@@ -1,7 +1,7 @@
 ---
 id: "0687"
 title: "Let a fix ticket fix the failing tests it names"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: "speck/ideas/done/2026-11-15-let-a-fix-ticket-fix-the-failing-tests-it-n
 after: []                # ticket ids that must be done first
 created: 2026-11-15
 started: "2026-11-15T20:50:21.778Z"
+approved: "2026-11-15T21:04:38.588Z"
 
 ---
 # 0687 · Let a fix ticket fix the failing tests it names
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A fix ticket that speck makes when the full suite fails names the tests it must fix, and those tests are listed as failing before its build. The build and review rules say a test failing before the build is never changed or fixed, so the reviewer escalates a fix ticket for doing exactly its job: 0671 blocked on this and went on only because speck took the recommendation.
@@ -52,9 +53,15 @@ When the full suite fails and speck makes a fix ticket for it, that ticket may n
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
+- Review rounds: 2, 1 of them a merge round
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 171,842
+- Elapsed since build started: 14 min
+- Changed lines: 14 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none. The reviewer's one minor finding (a sentence repeated in the build skill) was fixed in round 2.
 - During the `--related` run, 0630 AC3, 0657 AC3, 0148 AC4 and 0177 AC3 failed on timing under a 176-file load and passed when run on their own.
