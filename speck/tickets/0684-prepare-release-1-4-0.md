@@ -44,7 +44,7 @@ speck is ready to be released as 1.4.0.
 ## Notes
 - Asked for 2026-11-15: "Create a release ticket after it all. And set it ready too". A minor release, as the tickets add features.
 - Covers every ticket shipped since `v1.3.1`: 0664 and 0672 to 0682, which it waits for, the fix ticket 0683, and any other that ships before this is built. Fix tickets that only make this repo's own tests pass are left out of the changelog unless someone using speck would notice them.
-- A ticket among them that's cancelled rather than shipped no longer holds this up; leave it out of the changelog.
+- If one of them is cancelled rather than shipped, it's taken out of `after:` so this isn't held up, and left out of the changelog.
 - `npm run prices` fetches LiteLLM's price list from GitHub, so this build needs the network.
 - After it ships, check that the `v1.4.0` tag and its GitHub release page appeared. If not: `gh release create v1.4.0 --target main --title "speck 1.4.0" --notes-file docs/releases/v1.4.0.md`.
 - Checked 2026-11-15: `package.json` is `1.3.1`, `v1.3.1` is tagged, and `CHANGELOG.md`'s newest section is 1.3.1.
