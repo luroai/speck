@@ -50,7 +50,7 @@ The full suite passes on main again.
 - Went with the recommendation: Yes, a fix ticket may fix the tests it names (chosen by speck, as watch is decide, 2026-11-15 13:24 UTC).
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Nothing changes in the panel. Since the Builder fact was added to an open draft's table in Plan, the table has eight entries instead of seven, and three older checks still expected seven, so the full set of checks failed. Those checks now expect the Builder entry, and they pass again, including the one that lays the table out in a real browser on a narrow phone screen. To see it, open a draft in Plan: Builder sits after Level, with Size · risk and Type on the last row.
 
 ## Blocked question
 May this fix ticket change the three 0463 tests it names, even though the build rules say a test failing before a build is never fixed in it? The reviewer found the change itself correct (both criteria pass, including the real-browser check), but stopped on that rule. Options: (a) yes, a fix ticket may fix the tests it was made to fix, and the reviewer approves as is; (b) no, leave the tests alone and change the panel instead, dropping the Builder fact from an open Plan ticket's table, which undoes part of 0669. I recommend (a): the ticket exists only to make those tests pass, and the Builder fact is what 0669 asked for.
@@ -64,6 +64,8 @@ Clear winner: yes
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- Let a fix ticket fix the failing tests it names: skipped as a duplicate of speck/ideas/2026-11-15-let-a-fix-ticket-fix-the-failing-tests-it-names.md (round 1 escalated on this clash).
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -130,6 +132,74 @@ Clear winner: yes
     ],
     "escalation_question": "May ticket 0683 fix the three pre-existing failures explicitly named in its acceptance criteria, despite the review rule prohibiting fixes to listed pre-existing failures?",
     "summary": "The test updates correctly account for the Builder field already added to the panel. All three targeted tests pass, including the browser layout check, and no technical defect was found. Approval needs a decision resolving the conflict between this fix ticket and the review scope rule."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "bc0da1edd1ebe26e76722627e52fa32d70e7ec0c",
+    "session": "continued",
+    "thread_id": "01a1df60-6471-7b52-a368-a09aad798162",
+    "builder_response": "- Tests run: none new this round: no code or test changed since round 1 (only the ticket's Notes and Blocked question). The test output is round 1's run of test/panel-0463.test.mjs with --related.\n- F1: answered by the user's side. speck (watch: decide) went with the recommended option: \"Yes, a fix ticket may fix the tests it names\", recorded in the ticket's Notes (\"Went with the recommendation: ...\"). This fix ticket is exempt from the rule against fixing tests listed as failing before the build, for the three 0463 tests its acceptance criteria name. Please re-check F1 against that decision.\n",
+    "seconds": 16,
+    "usage": {
+      "input_tokens": 212300,
+      "cached_input_tokens": 168448,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1160,
+      "reasoning_output_tokens": 84
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 4516,
+      "cached": 79488,
+      "write": 0,
+      "output": 440
+    },
+    "cost_usd": 0.0213808,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-15T13:24:35.179Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "test/panel-0463.test.mjs correctly expects eight cells and shifts Type and Size · risk indices to match templates/panel.js lastFacts(). The unchanged recorded test run confirms all three named tests passed, including the real-browser check at 320 and 390 px."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The recorded run reports 151 passes, zero failures and three skips. No product code changed, and no code or tests changed since round 1. The updated assertions retain the existing behavioural and layout checks; shipping supplies the whole-suite check."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "speck/tickets/0683-fix-the-full-suite-failing-on-main-at-4f384bd.md",
+        "issue": "The general prohibition on fixing listed pre-existing failures conflicted with this fix ticket's explicit purpose. The recorded decision now permits this ticket to fix the three named tests.",
+        "suggested_fix": "No further change required; the ticket's Notes record the scope exception.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Approved. The tests now account for the panel's existing Builder field while retaining their behaviour and layout checks. All targeted tests pass, including the browser check. The recorded scope decision resolves the previous blocker."
   }
 }
 ```
