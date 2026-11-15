@@ -20,7 +20,7 @@ import { criteriaText, criteriaChange, criteriaChanges, shippedCriteriaChanged }
 import { cmdMergeCheck } from './merge-check.mjs';
 import { cmdDetect } from './detect.mjs';
 import { cmdKeys } from './keys.mjs'; import { cmdLogins } from './logins.mjs'; // 0635
-import { boardBuilders } from './build-model.mjs'; import { levelNames } from './levels.mjs'; import { levelBuilds } from './level-builds.mjs'; // 0662. 0667: what each level builds with
+import { boardBuilders } from './build-model.mjs'; import { levelNames } from './levels.mjs'; import { levelBuilds, ticketBuild } from './level-builds.mjs'; import { knownProviders } from './custom-providers.mjs'; // 0662. 0667: what each level builds with. 0669: and each ticket
 import { cmdAgents } from './your-agents.mjs';
 import { cmdConfig } from './config.mjs'; import { cmdConfigShow } from './settings.mjs';
 import { cmdTest } from './turns.mjs';
@@ -409,7 +409,7 @@ export function statusData(repo) {
   const tickets = statusTickets(repo, cfg);
   const done = new Set(tickets.filter(t => t.fm.status === 'done').map(t => padId(t.fm.id)));
   const runs = runsOf(repo);
-  const leads = groupLeader(), fixing = fixingOf(cfg), builderOf = boardBuilders(cfg, repo);
+  const leads = groupLeader(), fixing = fixingOf(cfg), builderOf = boardBuilders(cfg, repo), providers = knownProviders(repo);
   const entries = tickets.map(t => {
     const lint = lintTicket(t, cfg);
     const facts = questionFacts(contentLines(t.sections['blocked question'])); // 0283
@@ -421,7 +421,7 @@ export function statusData(repo) {
     return withForeman(t, fixing, { // 0317
       ...t.fm,
       // 0388: the builder and reviewer it would use now: its own, or else the settings'. 0391: a provider's, by its name
-      ...builderOf(t.fm), // 0545: and the model its builds run on
+      ...builderOf(t.fm), build_with: ticketBuild(t.fm, cfg, providers), // 0545: and the model its builds run on. 0669: its Builder fact, and where it comes from
       reviewer: ticketAgents(t.fm, cfg).reviewer,
       type: ticketType(t),
       kind: ticketKind(t), task: undefined, // 0350, 0492: its kind, not the old task line it may still have

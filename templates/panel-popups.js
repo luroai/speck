@@ -471,7 +471,8 @@ function paneTrack(t, tone) {
     return n;
   }));
 }
-// 0583: its facts. A value that's too long wraps, so nothing is cut short on a phone. 0624: each a tile.
+// 0583: its facts. A value that's too long wraps, so nothing is cut short on a phone. 0624: each a tile. 0669: its Builder
+// fact says what its next build would use, and opens a menu to change it.
 function paneFacts(t) {
   const priority = t.priority !== undefined && t.priority !== null && t.priority !== '' ? `P${t.priority}` : '–';
   const why = typeof t.auto_ship_why === 'string' ? t.auto_ship_why.trim() : '';
@@ -479,7 +480,7 @@ function paneFacts(t) {
   const named = s => (typeof s === 'string' && s.trim() ? `${s.trim()[0].toUpperCase()}${s.trim().slice(1)}` : '');
   const name = named(t.reviewer), model = typeof t.review_model === 'string' && t.review_model.trim() ? t.review_model.trim() : typeof t.reviewer_model === 'string' ? t.reviewer_model.trim() : '';
   return el('dl', 'facts', null, factCell('Priority', priority, null), levelFact(t), factCell('Size', t.size ? String(t.size) : '–', null), factCell('Risk', t.risk ? String(t.risk) : '–', null),
-    factCell('Ships by itself', ships, null), factCell('Builder', workerOf(t, { round: null }).value, null), factCell('Reviewer', name ? `${name}${model ? ` · ${model}` : ''}` : '–', null),
+    factCell('Ships by itself', ships, null), builderFact(t), factCell('Reviewer', name ? `${name}${model ? ` · ${model}` : ''}` : '–', null),
     ...paneFrom === 'queue' ? queueFacts(t) : paneFrom === 'shipped' ? shippedFacts(t) : []);
 }
 // 0585: what a Build row can't show: its type, and, on one that hasn't started, its ready check.

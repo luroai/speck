@@ -963,6 +963,17 @@ function levelEntry(builder, model) {
   const v = `${builder || settingSaved('builder') || 'claude'}|${model}`;
   return yourModels() !== null ? asEntry(v) : v;
 }
+// 0669: a ticket's Builder menu's choices: the Builder's own list, as levelEntries gives it, read from `view`, the
+// settings as readSettings reads them, whether or not the Settings view is open; and `on`, the one a ticket naming
+// `builder` and `model` has picked, or null when the list doesn't offer it, or '' for Default when it names neither.
+function builderEntries(view, builder, model) {
+  const was = settingsView;
+  settingsView = view; // levelEntries and its helpers read the view; put back at once, before anything else runs
+  try {
+    const entries = levelEntries(), on = levelEntry(builder, model);
+    return { entries, on: on === '' || entries.some(e => e.value === on) ? on : null };
+  } finally { settingsView = was; }
+}
 // One labelled list: its visible label, and the list, which calls `save` with the value picked.
 function levelField(text, label, options, value, save) {
   const c = el('select', 'edit');
