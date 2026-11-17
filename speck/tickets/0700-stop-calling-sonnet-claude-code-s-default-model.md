@@ -44,6 +44,7 @@ Picking a Claude model in any list saves that model, and nothing claims to know 
 ## Notes
 - Found 2026-11-17. `defaultModelOf` returns `'sonnet'` for claude; `roleEntries` in `templates/panel-settings.js` then makes the blank entry stand in for Sonnet.
 - Checked 2026-11-17: Claude Code takes `--model sonnet` and the other aliases (as `scripts/build-model.mjs` passes builder_model), and with no `--model` it uses the account's own default, which was Opus on this machine.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
