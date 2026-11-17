@@ -45,6 +45,8 @@ Picking a Claude model in any list saves that model, and nothing claims to know 
 - Found 2026-11-17. `defaultModelOf` returns `'sonnet'` for claude; `roleEntries` in `templates/panel-settings.js` then makes the blank entry stand in for Sonnet.
 - Checked 2026-11-17: Claude Code takes `--model sonnet` and the other aliases (as `scripts/build-model.mjs` passes builder_model), and with no `--model` it uses the account's own default, which was Opus on this machine.
 - Failing before this build: none
+- Existing tests changed: six tests in 0403, 0407, 0661 and 0666 asserted that Claude Code's blank model is Sonnet (the defect this ticket fixes). Their Claude Code expectations and fixtures now match AC1–AC4. Their checks for Codex, Cursor and providers are unchanged, and 0403's "saved by the default's own name" test now checks Codex's default, since Claude Code no longer has a named one.
+- Self-check: a saved blank Claude model with Claude Code not one of your agents read "Claude Code (default)"; it now reads "Claude Code · its own default" too, with a test.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

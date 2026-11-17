@@ -275,7 +275,7 @@ function buildWords(b) {
   if (!b || typeof b.agent !== 'string' || !b.agent) return null;
   const named = typeof b.model_slug === 'string' && b.model_slug ? levelModelNames.get(b.builder)?.get(b.model_slug) : undefined;
   const effort = b.effort === null ? null : b.effort || 'default effort';
-  return [b.agent, named || b.model || 'default model', effort].filter(Boolean).join(' · ');
+  return [b.agent, named || b.model || (b.builder === 'claude' ? 'its own default' : 'default model'), effort].filter(Boolean).join(' · '); // 0700: Claude Code's depends on the account
 }
 // Reads, once a page, the model names of Codex and Cursor where a level builds on one of their models, then draws again.
 // 0669: or where `builds` do, such as a ticket's.

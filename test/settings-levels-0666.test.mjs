@@ -15,7 +15,7 @@ import { levelsOf } from '../scripts/levels.mjs';
 Object.assign(process.env, gitEnv); // panelLevelRequest commits in this process
 
 const AGENT_MODELS = [
-  { id: 'claude', name: 'Claude Code', efforts: true, models: CLAUDE_MODELS.map(m => ({ ...m })), default_model: 'sonnet' },
+  { id: 'claude', name: 'Claude Code', efforts: true, models: CLAUDE_MODELS.map(m => ({ ...m })) },
   { id: 'codex', name: 'Codex', efforts: true, models: [{ slug: 'gpt-6.1-sol', display_name: 'GPT-6.1 Sol', description: null, efforts: ['low', 'high'] }], default_model: 'gpt-6.1-sol' }];
 const cfgText = dir => fs.readFileSync(path.join(dir, 'speck', 'config.yml'), 'utf8');
 // A project whose speck/config.yml gives `levels`, a block of YAML under levels: (none for null), committed.
@@ -65,7 +65,7 @@ test('0666 AC1: each level and the add form offer the Builder\'s own choices, in
 test('0666 AC1: Default names the Builder\'s agent on its default model when the Builder leaves the model blank', async () => {
   const r = repoWith('  quick: {}');
   const p = await opened(r.dir, { saved: { builder: 'claude', builder_model: '' } });
-  assert.deepEqual(options(p, 'Quick level builder')[0], { value: '', label: 'Default (Claude Code · Sonnet)' });
+  assert.deepEqual(options(p, 'Quick level builder')[0], { value: '', label: 'Default (Claude Code · its own default)' });
 });
 
 test('0666 AC1: picking a choice saves the level\'s builder and model together, and Default blanks both', async () => {

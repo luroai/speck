@@ -20,7 +20,7 @@ const CURSOR = [{ slug: 'auto', display_name: 'Auto' }, { slug: 'grok-4.7-high',
 const DEEPSEEK = [{ slug: 'deepseek-v4-pro', display_name: 'V4 Pro' }, { slug: 'deepseek-v4-flash', display_name: 'V4 Flash' }];
 // Your agents' models, as the server gives them, each with its default model.
 const YOUR_MODELS = ({ cursor = { models: CURSOR, default_model: 'grok-4.7-high' } } = {}) => [
-  { id: 'claude', name: 'Claude Code', efforts: true, models: CLAUDE_MODELS.map(m => ({ ...m })), default_model: 'sonnet' },
+  { id: 'claude', name: 'Claude Code', efforts: true, models: CLAUDE_MODELS.map(m => ({ ...m })) },
   { id: 'codex', name: 'Codex', efforts: true, models: CODEX, default_model: 'gpt-6.1-sol' },
   { id: 'cursor', name: 'Cursor', efforts: false, ...cursor },
   { id: 'deepseek', name: 'DeepSeek', efforts: false, models: DEEPSEEK, default_model: 'deepseek-v4-pro' }];
@@ -60,12 +60,12 @@ test('0403 AC2: the default model is labelled "(default)", once, and selected wh
   const p = settingsPage([view()]);
   await openSettings(p);
   for (const role of ['builder', 'reviewer', 'watch_agent']) {
-    assert.equal(labelOf(p, role, 'claude|'), 'Claude Code · Sonnet (default)');
+    assert.equal(labelOf(p, role, 'claude|'), 'Claude Code · its own default'); // 0700
     assert.equal(labelOf(p, role, 'codex|'), 'Codex · GPT-6.1 Sol (default)');
     assert.equal(labelOf(p, role, 'cursor|'), 'Cursor · Grok 4.7 High (default)');
     assert.equal(labelOf(p, role, 'deepseek|'), 'DeepSeek · V4 Pro (default)');
-    for (const v of ['claude|sonnet', 'codex|gpt-6.1-sol', 'cursor|grok-4.7-high', 'deepseek|deepseek-v4-pro']) assert.ok(!values(p, role).includes(v), `${role}: ${v} only as the default`);
-    assert.equal(labels(p, role).filter(l => / \(default\)$/.test(l)).length, 4, `${role}: one default an agent`);
+    for (const v of ['codex|gpt-6.1-sol', 'cursor|grok-4.7-high', 'deepseek|deepseek-v4-pro']) assert.ok(!values(p, role).includes(v), `${role}: ${v} only as the default`);
+    assert.equal(labels(p, role).filter(l => / \(default\)$/.test(l)).length, 3, `${role}: one default an agent`);
   }
   assert.equal(controlOf(p, 'builder').value, 'claude|', 'blank builder_model: Claude Code\'s default is selected');
   assert.equal(controlOf(p, 'reviewer').value, 'codex|', 'blank reviewer_model: Codex\'s default is selected');
@@ -91,10 +91,10 @@ test('0403 AC2: choosing the default entry after another model saves a blank mod
 });
 
 test('0403 AC2: a model saved by the default\'s own name shows as the default entry, not as one not offered', async () => {
-  const p = settingsPage([view({ builder_model: 'sonnet' })]);
+  const p = settingsPage([view({ reviewer_model: 'gpt-6.1-sol' })]); // 0700: Codex's, as Claude Code's default isn't named
   await openSettings(p);
-  assert.equal(controlOf(p, 'builder').value, 'claude|');
-  assert.ok(!labels(p, 'builder').some(l => /not offered/.test(l)), labels(p, 'builder').join(' / '));
+  assert.equal(controlOf(p, 'reviewer').value, 'codex|');
+  assert.ok(!labels(p, 'reviewer').some(l => /not offered/.test(l)), labels(p, 'reviewer').join(' / '));
   assert.equal(saveButton(p).disabled, true, 'nothing changed');
 });
 
@@ -109,13 +109,13 @@ test('0403 AC3: an agent that lists no models offers only its default, still lab
   assert.equal(labelOf(q, 'builder', 'cursor|'), 'Cursor (default)', 'its default\'s name isn\'t known');
 });
 
-test('0403 AC3: the Settings answer names each agent\'s default: Cursor\'s marked one, a provider\'s, Sonnet for Claude Code, Codex\'s first', async () => {
+test('0403 AC3: the Settings answer names each agent\'s default: Cursor\'s marked one, a provider\'s and Codex\'s first, but none for Claude Code (0700)', async () => {
   const r = panelRepo();
   fs.mkdirSync(path.dirname(yourAgentsFile(r.dir)), { recursive: true });
   fs.writeFileSync(yourAgentsFile(r.dir), JSON.stringify({ agents: ['claude', 'codex', 'cursor', 'deepseek'] }));
   const answer = await settingsAnswer(r.dir, async () => ({ models: CODEX }), async () => ({ models: CURSOR, default_model: 'grok-4.7-high' }), async () => structuredClone(AGENTS_FOUND));
   const byId = Object.fromEntries(answer.agent_models.map(a => [a.id, a]));
-  assert.equal(byId.claude.default_model, 'sonnet');
+  assert.equal(byId.claude.default_model, undefined, '0700: Claude Code\'s own default depends on the account');
   assert.equal(byId.codex.default_model, 'gpt-6.1-sol');
   assert.equal(byId.cursor.default_model, 'grok-4.7-high');
   assert.equal(byId.deepseek.default_model, 'deepseek-v4-pro');

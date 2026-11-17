@@ -776,11 +776,15 @@ const projectValue = key => { const r = settingRows().find(x => x.key === key); 
 // The agent the Foreman runs on when it's left to the builder's, as foremanAgentChosen reads it.
 const buildersAgent = () => { const b = settingChosen('builder'); return ['codex', 'cursor'].includes(b) || settingProvider(b) !== null ? b : 'claude'; };
 // 0403: the model an agent runs when its model is left blank, as the server named it, or '' when it couldn't tell.
-const defaultSlug = a => a !== null && typeof a.default_model === 'string' ? a.default_model : '';
-// That model by name, with " (default)", as " · Sonnet (default)", or just " (default)" when it isn't named.
-function defaultWords(a) {
+// 0700: never Claude Code's, which depends on the account, so each of its models is offered by its own name.
+const defaultSlug = a => a !== null && a.id !== 'claude' && typeof a.default_model === 'string' ? a.default_model : '';
+// 0700: Claude Code's blank model, in words that name no model.
+const CLAUDE_OWN = ' · its own default';
+// That model by name, with " (default)", as " · Auto (default)", or just " (default)" when it isn't named, or
+// Claude Code's " · its own default" (0700).
+function defaultWords(a, id = a?.id) {
   const slug = defaultSlug(a), m = slug ? agentModelsOf(a).find(x => x.slug === slug) : undefined;
-  return slug ? ` · ${m ? modelLabel(m) : slug} (default)` : ' (default)';
+  return slug ? ` · ${m ? modelLabel(m) : slug} (default)` : id === 'claude' ? CLAUDE_OWN : ' (default)';
 }
 // `role`'s entries: { group, value, label }, each value "<agent>|<model>", a blank model being the agent's own default,
 // which stands in for that model by name (0403).
@@ -807,7 +811,7 @@ function roleWords(role, value) {
   const a = yourAgent(agent), m = a !== null ? agentModelsOf(a).find(x => x.slug === model) : undefined;
   const who = agent === '' ? (role === 'qa_agent' ? `${managerName()}'s agent` : 'The builder\'s agent') : agent === 'claude-subagent' ? `${agentLabel(agent)} · subagent in the builder's session` : agentLabel(agent);
   if (model !== '') return `${who} · ${m ? modelLabel(m) : model}`;
-  return `${who}${agent === '' || agent === 'claude-subagent' ? ' (default)' : defaultWords(a)}`;
+  return `${who}${agent === '' || agent === 'claude-subagent' ? ' (default)' : defaultWords(a, agent)}`;
 }
 function roleEditor(x) {
   const role = x.key;
@@ -948,7 +952,7 @@ function levelEfforts(builder, model) {
 // agents on its own default.
 function levelEntries() {
   if (yourModels() !== null) return roleEntries('builder');
-  return rowChoices('builder').map(b => ({ group: null, value: `${b}|`, label: builderName(b) }));
+  return rowChoices('builder').map(b => ({ group: null, value: `${b}|`, label: `${builderName(b)}${b === 'claude' ? CLAUDE_OWN : ''}` })); // 0700
 }
 // The Builder's agent and model as saved, in its list's words, such as "Claude Code · Opus", without " (default)".
 const levelDefaultWords = () => levelEntryWords(levelEntry(settingSaved('builder') || 'claude', settingSaved('builder_model'))).replace(/ \(default\)$/, '');

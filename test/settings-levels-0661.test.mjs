@@ -17,7 +17,7 @@ import { PROVIDERS } from '../scripts/providers.mjs';
 Object.assign(process.env, gitEnv); // panelLevelRequest commits in this process
 
 const AGENT_MODELS = [
-  { id: 'claude', name: 'Claude Code', efforts: true, models: CLAUDE_MODELS.map(m => ({ ...m })), default_model: 'sonnet' },
+  { id: 'claude', name: 'Claude Code', efforts: true, models: CLAUDE_MODELS.map(m => ({ ...m })) },
   { id: 'codex', name: 'Codex', efforts: true, models: [{ slug: 'gpt-6.1-sol', display_name: 'GPT-6.1 Sol', description: null, efforts: ['low', 'high'] }], default_model: 'gpt-6.1-sol' }];
 const cfgText = dir => fs.readFileSync(path.join(dir, 'speck', 'config.yml'), 'utf8');
 const levelsIn = dir => levelsOf(parseConfig(cfgText(dir)));
@@ -79,7 +79,7 @@ test('0661 AC2: a level\'s builder, model and effort offer the builder\'s own ch
   const p = await opened(r.dir);
   const options = label => p.all(controlIn(p, label)).filter(n => n.tagName === 'option').map(o => o.value);
   // 0666: the builder's agents and models in one list, as the builder's own row offers them, after Default.
-  assert.deepEqual(options('Quick level builder'), ['', ...CLAUDE_MODELS.map(m => (m.slug === 'sonnet' ? 'claude|' : `claude|${m.slug}`)), 'codex|']);
+  assert.deepEqual(options('Quick level builder'), ['', 'claude|', ...CLAUDE_MODELS.map(m => `claude|${m.slug}`), 'codex|']);
   const own = p.all(rowOf(p, 'builder_effort')).find(n => n.tagName === 'select'); // the builder's own effort, as its list offers it
   assert.deepEqual(options('Quick level effort'), ['', ...p.all(own).filter(n => n.tagName === 'option' && n.value !== '').map(o => o.value)]);
   assert.match(p.all(controlIn(p, 'Quick level builder')).find(n => n.tagName === 'option').textContent, /^Default \(/);
