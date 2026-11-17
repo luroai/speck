@@ -1,7 +1,7 @@
 ---
 id: "0700"
 title: "Stop calling Sonnet Claude Code's default model"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-17
 started: "2026-11-17T19:13:59.448Z"
+approved: "2026-11-17T19:22:29.103Z"
 
 ---
 # 0700 · Stop calling Sonnet Claude Code's default model
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The Builder, reviewer and level lists offer "Claude Code · Sonnet (default)", and picking it saves a blank model, which leaves the choice to Claude Code. speck assumes Claude Code's own default is Sonnet (0403, `defaultModelOf` in `scripts/settings.mjs`), but it depends on the account: on a Max plan it's Opus. So someone who picks Sonnet gets every build on Opus, at several times the cost, while the panel says Sonnet. It happened in a project on 17 November: ticket 0002 showed "Claude Code · default model" and was built with claude-opus-5-5.
@@ -57,9 +58,14 @@ To see it, open Settings and look at the Builder's list or a build level's list.
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 156,682
+- Elapsed since build started: 8 min
+- Changed lines: 23 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (tidy-up, no idea note): the test fixtures in test/panel-builder-0669.test.mjs and test/settings-0409.test.mjs still give Claude Code `default_model: 'sonnet'`, which the server no longer sends. The page ignores it, so they pass, but they could drop it.
 
