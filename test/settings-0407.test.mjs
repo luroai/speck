@@ -28,7 +28,7 @@ const full = ({ codex = { models: CODEX } } = {}) => {
     your_agents: { list: true, agents: [
       { id: 'claude', name: 'Claude Code', kind: 'agent', yours: true, ready: true, installed: true, signed_in: true, roles: ['builder'] },
       { id: 'codex', name: 'Codex', kind: 'agent', yours: true, ready: true, installed: true, signed_in: true, roles: ['reviewer'] }] },
-    agent_models: [{ id: 'claude', name: 'Claude Code', efforts: true, models: CLAUDE_MODELS.map(m => ({ ...m })), default_model: 'sonnet' },
+    agent_models: [{ id: 'claude', name: 'Claude Code', efforts: true, models: CLAUDE_MODELS.map(m => ({ ...m })) },
       { id: 'codex', name: 'Codex', efforts: true, models: codex.models ?? [], ...(codex.why ? { why: codex.why } : { default_model: 'gpt-6.1-sol' }) }] };
 };
 
@@ -89,7 +89,7 @@ test('0407 AC2: each role\'s list and Your agents say they are loading, then fil
   await p.settle();
   assert.equal(controlOf(p, 'reviewer'), reviewer, 'the same list, so it keeps the focus');
   assert.ok(attached(p, reviewer));
-  assert.deepEqual(options(p, 'reviewer').filter(o => !o.disabled).map(o => o.value), ['claude|fable', 'claude|opus', 'claude|', 'claude|haiku', 'claude-subagent|', 'codex|']);
+  assert.deepEqual(options(p, 'reviewer').filter(o => !o.disabled).map(o => o.value), ['claude|', 'claude|fable', 'claude|opus', 'claude|sonnet', 'claude|haiku', 'claude-subagent|', 'codex|']);
   assert.equal(reviewer.value, 'codex|', 'the reviewer as set');
   assert.doesNotMatch(pane(p).textContent, /loading the list|Loading your agents/);
   assert.equal(controlOf(p, 'watch_agent').value, '|', 'the Foreman as set');

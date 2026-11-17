@@ -284,11 +284,10 @@ async function yourModels(yours, read, readCursor, providers) {
   return out;
 }
 // 0403: the model an agent runs when its model is left blank, or null when that can't be told: a provider's default,
-// Sonnet for Claude Code (its own default with no --model), the one Cursor marks (default), and the first Codex lists,
-// as it lists its models in its own order with the one it picks first.
+// the one Cursor marks (default), and the first Codex lists, as it lists its models in its own order with the one it
+// picks first. 0700: never for Claude Code, whose own default with no --model depends on the account (Opus on Max).
 function defaultModelOf(id, provider, got, models) {
   if (provider) return provider.defaultModel || null;
-  if (id === 'claude') return 'sonnet';
   if (id === 'cursor') return typeof got?.default_model === 'string' && got.default_model ? got.default_model : null;
   if (id === 'codex') return models.length ? models[0].slug : null;
   return null;
