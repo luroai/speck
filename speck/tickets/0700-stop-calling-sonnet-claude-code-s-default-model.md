@@ -1,7 +1,7 @@
 ---
 id: "0700"
 title: "Stop calling Sonnet Claude Code's default model"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-17
+started: "2026-11-17T19:13:59.448Z"
 
 ---
 # 0700 · Stop calling Sonnet Claude Code's default model
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 The Builder, reviewer and level lists offer "Claude Code · Sonnet (default)", and picking it saves a blank model, which leaves the choice to Claude Code. speck assumes Claude Code's own default is Sonnet (0403, `defaultModelOf` in `scripts/settings.mjs`), but it depends on the account: on a Max plan it's Opus. So someone who picks Sonnet gets every build on Opus, at several times the cost, while the panel says Sonnet. It happened in a project on 17 November: ticket 0002 showed "Claude Code · default model" and was built with claude-opus-5-5.
