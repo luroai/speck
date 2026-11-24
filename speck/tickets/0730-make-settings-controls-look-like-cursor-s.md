@@ -45,6 +45,7 @@ Settings' switches, menus, boxes and buttons look like Cursor's settings control
 - Switches are `[role="switch"]` in `templates/panel-settings.css`; lists are `select` elements built in `templates/panel-settings.js`. Keeping them as native `select` elements, styled, keeps phones' own pickers.
 - Green: pick one that meets 3:1 against the track's surroundings in both looks, kept apart from the panel's status green if they would be confused.
 - speck (2026-11-24 16:02 UTC) made draft fix ticket 0737: Wait to start dependent builds when approved work conflicts with main. Why: 0730 was launched because 0729 is approved, but its approved branch conflicts with main, so the scheduler needs to wait for that conflict to clear rather than launch a build that cannot start.
+- 2026-11-24: its first build stopped before starting, as it began on 0729's approved work while that conflicted with main and the main checkout had been made bare. Set ready again once 0729 shipped.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
