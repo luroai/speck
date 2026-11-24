@@ -1,5 +1,71 @@
 # Changelog
 
+## 1.6.0 · 24 November 2026
+
+What's new since 1.5.0. A minor release that makes the panel look and work like part of Cursor. Settings is laid out like Cursor's own settings, with switches and compact menus, and saves each change as soon as you make it. A hovered ticket's chain lights with a soft fill, and you can try an approved ticket's app from its review pack before you ship it. You can cap builds across every project on your machine, the bridge warns when an agent nears its usage limit, and tickets built on others stall less. Choosing Sonnet now really means Sonnet. Costs speck works out itself are still estimates at API list prices.
+
+### Getting started
+
+- Install this release with `npx github:luroai/speck#v1.6.0 init`.
+
+### Settings
+
+- Settings is laid out like a page of Cursor's own settings. Each setting has a plain name, such as Name, Watch or Bench, with a short grey line under it saying what it does, and its control on the right, or under the name on a narrow screen. Resting the pointer on a row shows the setting's technical name. Settings are grouped on soft grey rounded blocks under small grey labels, and each member of Your team has a block of its own starting with its picture, name and job. The ⓘ buttons are gone: press a setting's name or its short line to read its full explanation, and press again to hide it.
+- On/off settings, Auto-build and Auto-ship among them, are green-and-grey switches. Menus are compact, with a small chevron and no box until you hover or focus them, and text boxes and small buttons are rounded in the interface's own font. Every control keeps its 44 px tap target.
+- Settings has no Save button. A switch, a menu or a tick saves as soon as you change it, and a box you type in saves when you press Enter or leave it. The row says it saved. A change speck refuses, such as a value it can't use, or a project setting while your checkout isn't on the base branch or `speck/config.yml` has uncommitted changes, goes back to the saved value and says why under it. Turning on auto-ship, or adding a risk to it, still asks first, and closing Settings never asks about unsaved changes. Each project setting you change is a commit of its own.
+- A "Test runs at once on this machine" row under "Test runs at once" shows and sets `machine_parallel_tests`, the limit on test runs across every project on this machine, which you could only set from the command line before. It's saved in your home folder, so nothing in the project changes, and a value speck can't use, such as 0, is refused with the same reason the command line gives.
+- In every list that offers Claude Code's models, Fable, Opus, Sonnet and Haiku each save their own name, so choosing Sonnet saves `sonnet` and builds really run on it. A separate "Claude Code · its own default" leaves the choice to Claude Code, and the panel shows it in those words wherever it names a builder or level, rather than calling it Sonnet. A setting saved with no Claude model before this release reads "its own default": if you meant Sonnet, choose Sonnet again.
+
+### The panel
+
+- An approved code ticket's review pack has a Try it button. It starts the app from that ticket's copy of the code and shows the app's address as a link, so you can try the change before you ship it. While the app runs, the button offers Stop, and opening the pack again still shows the address and Stop. If the app can't start, the pack says why in the same words as `speck app`.
+- Hovering a ticket lights it and every ticket chained to it with the same soft raised fill a hovered row has, rather than a heavy dark ring. Tapping a linked id lights that ticket for a moment. On a computer, a hovered closed row's fill reaches a little past its text on each side, as an open row's does.
+- Closed drafts in Plan no longer show Set ready on the row, so their titles have more room. Open a draft, or its full view, to set it ready.
+- An open Plan card shows what the ticket waits for and what waits on it in the same plain two-part layout as the full view, rather than a boxed chain of circles. Its ticket numbers take the same room with a mouse as on a touch screen.
+- A ticket waiting on a ticket in its `after:` list that was cancelled says so, in the warning colour, on its Plan card, its Build row and its full view, and says to take it out of `after:`.
+- Shipped's figures keep their full labels on narrower screens, wrapping onto a second line rather than ending in dots. Four figures to a row start at 800 px wide.
+- Build timers count one second at a time, without skipping or repeating a number.
+- The Pipeline log's lines that had a gap where it hides a path or a command now read as whole sentences.
+- With your device's more-contrast setting on, the panel's borders and small grey text are much stronger in both looks.
+
+### Tickets built on others
+
+- An approved ticket built on another ticket that hasn't shipped sits under Building, with a line saying it's approved and ships after that ticket, rather than under Needs you as Ready to ship. It isn't counted in Needs you, on the bridge or in `speck status`'s list of what waits for you.
+- When the ticket another was built on is cancelled, `speck ship` and auto-ship no longer say to ship the cancelled ticket first. They say it was cancelled and give two ways on, each with its command: build the ticket again from the base branch, or keep the cancelled ticket's work in it and have the reviewer look at all of it. The status and the panel say the same.
+
+### Builds, agents and usage limits
+
+- `speck config set machine_parallel_builds <n>` caps the builds running at once across every project's `speck run` on this machine. `machine_parallel_builds` is saved in your home folder, beside `machine_parallel_tests`, and `speck config show` shows it after `max_parallel_builds`. Ready tickets wait while the machine is full, and each project's `max_parallel_builds` still applies within it. Unset, nothing changes.
+- When an agent is at 90% or more of a usage window, or has hit its limit, All projects on the bridge shows a line naming the agent, the window, how much is used and when it resets. The line goes once speck's newest reading for it is under 90% again.
+- After a Claude Code review round, speck updates Claude's usage reading as it does after a Claude build, so `speck agents` and Settings show the fresher figure.
+- When a build `speck run` handed back, for example to settle a clash at ship, stops on a usage limit that resets more than an hour away, it carries on on the next free agent on `builder_bench`, told what the hand-back was for. It doesn't spend another hand-back, and the ticket doesn't ship while the new agent works.
+- When a builder hands work to Codex and a later build carries that Codex conversation on, the ticket's spend counts the later work too, once.
+- An idle `speck run` reads a finished ticket's build log again only when it has changed, so it uses less of the machine as a project's history grows.
+
+### Checks in the app
+
+- While speck is checking a blocked ticket's question in the running app, or will check it, the ticket says "speck is checking it in the app" rather than "Waiting for you", sits under Building and isn't counted under Needs you.
+- speck's messages say QA checked the app even when none of QA's settings are set.
+- When a check in the app needs an account with no saved test login, the watching agent leaves it for you. When a saved login fails, it asks you, and you can fix the login with `speck logins set`.
+
+### Commands
+
+- `speck set <id> level ""` takes a ticket's level off, as the panel's Default choice does, and says it's now blank. The same works for its builder, reviewer, models and efforts.
+- `speck logins set` warns when a test password is shorter than 8 characters or appears in a file in the project, as any commit holding it would be refused. It never shows the password and still saves the login.
+- At the review limit, the build says to answer with `speck answer` or the panel's Answer, which is what allows 2 more rounds, rather than by editing the ticket.
+
+### Shipping
+
+- speck's own tests always stay inside their own throwaway folders, however they're started. If the main checkout is ever left without its working files, `speck ship` refuses, says what's wrong and gives the one command that puts it right, and `speck run` holds every ship until it's fixed.
+
+### Tests
+
+- Several of speck's own tests that failed now and then on a busy machine, around browsers, swipes and waited time, are steady, and the README's terminal install command is checked against the setup prompt.
+
+### Prices
+
+- The shipped price table has been refreshed with this release's rates, taken on 24 November 2026.
+
 ## 1.5.0 · 15 November 2026
 
 What's new since 1.4.0. A minor release that finishes "picks the crew" and makes the line steadier. The ticket writer now suggests a build level for each ticket, and Shipped compares builder models by their results, so you can see whether a cheaper model holds up. Review rounds carry on through more usage limits, a handed-back build carries on after one, a ticket cancelled during its build no longer leaves others waiting, and fix tickets may fix the tests they were made for. Costs speck works out itself are still estimates at API list prices.
