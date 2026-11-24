@@ -1,7 +1,7 @@
 ---
 id: "0712"
 title: "Point answers at the review limit to speck answer"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -22,7 +22,7 @@ started: "2026-11-24T13:44:39.001Z"
 ---
 # 0712 · Point answers at the review limit to speck answer
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Only Go with the recommendation, `speck answer` and the panel's Answer add the line that opens 2 more review rounds. The speck-build skill tells you to answer in the ticket and run `/speck-build`, which resumes a build that can only block again with the same question.
@@ -47,7 +47,7 @@ An answer to a question at the review limit always goes through `speck answer` o
 - Pictures: none, because nothing visual changes
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+If a build stops because it ran out of review rounds, the build instructions now tell you to answer with the answer command or the panel's Answer button, because that is what gives it 2 more rounds. Editing the ticket and restarting the build used to leave it stuck on the same question. If you try that anyway, the builder now stops and points you to the right way. Nothing else changes.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -57,3 +57,75 @@ An answer to a question at the review limit always goes through `speck answer` o
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "b1340a2d12f94d4b2c08c88a66cb0d12166a7b45",
+    "session": "fresh",
+    "thread_id": "01a20dd3-e04d-7fa2-9509-06eb87f8f929",
+    "builder_response": "- Tests run: test/skill-build-answer-0712.test.mjs test/skills.test.mjs (plus the related files via --related, which all passed; the one failure there was my naming the SKILL.md as a test file)\n",
+    "seconds": 22,
+    "usage": {
+      "input_tokens": 119291,
+      "cached_input_tokens": 97664,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 583,
+      "reasoning_output_tokens": 44
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 21627,
+      "cached": 97664,
+      "write": 0,
+      "output": 583
+    },
+    "cost_usd": 0.0588504,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-24T13:52:20.208Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "skills/speck-build/SKILL.md sections 4 and 6 explicitly direct review-limit answers through speck answer or the panel's Answer. The passing 0712 AC1 test checks both sections."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Pre-flight step 2 explicitly stops a review-limit-blocked resume without a subsequent allowance line and directs the user to speck answer or the panel. The passing 0712 AC2 test checks the resume instructions."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Section 4 retains the explicit prohibition against the builder writing the allowance line. The passing 0712 AC3 test checks this prohibition."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Verified recorded test output: 156 passed, 3 skipped, no failures. Changes are confined to the skill instructions, their tests and ticket metadata; no runtime code changed."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The instructions now direct review-limit answers through the command or panel that grants two more rounds, and tell builders to stop if that permission is missing. Builders remain forbidden from granting themselves extra rounds. The relevant tests pass, and no blocking concerns were found."
+  }
+}
+```
+
+</details>
