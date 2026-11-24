@@ -1,7 +1,7 @@
 ---
 id: "0715"
 title: "Say when a sign-in check is left rather than asked"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -22,7 +22,7 @@ started: "2026-11-24T13:52:52.125Z"
 ---
 # 0715 · Say when a sign-in check is left rather than asked
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The speck-watch skill says to ask the user when the agent can't sign in, while its leave action covers a check needing an account the agent can't use. The two overlap, so the agent may stop a build with a question where 0679 meant it to carry on, or the reverse.
@@ -47,7 +47,7 @@ The skill and the check's brief say plainly which sign-in troubles are left and 
 - Pictures: none, because nothing anyone sees changes
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When a check in the app needs an account, the watching agent now knows what to do. With no saved test login for that account, it leaves the check for you. If a saved login exists but fails, or any other sign-in trouble comes up, it asks you, and you can fix the login with `speck logins set`. Nothing changes in what leaving a check does.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -57,3 +57,80 @@ The skill and the check's brief say plainly which sign-in troubles are left and 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups: none. Review F1 (minor) was about my test run passing non-test files; the real tests passed.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "f7d2ccb726096016c4768b4853bbfb0ea5d3d15a",
+    "session": "fresh",
+    "thread_id": "01a20dde-475e-7520-ab5d-cb9ebe8c651b",
+    "builder_response": "- AC1/AC2 are checked by review; no tests. Ran related tests: all pass.\n",
+    "seconds": 29,
+    "usage": {
+      "input_tokens": 129203,
+      "cached_input_tokens": 88960,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 727,
+      "reasoning_output_tokens": 44
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 40243,
+      "cached": 88960,
+      "write": 0,
+      "output": 727
+    },
+    "cost_usd": 0.096652,
+    "tests": {
+      "failing": 1,
+      "second_try": []
+    },
+    "saved_at": "2026-11-24T14:03:49.106Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "skills/speck-watch/SKILL.md, checking-in-the-app step 5: leave applies with watch: decide when no saved test login exists; failed saved logins and other sign-in trouble require asking. Checked by review."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/app-check.mjs, checkBrief(): the leave instruction names accounts without saved logins, excludes failed saved logins, and directs remaining cases to ask. Checked by review."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "/tmp/speck-0715-tests.txt reports 266 passing tests and three skipped. Its sole failure comes from incorrectly passing SKILL.md to Node as a test file (ERR_UNKNOWN_FILE_EXTENSION), not a failing existing test. No tests or leave-action implementation changed."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "minor",
+        "file": "/tmp/speck-0715-tests.txt",
+        "issue": "The builder says all related tests pass, but the submitted run exits with a failure because it tries to execute the Markdown skill as a test.",
+        "suggested_fix": "Run speck test --files with the related test/*.test.mjs files rather than the changed source and skill paths, and report the resulting totals accurately.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The instructions now distinguish missing saved logins from sign-in failures: missing logins leave the check for the user, while failures prompt a question. The leave action itself is unchanged. Related tests passed; the reported failure was caused by trying to execute a Markdown file as a test."
+  }
+}
+```
+
+</details>
