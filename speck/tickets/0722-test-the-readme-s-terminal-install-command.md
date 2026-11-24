@@ -40,6 +40,7 @@ The README's terminal install command is one of the tested README facts.
 
 ## Notes
 - The rule text is in `docs/brief.md` (Criteria about documents), `skills/speck-ticket/SKILL.md`, `templates/reviewer-prompt.md`, and `test/docs-0491.test.mjs` (`TESTED`, `ALLOWED`). The setup prompt's command is tested in `test/install-0253.test.mjs`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
