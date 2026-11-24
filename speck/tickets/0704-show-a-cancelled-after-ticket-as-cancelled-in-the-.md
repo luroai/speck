@@ -1,7 +1,7 @@
 ---
 id: "0704"
 title: "Show a cancelled after: ticket as cancelled in the panel"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: ["0703"]                # ticket ids that must be done first
 created: 2026-11-24
 built_on: "0703"
 started: "2026-11-24T12:41:02.053Z"
+approved: "2026-11-24T13:27:02.863Z"
 
 ---
 # 0704 · Show a cancelled after: ticket as cancelled in the panel
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 speck run and `speck start` say a cancelled ticket must come out of `after:`, but the panel still shows a ticket waiting on it with a lock and "Waiting on <id>", so someone reading only the panel waits for a ticket that will never ship.
@@ -58,9 +59,15 @@ To see it, cancel a ticket that another ticket names in after:, then look at the
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 whereLine hides the cancellation instruction when t.inFlight is true, including blocked and approved tickets.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 745,318
+- Elapsed since build started: 46 min
+- Changed lines: 69 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Known limit: in the real panel a cancelled ticket's title doesn't show in Waits on (only its id), as the page doesn't get cancelled tickets' titles. The model would use one if it had it.
