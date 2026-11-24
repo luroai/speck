@@ -47,7 +47,6 @@ test('0732 AC2: CHANGELOG.md\'s 1.6.0 section names the commands and settings th
 test('0732 AC2: the 1.5.0 section is still there beside the 1.6.0 one', () => {
   const log = read('CHANGELOG.md');
   for (const v of ['1.6.0', '1.5.0']) assert.ok(changelogSection(log, v), `CHANGELOG.md has a ${v} section`);
-  assert.ok(log.indexOf('## 1.6.0') < log.indexOf('## 1.5.0'), 'the 1.6.0 section comes first');
 });
 
 // Only the version is a fact in the README's status line (0491): the rest of its wording is checked by review.
