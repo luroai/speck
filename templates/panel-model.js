@@ -689,9 +689,9 @@ const RUN_ID = /(?<![\w:./-])(\d{4,})(?![\w:/-]|\.\w)/;
 // A sentence without what it mustn't show: parentheses with a session or process in them, `code`, ids of sessions,
 // processes, paths, links, file names and speck's or a tool's commands. Whatever is left is tidied of the gaps they leave.
 function runPlain(s) {
-  return s
+  const cut = s
     .replace(/^\S*\/\S*\.(?:ya?ml|json|md|mjs)(?= (?:has|is|was)\b)/, 'The file')
-    .replace(/\s*Last lines of[\s\S]*$/, '')
+    .replace(/\s*Last lines of \S+:(?:\n[\s\S]*)?$/, '')
     .replace(/\bConflicting files:[\s\S]*?\.(?=\s+[A-Z]|\s*$)\s*/g, '')
     .replace(/,?\s+or run\s+(?:`[^`]*`|\/[\w-]+(?: \d{4,})?),?/gi, '')
     .replace(/\bRun\s+`[^`]*`\s+to\b[^.]*\.\s*/g, '')
@@ -705,12 +705,14 @@ function runPlain(s) {
     .replace(/(?<![\w.'-])npm (?:test|ci|install)\b/g, '')
     .replace(/\b(?:Its\s+)?log:\s*(?=$|[.,;])/gi, '')
     .replace(/\(\s*\)/g, '')
-    .replace(/\s+/g, ' ')
+    .replace(/\s+/g, ' ');
+  // Only a sentence that lost something is tidied of what it leaves behind: one that lost nothing reads as written.
+  return (cut === s.replace(/\s+/g, ' ') ? cut : cut
     .replace(/\s+(?:with|in|into|of)(?=\s*[.,;:!?]|\s*$)/gi, '')
     .replace(/\b(then|or|and)\s+run(?=\s*[.,;:!?]|\s*$)/gi, '$1')
     .replace(/\s+([.,;:!?])/g, '$1')
     .replace(/([,;:])(?=[.,;:]|$)/g, '')
-    .trim();
+    .trim()).trim();
 }
 // The short reasons a ship gives, for `<id> didn't ship`, or null for one it doesn't. 0620: any other reason whole.
 function shipWhy(why) {

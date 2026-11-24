@@ -27,3 +27,8 @@ test('0706 AC3: a line with no path or command is unchanged', () => {
   assert.equal(summary('speck run stopped. 1 build is still running: 0457.'), '0457 speck run stopped. 1 build is still running: 0457.');
   assert.equal(summary('Shipped 0001.'), '0001 shipped');
 });
+test('0706 AC3: ordinary sentences with those phrases are left whole', () => {
+  assert.equal(summary('Please tell me which folder to put it in.'), 'Please tell me which folder to put it in.');
+  assert.equal(summary('Last lines of the build are useful.'), 'Last lines of the build are useful.');
+  assert.equal(summary('speck run: watching for ready tickets.'), 'speck run: watching for ready tickets.');
+});
