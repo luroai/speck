@@ -1,7 +1,7 @@
 ---
 id: "0752"
 title: "File fewer, unduplicated follow-up notes from builds"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -22,7 +22,7 @@ started: "2026-11-24T23:12:03.874Z"
 ---
 # 0752 · File fewer, unduplicated follow-up notes from builds
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 On 2026-11-24, 31 tickets left 15 inbox notes, five of them the same problem, because builds running side by side can't see each other's notes until they ship, and builds save a note for every small thing they notice. The user had cleared Capture down to 8 and it went back to 23.
@@ -47,7 +47,9 @@ Builds save an inbox note only for a follow-up worth its own ticket that no othe
 - Self-check: no changes. The rewording keeps the phrases followups-0036 checks (behaviour change, bug, missing check, tidy-ups, unused code, known limits); `speck status --json` does give `status` and `worktree` per ticket.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Builds now save far fewer notes to your Capture inbox. A build saves a note only for something you'd notice using speck (a bug or a change in how it behaves) or for a test that fails or is unsteady on main. Small things like tidy-ups, missing checks or wording go only in the ticket's Delivery log. Before saving a note, a build now also looks at what other builds running at the same time have written and at anything shipped since it started, so the same problem is no longer saved five times over. A failing test that a note or open ticket already names is never saved again.
+
+To see it, run several builds at once and watch the Capture list: notes should be rare and not repeat each other. Keep an eye out for a real bug landing only in a Delivery log, which would mean the new bar is too strict.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -56,4 +58,77 @@ Builds save an inbox note only for a follow-up worth its own ticket that no othe
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups (Delivery log only, no inbox note):
+- 0161's light-look browser test once failed with "panel didn't start" during `speck test --related`, while three other builds were running, and passed on a rerun. It passed in the recorded full-suite run on main, so it isn't shown to be unsteady there. Checked against notes and open tickets on main and in other builds' worktrees: none names it.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "56a7df2aa9b27e481e21f117efb44b1eeaecb5ad",
+    "session": "fresh",
+    "thread_id": "01a20fd7-74c9-7060-a9eb-69328a4471b0",
+    "builder_response": "- Tests run: `speck test --related test/followups-0036.test.mjs` (683 tests: every test file that reads skills/speck-build/SKILL.md, plus the checks). One failure, 0161's light-look browser test, timed out starting a panel while three other builds were running; it touches nothing this change does. Re-ran it with followups-0036 via `speck test --files test/followups-0036.test.mjs test/panel-0161.test.mjs`: all pass. That rerun is the output attached.\n- No new tests: AC1–AC3 are skill wording, marked (checked by review). AC4 is covered by the existing tests that read the skill.\n- The change is section 5 step 1 of skills/speck-build/SKILL.md only.\n",
+    "seconds": 24,
+    "usage": {
+      "input_tokens": 143770,
+      "cached_input_tokens": 111232,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 680,
+      "reasoning_output_tokens": 13
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 32538,
+      "cached": 111232,
+      "write": 0,
+      "output": 680
+    },
+    "cost_usd": 0.0829992,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-24T23:15:31.692Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "skills/speck-build/SKILL.md:70–75 requires checks on this branch, the current base branch and worktrees of building, reviewing or approved tickets; duplicates are skipped and their matches listed in the Delivery log."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "skills/speck-build/SKILL.md:67–69 limits inbox notes to user-visible behaviour changes or bugs, and tests failing or unsteady on the base branch. Everything else stays in the Delivery log."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "skills/speck-build/SKILL.md:75 explicitly forbids saving a base-branch failing or unsteady test again whenever another note or open ticket names it, regardless of wording."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Saved test output confirms 152 tests: 149 passed, 3 skipped, 0 failed. Existing followups-0036 tests exercise the changed skill; no tests were added or weakened. The reported browser timeout passed on rerun."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The build instructions now restrict follow-up notes to worthwhile user-visible issues or unreliable base-branch tests, and require duplicate checks across the base branch and other active builds. The wording meets all criteria, the recorded tests pass, and the change stays within scope."
+  }
+}
+```
+
+</details>
