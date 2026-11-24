@@ -1,7 +1,7 @@
 ---
 id: "0706"
 title: "Tidy the gaps where the Pipeline log hides paths"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: "speck/ideas/done/2026-11-10-tidy-the-gaps-where-the-pipeline-log-hides-
 after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T12:29:50.712Z"
+approved: "2026-11-24T13:10:13.386Z"
 
 ---
 # 0706 · Tidy the gaps where the Pipeline log hides paths
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When the Pipeline log takes a file path or command out of a line, the sentence around it can read oddly, such as "Conflicting files:" with nothing after it, or "Resume its session, or run 0457, to carry on." Someone reading on a phone can't tell what was meant.
@@ -53,9 +54,15 @@ The Pipeline log hides file locations and commands so it stays readable on a pho
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 runPlain applies its new cleanup rules even when nothing was removed.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 214,174
+- Elapsed since build started: 40 min
+- Changed lines: 23 (limit 5000)
 Follow-ups: none.
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
