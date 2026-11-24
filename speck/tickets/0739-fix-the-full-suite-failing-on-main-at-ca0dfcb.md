@@ -40,7 +40,7 @@ The full suite passes on main again.
 - Changes the failing tests don't need.
 
 ## Notes
-<!-- Constraints, links and decisions. Optional. -->
+Failing before this build: 0058 AC3 and AC4 (in a real browser the counter ticks between polls, and a selection in or across it stays), 0164 AC3 (in a browser whose pointer can't hover, a tapped card keeps its background, and an opened card keeps its opened colour). The recorded output kept only its tail, so these come from the ticket.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
