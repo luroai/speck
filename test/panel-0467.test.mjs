@@ -37,7 +37,7 @@ async function openCard(p, id) {
   return [view, view.children[0]];
 }
 const inView = (p, card) => card === p.byId('full-ticket');
-const boxOf = (p, n) => p.all(n).find(x => /^deps\b|\bwaits-facts\b/.test(x.className || '')); // 0613: or its Waits on facts
+const boxOf = (p, n) => p.all(n).find(x => /^deps\b|\bwaits-facts\b|\bchain-facts\b/.test(x.className || '')); // 0613: or its Waits on facts (0703: or chain facts)
 // 0613: the links and plain ids in its Waits on facts, one for each ticket
 const chipsOf = (p, box) => p.all(box).filter(n => /^waits-link\b/.test(n.className || ''));
 const idIn = n => n.children.find(c => c.className === 'sid').textContent;
@@ -83,34 +83,26 @@ test('0467 AC2: the model gives a chain its five slots, with +n at an end that h
   assert.deepEqual(depsIn(loop, '0001'), { kind: 'chain', before: 1, after: 1, slots: [null, { id: '0002', state: 'queued' }, { id: '0001', state: 'self' }, { id: '0002', state: 'queued' }, null] });
 });
 
-test('0467 AC2: an open card in a chain shows the Chain box: its header, then five slots, each a circle over an id, a shipped one green and ticked, one building blue', async () => {
+// 0703: the Chain box (a header and five slots) gave way to chain facts on a Plan card too (test/panel-0703.test.mjs)
+test('0467 AC2: an open card in a chain shows its chain as facts right under its table, with each one\'s state', async () => {
   const p = boardPage([board()]);
   await p.settle();
-  for (const [id, header] of [['0013', '3 before · 4 after'], ['0014', '4 before · 3 after']]) {
+  for (const id of ['0013', '0014']) {
     const [card, head] = await openCard(p, id);
-    // 0603: the full view shows a chain as facts (test/panel-0603.test.mjs), under its table, then its live section (0584)
-    if (inView(p, card)) { assert.deepEqual(card.children[1].children.map(n => n.className).slice(0, 3), ['track', 'facts', 'facts chain-facts'], `${id}: right under its table`); continue; }
     const box = boxOf(p, card);
-    assert.equal(box.className, 'deps deps-chain');
-    {
+    assert.equal(box.className, 'facts chain-facts');
+    if (!inView(p, card)) {
       assert.equal(head.children[head.children.length - 2].className, 'facts', `${id}: its top row ends with its table, then Set ready (0586)`);
       const under = card.children[card.children.indexOf(head) + 1];
       assert.equal(under.className === 'detail' ? under.children[0] : under, box, `${id}: right under it`);
     }
-    assert.deepEqual(cls(box, /^deps-head$/).children.map(n => n.textContent), ['Chain', header]);
-    assert.equal(slotsOf(box).length, 5);
   }
-  const box = boxOf(p, (await openCard(p, '0014'))[0]); // 0603: a Plan card, as the full view has no slots
-  assert.deepEqual(slotsOf(box).map(slotText), [['slot more', '+3'], ['slot queued', '0013'], ['slot self', '0014'], ['slot queued', '0015'], ['slot more', '+2']]);
-  for (const s of slotsOf(box)) assert.deepEqual(s.children.map(c => c.className), ['dot', 'sid'], 'a circle over an id');
+  const box = boxOf(p, (await openCard(p, '0014'))[0]);
+  assert.deepEqual(p.all(box).filter(n => /^chain-id\b/.test(n.className || '')).map(n => [n.className, n.textContent]), [['chain-id queued', '0013'], ['chain-id queued', '0015']]);
   const q = boardPage([board([T('0001', 'done'), full('0002', { after: ['0001'] })])]);
   await q.settle();
   const b = boxOf(q, (await openCard(q, '0002'))[0]);
-  assert.deepEqual(slotsOf(b).map(slotText), [['slot', ''], ['slot shipped', '0001'], ['slot self', '0002'], ['slot', ''], ['slot', '']]);
-  assert.match(styles(), /\.deps \.slot\.shipped \.dot \{ border-color: var\(--green\)/, 'a shipped one\'s circle is green');
-  assert.match(styles(), /\.deps \.slot\.shipped \.dot::after \{[^}]*border-width: 0 2px 2px 0; transform: rotate\(45deg\)/, 'with a tick');
-  assert.match(styles(), /\.deps \.slot\.building \.dot \{ border-color: var\(--blue\)/, 'one building is blue');
-  assert.equal(cls(b, /^deps-head$/).children[1].textContent, '1 before · 0 after');
+  assert.deepEqual(q.all(b).filter(n => /^chain-id\b/.test(n.className || '')).map(n => [n.className, n.textContent]), [['chain-id shipped', '0001']]);
   // neither: no box
   const [alone] = await openCard(p, '0300');
   assert.equal(boxOf(p, alone), undefined);
@@ -153,8 +145,7 @@ test('0467 AC4: the full ticket shows the same box (0613: or Waits on facts) und
     await p.settle();
     const steps = p.byId('full-ticket').children[1];
     assert.equal(steps.children.length, 3, `${id}: track, table, then the box`);
-    if (id === '0014') assert.equal(steps.children[2].className, 'facts chain-facts', `${id}: its chain as facts (0603)`);
-    else assert.equal(steps.children[2].textContent, want, `${id}: the same box`);
+    assert.equal(steps.children[2].textContent, want, `${id}: the same facts`);
     p.press(p.all(p.byId('full-ticket')).find(n => n.className === 'close'));
     await p.settle();
   }
@@ -206,18 +197,13 @@ const MEASURE = id => `(async () => {
   document.getElementById('tab-plan').click();
   const card = () => [...document.querySelectorAll('#shaping .item.ticket')].find(n => n.querySelector('.id').textContent === ${JSON.stringify(id)});
   if (!card().classList.contains('open')) card().querySelector('.head').click();
-  await wait(() => card().classList.contains('open') && card().querySelector('.deps, .waits-facts'));
-  if (!card().querySelector('.deps')) { const c = card().getBoundingClientRect(); return { lines: [...card().querySelectorAll('.waits-item')].map(n => { const r = n.getBoundingClientRect(); return { text: n.textContent, left: r.left, right: r.right, height: r.height, card: [c.left, c.right] }; }) }; }
-  const box = card().querySelector('.deps'), grid = box.querySelector('.deps-slots'), g = grid.getBoundingClientRect(), c = card().getBoundingClientRect();
-  const cols = getComputedStyle(grid).gridTemplateColumns.split(' ').map(parseFloat);
-  const out = { card: [c.left, c.right], grid: [g.left, g.right], box: [box.getBoundingClientRect().left, box.getBoundingClientRect().right], cols,
-    kids: [...grid.children].map(n => { const r = n.getBoundingClientRect(), t = n.querySelector('.sid') || n.querySelector('span') || n; const s = getComputedStyle(t);
-      const range = document.createRange(); range.selectNodeContents(t.firstChild); const lines = range.getClientRects().length;
-      return { text: n.textContent, left: r.left, right: r.right, top: r.top, width: r.width, over: t.scrollWidth > t.clientWidth + 0.5, nowrap: s.whiteSpace === 'nowrap', lines }; }) };
-  return out;
+  await wait(() => card().classList.contains('open') && card().querySelector('.waits-facts, .chain-facts'));
+  if (card().querySelector('.waits-facts')) { const c = card().getBoundingClientRect(); return { lines: [...card().querySelectorAll('.waits-item')].map(n => { const r = n.getBoundingClientRect(); return { text: n.textContent, left: r.left, right: r.right, height: r.height, card: [c.left, c.right] }; }) }; }
+  const box = card().querySelector('.chain-facts'), c = card().getBoundingClientRect(), r = box.getBoundingClientRect();
+  return { box: [r.left, r.right], card: [c.left, c.right], ids: [...box.querySelectorAll('.chain-id')].map(n => { const q = n.getBoundingClientRect(); return { text: n.textContent, left: q.left, right: q.right, height: q.height }; }) };
 })()`;
 
-test('0467 AC3: in a real browser from 320 px up, every circle keeps to its slot with its id on one line, and 27 tickets in after: each keep to one line (0613)', skip, async () => {
+test('0467 AC3: in a real browser from 320 px up, the ids of a chain keep to one line inside its card, and 27 tickets in after: each keep to one line (0613)', skip, async () => {
   const panel = await startPanel(panelRepo().dir, ['--port', String(await freePort())]);
   const b = await browserPage('about:blank');
   try {
@@ -231,19 +217,10 @@ test('0467 AC3: in a real browser from 320 px up, every circle keeps to its slot
       const w = await b.js(MEASURE('0452'));
       assert.equal(w.lines.length, 27, `${width}: 27 lines`);
       for (const l of w.lines) assert.ok(l.left >= l.card[0] - 0.5 && l.right <= l.card[1] + 0.5 && l.height < 50, `${width}: ${l.text} on one line inside its card (${JSON.stringify(l)})`);
-      for (const [id, per] of [['0903', 5]]) {
-        const m = await b.js(MEASURE(id)), at = `${width} ${id}`;
-        assert.equal(m.cols.length, per, `${at}: ${per} columns`);
-        assert.ok(m.box[0] >= m.card[0] - 0.5 && m.box[1] <= m.card[1] + 0.5, `${at}: the box inside its card`);
-        const col = (m.grid[1] - m.grid[0] - (per - 1) * 4) / per;
-        for (const [i, k] of m.kids.entries()) {
-          const wide = 1;
-          // Chrome draws a button a whole number of pixels wide, so one can reach under a pixel into the 4 px gap
-          assert.ok(k.left >= m.grid[0] - 0.5 && k.right < m.grid[1] + 1, `${at}: ${k.text} inside the box`);
-          assert.ok(Math.abs(k.width - (col * wide + (wide - 1) * 4)) < 1, `${at}: ${k.text} fills its slot (${k.width} vs ${col})`);
-          assert.ok(!k.over && k.nowrap && k.lines === 1, `${at}: ${k.text}'s id on one line, not cut (${JSON.stringify(k)})`);
-        }
-      }
+      const m = await b.js(MEASURE('0903'));
+      assert.ok(m.box[0] >= m.card[0] - 0.5 && m.box[1] <= m.card[1] + 0.5, `${width}: the chain facts inside their card`);
+      assert.deepEqual(m.ids.map(i => i.text), ['0902', '0904'], `${width}: the ids`);
+      for (const i of m.ids) assert.ok(i.left >= m.card[0] - 0.5 && i.right <= m.card[1] + 0.5 && i.height < 50, `${width}: ${i.text} on one line inside its card`);
     }
   } finally { await b.close(); await stop(panel); }
 });

@@ -200,7 +200,7 @@ test('0154 AC4: each id button says where it goes to a screen reader and is at l
   assert.equal(all.length, 2);
   for (const b of all) assert.match(b.attrs['aria-label'], new RegExp(`^Go to ticket ${b.textContent}, `));
   const touch = (css().match(/@media \(pointer: coarse\) \{([\s\S]*)$/) || [])[1] || '';
-  assert.match(touch, /\.deps \.slot, \.waits-facts button\.waits-link \{ min-height: 44px; \}/, 'a tap area 44 px high on a touch screen (0613: a Waits on link)');
+  assert.match(touch, /\.deps \.slot, \.waits-facts button\.waits-link, \.chain-facts button\.chain-id \{ min-height: 44px; \}/, 'a tap area 44 px high on a touch screen (0613: a Waits on link; 0703: a chain id)');
 });
 
 async function withBoard(fn, { width = 1280 } = {}) {

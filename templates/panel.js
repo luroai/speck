@@ -869,11 +869,7 @@ function depsBox(t, inPane = false) {
   const d = t.deps;
   if (!d) return null;
   if (d.kind === 'waits') return waitsFacts(d, inPane, startsOn(t));
-  if (inPane) return chainFacts(d, startsOn(t));
-  const slots = d.slots.map(s => (!s ? el('span', 'slot')
-    : s.more ? el('span', 'slot more', null, el('span', 'dot'), el('span', 'sid', `+${s.more}`))
-      : depNode(`slot ${s.state}`, s.id, s.state, [el('span', 'dot'), el('span', 'sid', s.id)], inPane)));
-  return el('div', 'deps deps-chain', null, el('div', 'deps-head', null, el('b', null, 'Chain'), el('span', null, `${d.before} before · ${d.after} after`)), el('div', 'deps-slots', null, ...slots));
+  return chainFacts(d, startsOn(t), inPane); // 0703: a Plan card too, its ids going to the ticket on the page
 }
 // 0613: the tickets a ticket waits on as one fact in the facts' style, in the full view and an open Plan card alike:
 // one line for each, in id order, its id and title as a link to it, then its state. 0698: when it can start on the
@@ -890,21 +886,21 @@ function waitsFacts(d, inPane, on = null) {
 // waiting on it, each id with its state, and "+n more" for the ones the model's slots leave out. 0698: when it can start
 // on the approved work of the one it waits for (`on`), the first fact is Starts on, and that one's state says so.
 const ON_WORDS = 'approved work';
-function chainFacts(d, on = null) {
+function chainFacts(d, on = null, inPane = true) {
   const at = d.slots.findIndex(s => s && s.state === 'self'), nearest = at > 0 ? d.slots[at - 1] : null;
   const starts = on !== null && !!nearest && String(nearest.id) === on;
   const word = s => (starts && s === nearest ? ON_WORDS : DEP_WORDS[s.state]);
   const cell = (label, slots) => {
     const ss = slots.filter(Boolean), words = ss.map(s => (s.more ? `+${s.more} more` : `${s.id} ${word(s)}`));
     const names = ss.map((s, i) => (s.more ? el('span', 'chain-more', words[i])
-      : el('span', 'chain-item', null, depNode(`chain-id ${s.state}`, s.id, s.state, [el('span', 'sid', s.id)], true), document.createTextNode(' '), el('span', 'chain-state', word(s)))));
+      : el('span', 'chain-item', null, depNode(`chain-id ${s.state}`, s.id, s.state, [el('span', 'sid', s.id)], inPane), document.createTextNode(' '), el('span', 'chain-state', word(s)))));
     return factCell(label, '—', null, words.join(', ') || '—', null, names.length ? names.flatMap((n, i) => (i ? [document.createTextNode(', '), n] : [n])) : null);
   };
   return el('dl', 'facts chain-facts', null, cell(starts ? 'Starts on' : 'Waits for', d.slots.slice(0, at).reverse()), cell('Waiting on it', d.slots.slice(at + 1)));
 }
 // What a dependency box shows, to tell when it needs drawing again.
 const depsSig = t => signature([t.deps || null, depsLinks(t), startsOn(t)]);
-const isDeps = n => /^deps\b|\bwaits-facts\b/.test(n.className || '');
+const isDeps = n => /^deps\b|\bwaits-facts\b|\bchain-facts\b/.test(n.className || '');
 // Puts an open card's dependency box right in `card`, straight after `top`, or first in it when `top` is null: a new
 // one in place of the old when what it shows has changed, or none when it has none now.
 function putDeps(card, top, t) {
