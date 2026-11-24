@@ -1,7 +1,7 @@
 ---
 id: "0730"
 title: "Make Settings' controls look like Cursor's"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -21,7 +21,7 @@ created: 2026-11-24
 ---
 # 0730 · Make Settings' controls look like Cursor's
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Settings uses the browser's plain select boxes and text fields and a black-and-white switch, which look unlike the controls beside them in Cursor: green switches, compact borderless menus reading "Default ⌄", and small rounded buttons.
