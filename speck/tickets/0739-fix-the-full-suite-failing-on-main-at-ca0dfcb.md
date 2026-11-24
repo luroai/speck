@@ -1,7 +1,7 @@
 ---
 id: "0739"
 title: "Fix the full suite failing on main at ca0dfcb"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T17:46:15.632Z"
+approved: "2026-11-24T17:53:42.990Z"
 
 ---
 # 0739 · Fix the full suite failing on main at ca0dfcb
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The full suite fails on main at commit ca0dfcb (ca0dfcb1c1f0915b47bdc98deacf395f57422cfb). Failing tests:
@@ -53,9 +54,14 @@ Nothing changes in speck itself. Two of speck's own browser checks were failing 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 83,817
+- Elapsed since build started: 7 min
+- Changed lines: 0 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - On a touch screen, a tap near the start of a closed Plan row's title can land on the tag under it (speck/ideas/2026-11-24-keep-a-tap-on-a-plan-row-s-title-off-its-tags.md).
