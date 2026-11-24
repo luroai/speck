@@ -1,7 +1,7 @@
 ---
 id: "0740"
 title: "Keep a ship's tests from turning the main checkout bare"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -22,7 +22,7 @@ started: "2026-11-24T20:10:40.702Z"
 ---
 # 0740 · Keep a ship's tests from turning the main checkout bare
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 At 18:02:36 on 2026-11-24, during 0738's ship, `core.bare = true` was written to the main checkout's `.git/config`. Git then refused to work there, so the panel loaded no data, two later ships moved `main` without updating the files on disk, and builds stopped before starting. It can happen again on any ship until the cause is found.
@@ -60,3 +60,89 @@ Nothing a ship or its tests run can make the main checkout bare, and a ship refu
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "01f0dba088cca384c2a14ec15e45256b9fa1127a",
+    "session": "fresh",
+    "thread_id": "01a20f4d-da88-7902-8eef-a9458ef28f88",
+    "builder_response": "- Tests run: test/git-env-0740.test.mjs test/ship-bare-0740.test.mjs test/ship-0153.test.mjs test/ship-0204.test.mjs test/ship.test.mjs test/worktrees.test.mjs test/tmp-cleanup.test.mjs test/usage-limit-0622.test.mjs (with the commands.checks files `speck test --files` adds). This is the output attached: 270 tests, 0 failures.\n- Before it, `speck test --related` with this ticket's files chose all 659 test files, as every one imports test/support/tmp.mjs, which this ticket changes. It ran 6,024 tests with one failure, `0622 AC1 AC2 AC3: a build that hit the limit while speck run was off is waited out when it starts, and holds new work too` (a race between a resume and a new launch, unrelated to git). It's in the shared flaky log three times on main's full suite, most recently at 2026-11-24T18:10, and passed when run again here with the files above. The related run's full output is kept at /tmp/speck-0740-related-run.txt.\n- AC1 (checked by review): the cause is in the ticket's Notes. In short, the 0739 build ran `git bisect run` in a worktree of this repository; git gives the script GIT_DIR naming `.git/worktrees/<name>`, and `panelRepo()`'s `git init -q -b main` in a temporary folder then reinitialised this repository, guessing it bare because that path doesn't end in `/.git`. Not a ship's tests. I reproduced it on a throwaway clone.\n- AC2: test/support/git-env.mjs takes git's repository variables (git 2.53's `git rev-parse --local-env-vars` list) out of process.env when it loads. tmp.mjs, which every test file must import first (checked by tmp-cleanup.test.mjs's AC1), now imports it before anything else, and so does the suite runner (test/support/suite.mjs). The two AC2 tests run the real quick-test runner (`node test/support/suite.mjs --quick`, as commands.test runs it) from a sandbox main checkout whose test/ folder holds a test file that loads the real tmp.mjs and makes repos with the real panelRepo(), shipRepo() and remoteMoves() plus raw `git init`/`git config`/bare `git init` with no folder, and a second test file that loads no support module, so only the runner can have cleaned its environment. One test sets GIT_DIR, GIT_WORK_TREE and GIT_INDEX_FILE to the main checkout's own, the other sets GIT_DIR as `git bisect run` does in a worktree (the incident). Both compare .git/config byte for byte. Running all 3,951 quick tests under those variables isn't practical in a test (about 3 to 6 minutes); the fixture runs the same runner and the same repo-making helpers.\n- AC3: `initBare(dir)` in git-env.mjs names the folder and gives git none of those variables (with GIT_COMMON_DIR set, git sets core.bare in the main checkout even when given a folder; with GIT_WORK_TREE set, it won't make the repository at all). Every place under test/ that made a bare repository now uses it: remoteMoves (ship.mjs), prRepo (pr.mjs), docPrRepo (doc-ship.mjs), and the helpers and tests in ship.test.mjs, ship-0153, ship-0204, worktrees.test.mjs and tmp-cleanup.test.mjs's fixture. A scan test keeps it that way.\n- AC4: scripts/bare-main.mjs reads `git worktree list --porcelain`: the main checkout is bare when its entry says `bare` and it has a .git folder. `speck ship` refuses first thing in cmdShip (both ship modes) and again after its tests, in case they made it bare, before any commit or merge. speck run's ship queue starts no ship while it's so, says it once with the `git -C … config core.bare false` command, reports it as its hold (so speck status and the panel show it), and ships again once it's set back; a ship refused while it's bare isn't counted as a try, isn't handed back or looked into, and its auto-ship record is removed so it isn't taken as the last try. scripts/ship.mjs was at its 600-line limit, so its three additions share lines with existing statements.\n- AC5: see the related run above.\n",
+    "seconds": 28,
+    "usage": {
+      "input_tokens": 174597,
+      "cached_input_tokens": 124032,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 864,
+      "reasoning_output_tokens": 65
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 50565,
+      "cached": 124032,
+      "write": 0,
+      "output": 864
+    },
+    "cost_usd": 0.1221732,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-24T20:45:18.117Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "The ticket's Notes name git bisect run, the two panel tests, and panelRepo()'s git init -q -b main as the cause, explaining how inherited GIT_DIR changed the shared config."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "git-env-0740.test.mjs runs the real quick-test runner with the specified environment and real repository helpers, comparing .git/config byte for byte. Both AC2 tests passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "initBare() strips repository environment variables and explicitly names the destination. All existing bare-repository creators use it; isolation, error handling and scan tests passed."
+      },
+      {
+        "id": 4,
+        "status": "fail",
+        "evidence": "cmdShip() checks initially and the local shipTicket() checks after tests. However, pr-ship.mjs runs testLanding() then calls gh pr merge without checking again. Existing PR coverage tests only an initially bare checkout."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The recorded targeted run confirms 270 tests, zero failures and three skips, including the previously failing usage-limit test. Existing tests were not weakened."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/pr-ship.mjs",
+        "issue": "Pull request shipping can merge after its tests make the main checkout bare. testLanding() returns directly to shipPrTicket(), which invokes gh pr merge without the safeguard added to local shipping. This leaves AC4 incomplete.",
+        "suggested_fix": "Check refuseBareMain(repo, base) after PR landing tests and before merging. Add a PR-mode regression test whose test command sets the main checkout's core.bare=true; verify refusal, the repair instruction, and no GitHub merge or local tidying.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The change isolates test repositories from inherited Git settings and blocks shipping when the main checkout is already bare. Local shipping also catches damage caused during tests. Pull request shipping misses that second check and could still merge, so that path needs fixing before approval."
+  }
+}
+```
+
+</details>

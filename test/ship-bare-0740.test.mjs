@@ -7,7 +7,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { shipRepo, gIn, runIn, BRANCH } from './support/ship.mjs';
 import { prRepo } from './support/pr.mjs';
+import { gitEnv } from './support/panel.mjs';
 import { shipQueue } from '../scripts/ship-queue.mjs';
+import { openAndKeep } from '../scripts/pull-request.mjs';
+
+Object.assign(process.env, gitEnv); // the commits speck makes when the tests call it directly
 
 const CFG = { base_branch: 'main', branch_prefix: 'speck/' };
 const TICKETS = [{ id: '0001', status: 'approved', auto_ship: true, type: '', approved: '2026-11-24T10:00:00.000Z', build_running: false }];
@@ -70,6 +74,22 @@ test('0740 AC4: a ship whose tests make the main checkout bare refuses once they
   saysBare(res.stderr, r.dir);
   bare(r.dir, false);
   assert.deepEqual(r.snapshot(), before);
+  assert.equal(r.statusIn(r.wt), 'approved');
+});
+
+test('0740 AC4: in pull request mode, a ship whose tests make the main checkout bare refuses before gh merges anything, changing nothing', () => {
+  const r = prRepo({ test: 'git -C {main} config core.bare true' });
+  openAndKeep(r.dir, r.cfg, '1', { gh: r.gh.gh });
+  const before = r.snapshot(), remoteMain = r.remoteHas('main');
+  const res = r.cli(r.dir, 'ship', '1');
+  assert.notEqual(res.status, 0, res.stdout);
+  assert.match(res.stdout, /Running tests/, 'the tests ran');
+  saysBare(res.stderr, r.dir);
+  assert.deepEqual(r.gh.calls().filter(c => c.args[0] === 'pr' && c.args[1] === 'merge'), [], 'gh never asked to merge');
+  assert.equal(r.gh.prs()[0].state, 'OPEN');
+  bare(r.dir, false);
+  assert.deepEqual(r.snapshot(), before, 'nothing tidied up');
+  assert.equal(r.remoteHas('main'), remoteMain);
   assert.equal(r.statusIn(r.wt), 'approved');
 });
 

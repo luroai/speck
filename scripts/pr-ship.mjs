@@ -11,6 +11,7 @@ import { shipFolders, putBranchBack } from './ship-folders.mjs';
 import { runGh, lastLine, branchFolder, removeFolder } from './pull-request.mjs';
 import { removeScratch } from './scratch.mjs';
 import { doneTip, pushDone, pushedEarlier } from './pr-done.mjs';
+import { refuseBareMain } from './bare-main.mjs';
 
 const VIEW = 'number,url,state,isDraft,mergeable,mergeStateStatus,reviewDecision,statusCheckRollup,headRefOid';
 
@@ -141,6 +142,7 @@ function testLanding(at, cfg, pad, branch, remote) {
   // 0355: a task changes only speck/ (shipChecks), so there's nothing for the tests to check.
   if (ticketKind(findTicket(at, pad)) === 'task') return console.log(`Ticket ${pad} is a task, so no tests run before it ships.`);
   const r = testMerged(at, cfg, branch, candidate);
+  refuseBareMain(at, base); // 0740: the tests may have made the main checkout bare, so nothing is merged on GitHub
   if (!r.ok) throw testFailure(at, cfg, base, target, { moved: !isAncestor(at, target, tip), failing: failingTests(r.output) });
 }
 
