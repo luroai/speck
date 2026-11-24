@@ -1,7 +1,7 @@
 ---
 id: "0732"
 title: "Prepare release 1.6.0"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,13 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0701","0702","0703","0704","0705","0706","0707","0708","0709","0710","0711","0712","0713","0714","0715","0716","0717","0718","0719","0720","0721","0722","0723","0724","0725","0726","0727","0728","0729","0730","0731","0740"]                # ticket ids that must be done first
 created: 2026-11-24
+built_on: "0731"
+started: "2026-11-24T21:43:19.190Z"
 
 ---
 # 0732 · Prepare release 1.6.0
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Since 1.5.0, speck's Claude models are named properly (0700), and 0701 to 0731 make the panel look and work like part of Cursor (Settings laid out like Cursor's and saving each change straight away, a soft highlight for chained tickets, Set ready only on an open ticket), add Try it from a review pack, a build limit across projects and a usage warning on the bridge, and fix stalls around tickets built on others. Anyone following the setup prompt, or updating speck in a project, still gets 1.5.0.
