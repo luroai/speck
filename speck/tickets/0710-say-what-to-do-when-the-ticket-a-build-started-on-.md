@@ -46,6 +46,8 @@ speck says the base ticket was cancelled and names a way on that works.
 - Refuse and name the ways out, as `after:` does for a cancelled ticket (`goneWhy`), rather than blocking with a question: an approved ticket has no build running to ask.
 - Reviews measure only the ticket's own change from the base ticket (`ownBase`), so keeping the cancelled work means reviewing it again as part of this ticket.
 - Failing before this build: not checked
+- Self-check: `--rebuild` now marks the ticket's run record as committed since its build ended still ready, so a speck run that launched it before launches it again; `--rebuild` refuses in the main checkout before the "you're in its worktree" check; `--keep` adds a Review log heading when a ticket has none.
+- Pictures: none, because nothing anyone sees changes in how the panel looks: it already shows the auto-ship reason, which now names the ways on.
 - Waits for the ticket that keeps a ticket waiting on its base ticket out of Needs you: both change `built-on.mjs` and `ship.mjs`.
 
 ## In plain words

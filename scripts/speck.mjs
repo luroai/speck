@@ -38,7 +38,8 @@ import { goWithResumable, goWithWaiting, callsOf } from './go-with.mjs';
 import { handedBack } from './hand-back.mjs'; import { buildSession } from './build-records.mjs'; import { noteThisBuild } from './seen-builds.mjs';
 import { changesPending } from './changes-asked.mjs'; import { cmdChanges } from './changes.mjs';
 import { cmdApp } from './app.mjs'; import { SET_USAGE, setSeveralReady } from './set-ready.mjs'; // 0634, 0681
-import { startWaits, startedOn, mergeBuiltOn, markBuiltOn, builtOnWaiting } from './built-on.mjs'; // 0674
+import { startWaits, startedOn, mergeBuiltOn, markBuiltOn, builtOnWaiting, CancelledWhy } from './built-on.mjs'; // 0674
+import { cmdBuiltOn } from './built-on-cancelled.mjs'; // 0710
 
 // Every name speck.mjs exported before it was split into modules (0018, 0078) can still be imported from it.
 export { panelServer };
@@ -397,9 +398,9 @@ export function statusData(repo) {
     const facts = questionFacts(contentLines(t.sections['blocked question'])); // 0283
     const after = Array.isArray(t.fm.after) ? t.fm.after : [];
     const num = v => (typeof v === 'number' && Number.isFinite(v) ? v : null);
-    const shipsAfter = ['done', 'cancelled'].includes(t.fm.status) ? '' : builtOnWaiting(repo, cfg, t.fm)?.id, waiting_on = after.filter(id => !done.has(padId(id))); // 0674
+    const builtOn = ['done', 'cancelled'].includes(t.fm.status) ? null : builtOnWaiting(repo, cfg, t.fm), shipsAfter = builtOn && !builtOn.cancelled ? builtOn.id : '', waiting_on = after.filter(id => !done.has(padId(id))); // 0674
     const criteria_change = ['done', 'cancelled'].includes(t.fm.status) ? null : criteriaChange(t.at || repo, cfg, t.fm.id), criteria_changed = criteria_change !== null; // 0565
-    const shipsWhyNot = autoShipWhyNot(cfg, padId(t.fm.id), t.fm.risk, ticketRounds(t.raw).rounds, ticketKind(t), changesPending(t.raw, ticketRounds(t.raw).rounds).length > 0, criteria_changed, ['done', 'cancelled'].includes(t.fm.status) ? '' : () => receiptWhyNot(repo, t.fm.id, ticketRounds(t.raw).rounds), leftChecks(t.sections.notes), shipsAfter); // 0629. 0679. 0674
+    const shipsWhyNot = autoShipWhyNot(cfg, padId(t.fm.id), t.fm.risk, ticketRounds(t.raw).rounds, ticketKind(t), changesPending(t.raw, ticketRounds(t.raw).rounds).length > 0, criteria_changed, ['done', 'cancelled'].includes(t.fm.status) ? '' : () => receiptWhyNot(repo, t.fm.id, ticketRounds(t.raw).rounds), leftChecks(t.sections.notes), builtOn ?? ''); // 0629. 0679. 0674
     const stop = inHand(t) ? buildStop(runs, t.fm.id) : null, builder = builderSpent(runs, t.fm.id), watch = watchSpent(runs, t.fm.id), delegated = delegatedSpent(runs, t.fm.id);
     return withForeman(t, fixing, { // 0317
       ...t.fm,
@@ -443,7 +444,7 @@ export function statusData(repo) {
       })),
       // 0223: the review round being run now, or null: whether the reviewer or the builder is at work on a reviewing ticket.
       review_running: inHand(t) ? roundRunning(runs, t.fm.id, ticketRounds(t.raw).rounds.length) : null,
-      waiting_on, after_cancelled: waiting_on.filter(id => cancelled.has(padId(id))), ships_after: shipsAfter || null, // 0675: and the ticket it was built on, until that one has shipped
+      waiting_on, after_cancelled: waiting_on.filter(id => cancelled.has(padId(id))), ships_after: shipsAfter || null, built_on_cancelled: builtOn?.cancelled ? builtOn.id : null, // 0675: and the ticket it was built on, until that one has shipped. 0710: or that was cancelled
       starts_on: t.fm.status === 'ready' && waiting_on.length === 1 ? startWaits(repo, cfg, t, () => tickets).on?.id ?? null : null, // 0675: the approved ticket it can start on
       // 0217: once a build of it has started again, a stopped build is no longer shown as stopped.
       // 0284: nor is one waiting for speck run to resume it with the recommendation you went with.
@@ -488,12 +489,15 @@ function cmdStatus(args = []) {
     const group = tickets.filter(t => t.fm.status === s).map(t => ({ t, id: t.fm.id, type: ticketType(t), priority: ticketPriority(t) })).sort(byPriority);
     if (!group.length) continue;
     // 0709: an approved ticket built on one that hasn't shipped waits for that one, not for you.
-    const after = new Map(s === 'approved' ? group.map(({ t }) => [t.fm.id, builtOnWaiting(repo, cfg, t.fm)?.id]).filter(([, on]) => on) : []), yours = group.length - after.size;
+    // 0710: one built on a ticket that was cancelled never ships after it, so it's yours, with the ways on.
+    const on = new Map(s === 'approved' ? group.map(({ t }) => [t.fm.id, builtOnWaiting(repo, cfg, t.fm)]).filter(([, b]) => b) : []);
+    const after = new Map([...on].filter(([, b]) => !b.cancelled).map(([id, b]) => [id, b.id])), yours = group.length - after.size;
     console.log(`\n${s.toUpperCase()} (${group.length})${s === 'approved' && yours ? `: ${after.size ? `${yours} ` : ''}waiting for you. Read \`speck pack <id>\`, then run /speck-ship <id>` : ''}`);
     for (const { t, priority } of group) {
       console.log(`  ${t.fm.id}${TYPES.includes(t.fm.type) ? ` ${t.fm.type}` : ''}  P${priority === null ? '-' : typeof priority === 'object' ? JSON.stringify(priority) : priority}  ${t.fm.size}/${t.fm.risk}  ${t.fm.title}`);
       if (t.at) console.log(`        ↳ being built in ${t.at}`);
       if (after.has(t.fm.id)) console.log(`        ↳ ships after ${after.get(t.fm.id)}, which it was built on: nothing to do until that has shipped`);
+      else if (on.get(t.fm.id)?.cancelled) console.log(`        ! ${CancelledWhy(t.fm.id, on.get(t.fm.id).id, cfg.base_branch)}`);
       const killed = inHand(t) ? buildKilled(runs, t.fm.id) : null;
       if (killed) console.log(`        ! Build stopped unexpectedly. ${resumeHint(cfg, killed)}`);
       for (const line of foremanTicketLines(foremanOn.get(t.fm.id), contentLines(t.sections['blocked question']).join(' '), name)) console.log(line); // 0317
@@ -555,6 +559,8 @@ const HELP = `speck: Plan in ten minutes. Come back to it shipped.
   speck merge-check <id>              what merging the base branch into the ticket's branch would conflict on, as JSON
   speck changes <id> "<note>"         send changes you want back to an approved ticket's build: speck run resumes
                                       it to make them, and it's reviewed and approved again before it ships
+  speck built-on <id> --rebuild|--keep  when the ticket a build started on was cancelled: start its build again from the
+                                      base branch (--rebuild), or keep that ticket's work in it, reviewed as its own (--keep)
   speck ship <id> [--auto]            merge an approved ticket into the base branch (the user's gate; --auto
                                       ships only if auto_ship in speck/config.yml allows it for this ticket)
   speck pr <id>                       push an approved ticket's branch and open its pull request with gh (ship_mode: pr)
@@ -565,7 +571,7 @@ const HELP = `speck: Plan in ten minutes. Come back to it shipped.
 `;
 
 const COMMANDS = { init: cmdInit, doctor: cmdDoctor, detect: cmdDetect, agents: cmdAgents, new: cmdNew, check: cmdCheck, lint: cmdCheck, set: cmdSet, config: args => args[0] === 'show' ? cmdConfigShow(args.slice(1)) : cmdConfig(args), keys: cmdKeys, logins: cmdLogins, start: cmdStart, cancel: cmdCancel, status: cmdStatus, panel: cmdPanel, run: args => args.includes('--background') ? import('./run-background.mjs').then(m => m.runBackground()) : cmdRun(), pause: cmdPause, play: cmdPlay, stop: cmdStop, diffstat: cmdDiffstat, test: cmdTest,
-  review: cmdReview, record: cmdRecord, prompt: cmdPrompt, 'reviewer-settings': cmdReviewerSettings, 'review-running': cmdReviewRunning, diff: cmdDiff, close: cmdClose, next: cmdNext, pack: cmdPack, picture: cmdPicture, app: cmdApp, prices: cmdPrices, spend: cmdSpend, output: cmdOutput, 'merge-check': cmdMergeCheck, changes: cmdChanges, ship: cmdShip, pr: cmdPr, watch: cmdWatch, 'split-off': cmdSplitOff, answer: a => cmdForeman(['answer', ...a]), dismiss: a => cmdForeman(['dismiss', ...a]), foreman: cmdForeman }; // 0486: foreman still works
+  review: cmdReview, record: cmdRecord, prompt: cmdPrompt, 'reviewer-settings': cmdReviewerSettings, 'review-running': cmdReviewRunning, diff: cmdDiff, close: cmdClose, next: cmdNext, pack: cmdPack, picture: cmdPicture, app: cmdApp, prices: cmdPrices, spend: cmdSpend, output: cmdOutput, 'merge-check': cmdMergeCheck, changes: cmdChanges, ship: cmdShip, pr: cmdPr, watch: cmdWatch, 'split-off': cmdSplitOff, 'built-on': cmdBuiltOn, answer: a => cmdForeman(['answer', ...a]), dismiss: a => cmdForeman(['dismiss', ...a]), foreman: cmdForeman }; // 0486: foreman still works
 
 // Runs one command line, as `node speck.mjs <args>` does: a SpeckError it ends with is thrown.
 function dispatch([cmd, ...args]) {
