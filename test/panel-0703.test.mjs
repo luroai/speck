@@ -2,7 +2,7 @@ import './support/tmp.mjs'; // first: sends every temporary folder into one per-
 // 0703: an open Plan card shows its chain as the facts Waits for and Waiting on it, as the full view does.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, full, boardPage, items, queueRows, top, click } from './support/panel.mjs';
+import { T, full, boardPage, items, queueRows, top, click, findChrome, browserPage, panelRepo, startPanel, stop, freePort, openLane } from './support/panel.mjs';
 
 const TICKETS = () => [
   full('0010'), full('0011', { after: ['0010'], waiting_on: ['0010'] }), full('0012', { after: ['0011'], waiting_on: ['0011'] }),
@@ -40,12 +40,44 @@ test('0703 AC2: pressing an id in a Plan card\'s chain facts goes to that ticket
   assert.ok(queueRows(p).find(n => idOf(p, n) === '0012') || items(p).find(n => idOf(p, n) === '0012'), 'it is on the page');
 });
 
-test('0703 AC3: after a state refresh the card has exactly one set of chain facts', async () => {
-  const p = await page();
+test('0703 AC3: after a state refresh that changes the chain, the open card shows the new chain in one set of facts', async () => {
+  const one = TICKETS();
+  const two = TICKETS().map(t => (t.id === '0012' ? T('0012', 'building', { after: ['0011'], waiting_on: ['0011'], started: new Date().toISOString() }) : t));
+  const p = boardPage([{ run: { on: false }, ideas: [], tickets: one }, { run: { on: false }, ideas: [], tickets: two }]);
+  await p.settle();
   const card = await openCard(p, '0011');
   assert.equal(factsIn(p, card).length, 1);
-  for (let i = 0; i < 2; i++) { assert.ok(p.timers.length, 'a refresh is waiting'); p.timers.shift()(); await p.settle(); }
-  assert.equal(factsIn(p, await openCard(p, '0011')).length, 1);
+  assert.match(factsIn(p, card)[0].textContent, /0012 queued/);
+  p.timers.shift()();
+  await p.settle();
+  const after = await openCard(p, '0011');
+  assert.equal(factsIn(p, after).length, 1, 'one set');
+  assert.equal(boxes(p, after).length, 0);
+  assert.match(factsIn(p, after)[0].textContent, /0012 building/, 'the new chain');
+});
+
+test('0703 AC1: in a browser at 320 px, a Plan card\'s chain facts keep their text visible, not cut off', { skip: findChrome() ? false : 'no Chromium found' }, async () => {
+  const board = { run: { on: false }, ideas: [], tickets: TICKETS().concat([full('0013', { after: ['0011'], waiting_on: ['0011'] }), full('0014', { after: ['0011'], waiting_on: ['0011'] }), full('0015', { after: ['0011'], waiting_on: ['0011'] }), full('0016', { after: ['0011'], waiting_on: ['0011'] })]) };
+  const stub = `(() => { const S = ${JSON.stringify(board)}; const real = window.fetch.bind(window);
+    window.fetch = async (u, o = {}) => String(u) === '/api/state' ? new Response(JSON.stringify(S), { status: 200, headers: { 'content-type': 'application/json' } }) : real(u, o); })();`;
+  const panel = await startPanel(panelRepo().dir, ['--port', String(await freePort())]);
+  const b = await browserPage('about:blank');
+  try {
+    await b.send('Page.enable');
+    await b.send('Page.addScriptToEvaluateOnNewDocument', { source: stub });
+    await b.send('Emulation.setDeviceMetricsOverride', { width: 320, height: 900, deviceScaleFactor: 1, mobile: true });
+    await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
+    await b.until(`document.querySelectorAll('#shaping .item.ticket').length > 3`, 'the panel');
+    await b.js(openLane('plan'));
+    const m = await b.js(`(async () => {
+      const card = () => [...document.querySelectorAll('#shaping .item.ticket')].find(n => n.querySelector('.id').textContent === '0011');
+      if (!card().classList.contains('open')) card().querySelector('.head').click();
+      for (let i = 0; i < 100 && !(card().classList.contains('open') && card().querySelector('.chain-facts')); i++) await new Promise(r => setTimeout(r, 20));
+      return [...card().querySelectorAll('.chain-facts .value')].map(v => ({ text: v.textContent, clipped: v.scrollWidth > v.clientWidth + 0.5, ws: getComputedStyle(v).whiteSpace }));
+    })()`);
+    assert.equal(m.length, 2, JSON.stringify(m));
+    for (const v of m) assert.ok(!v.clipped && v.ws === 'normal', JSON.stringify(v));
+  } finally { await b.close(); await stop(panel); }
 });
 
 test('0703 AC4: an open Plan card with no chain shows no chain facts and no Chain box', async () => {
