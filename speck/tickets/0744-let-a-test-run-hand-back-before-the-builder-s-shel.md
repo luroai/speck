@@ -1,7 +1,7 @@
 ---
 id: "0744"
 title: "Let a test run hand back before the builder's shell limit while it waits"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -21,7 +21,7 @@ created: 2026-11-24
 ---
 # 0744 · Let a test run hand back before the builder's shell limit while it waits
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 When `speck test` waits for a turn behind other builds' runs (`max_parallel_tests`), it can wait past the builder's 10-minute shell limit and be killed before running a test. In 0711's build a run did exactly that, so a busy machine stops a build partway for no reason of its own.
