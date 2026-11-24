@@ -1,7 +1,7 @@
 ---
 id: "0727"
 title: "Keep Set ready off a closed Plan row"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T15:15:49.304Z"
 approved: "2026-11-24T17:25:35.044Z"
+blocked_at: "2026-11-24T17:36:10.238Z"
 
 ---
 # 0727 · Keep Set ready off a closed Plan row
 
-**Status:** 👍 approved
+**Status:** ⛔ blocked
 
 ## Problem
 Every closed draft in Plan has a Set ready button on its row, so a ticket can be set ready without ever being opened, and the button takes space the title needs. Gate 1 should come after at least a scan of the ticket.
@@ -52,7 +53,12 @@ Set ready shows only once a draft is open, on its open row or in its full view, 
 Closed drafts in Plan no longer show Set ready on the row, so each title has the room the button used to take. Open a draft (or its full view) to set it ready, with the same checks and “Setting ready…” behaviour as before. Priority stays on the closed row.
 
 ## Blocked question
-<!-- Filled in by speck only when status is blocked. -->
+Other shipped work keeps rewriting the same panel description in the brief (`docs/brief.md`), so this ticket can't land: it has already been handed back twice for that clash. Options: (A) hold other tickets that change that panel description until this one has shipped, then try shipping it again; (B) drop this ticket's brief wording and ship only the panel behaviour; (C) keep trying after each other ship. I recommend A, so the brief stays accurate with the change.
+
+Recommended: Hold other brief panel-description ships until this lands, then try again
+Other options: Drop the brief wording and ship the panel only; Keep trying after each other ship
+Changes what you'd notice: yes
+Clear winner: yes
 
 ## Review log
 Round 1 (codex): approve.
