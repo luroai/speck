@@ -106,3 +106,16 @@ test('0713 AC3: once the agent has checked it and done nothing, and with watch t
   assert.equal(statusData(checking({ watch: 'tell' }).r.dir).tickets.find(t => t.id === '0001').app_checking, false);
   assert.equal(statusData(checking({ risk: 'high' }).r.dir).tickets.find(t => t.id === '0001').app_checking, false);
 });
+
+test('0713 AC3: with watch off it reads Waiting for you under Needs you in the Build lane, and the header and bridge leave it out, as they do every blocked question while watch is off', async () => {
+  const { r } = checking({ watch: 'off' });
+  const t = statusData(r.dir).tickets.find(x => x.id === '0001');
+  assert.equal(t.app_checking, false);
+  const p = await page([t]);
+  assert.ok(heads(p).some(h => /^Needs you/.test(h)), heads(p).join(' | '));
+  assert.match((await fullViewOf(p, '0001')).textContent, /Waiting for you\. Answer the question/);
+  assert.doesNotMatch(view([t], 'off').word, /Needs you/);
+  assert.equal(summary([t], 'off').needs_you, 0);
+  assert.equal(view([blocked({ app_checking: false, id: '0002' })], 'off').word, view([t], 'off').word, 'the same as any other blocked question');
+  assert.ok(blockOf(r.run('status').stdout, '0001').includes('→ Waiting for you'));
+});
