@@ -136,7 +136,7 @@ test('0517 AC3: a redraw held by a slide a finger catches is made once the finge
 // of 90 on 16 cores no try came within 50 ms on the clock, so each frame is timed by the CPU time the page's main thread
 // spent on it (Chrome's ThreadTime), which a busy machine barely changes, with its slide paused from the end of that
 // frame until it's read, so the redraw once the card is at rest isn't counted in it. The time on the clock is reported
-// beside it.
+// beside it. That the slide starts on that first frame, the page holding nothing back for later, is checked every time.
 test('0517 AC3: in a real browser with 500 shipped tickets, a slide\'s first frame comes within 50 ms of the lane change, with no redraw in it', skip, async () => {
   const r = panelRepo();
   for (let n = 0; n < 500; n++) r.write(`${2000 + n}-done.md`, fm({ id: `"${2000 + n}"`, title: `Shipped ticket ${n}`, status: 'done' }), good, 'speck/tickets/done');
@@ -160,12 +160,14 @@ test('0517 AC3: in a real browser with 500 shipped tickets, a slide\'s first fra
         ['build', `document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }))`],
         ['shipped', `document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }))`]]) {
         const cpu0 = await threadMs();
-        const [t0, t1] = await b.js(`new Promise(done => { work.length = 0; const t0 = performance.now(); ${change};
+        const [t0, t1, sliding] = await b.js(`new Promise(done => { work.length = 0; const t0 = performance.now(); ${change};
           requestAnimationFrame(() => { document.getElementById('${LANE_IDS[to]}').getBoundingClientRect(); document.getElementById('shipped-section').getBoundingClientRect();
-            const t1 = performance.now(), slides = document.getAnimations(); for (const a of slides) a.pause(); window.paused0734 = slides; done([t0, t1]); }); })`);
+            const t1 = performance.now(), slides = document.getAnimations(); for (const a of slides) a.pause(); window.paused0734 = slides;
+            done([t0, t1, slides.filter(a => a.effect && a.effect.target && a.effect.target.parentElement === document.querySelector('main') && a.effect.getTiming().delay === 0).length]); }); })`);
         times.push(Math.round((await threadMs()) - cpu0));
         await b.js('(() => { for (const a of window.paused0734) a.play(); return 1; })()');
         assert.equal(await b.js(`document.getElementById('tab-${to}').getAttribute('aria-selected')`), 'true', `to ${to}`);
+        assert.equal(sliding, 4, `to ${to}: the four cards' slide has started, with no delay, by the first frame after the lane change`);
         walls.push(Math.round(t1 - t0));
         await b.until(`!document.querySelector('main').dataset.slide`, 'the slide to end', 5000);
         await b.until(`work.some(([n]) => n === 'panelModel') && work.some(([n]) => n === 'wholeButtons')`, `to ${to}: the redraw and the measuring once the card is at rest`, 5000);
