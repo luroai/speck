@@ -8,17 +8,15 @@ import { sharedPanel } from './support/shared-panel.mjs';
 
 const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
 
-test('0614 AC1 AC2: an open row\'s fill reaches 12 px past each side, with a linked id\'s ring round it, and opening it changes no side padding or margin', () => {
+test('0614 AC1 AC2: an open row\'s fill reaches 12 px past each side, and opening it changes no side padding or margin', () => {
   const open = cssRules('.item.row.open');
   assert.equal(cssValue(open, 'box-shadow'), '-12px 0 0 var(--raise), 12px 0 0 var(--raise)');
   for (const prop of ['padding', 'padding-left', 'padding-right', 'margin', 'margin-left', 'margin-right']) assert.equal(cssValue(open, prop), undefined, `no ${prop} of its own`);
-  assert.equal(cssValue(cssRules('.item.row.open::after'), 'inset'), '0 -12px', 'the ring\'s box is the whole fill');
-  assert.equal(cssValue(cssRules('.item.row.open::after'), 'pointer-events'), 'none', 'and takes no taps');
-  // a linked id's ring, lit while hovered or gone to, goes round the fill rather than the row's box inside it
-  assert.equal(cssValue(cssRules('.item.row.open.hl::after'), 'box-shadow'), 'inset 0 0 0 1px var(--text)');
-  assert.equal(cssValue(cssRules('.item.row.open.flash'), 'animation'), 'none', 'the row\'s own ring would hide the fill\'s sides');
-  assert.equal(cssValue(cssRules('.item.row.open.flash::after'), 'animation'), 'flash 1.5s ease-out');
-  assert.equal(cssValue(cssRules('.item.row.open.flash::after'), 'box-shadow'), 'inset 0 0 0 2px var(--text)', 'asked for less motion, it stays lit');
+  // 0728: lighting an open row adds no ring — the raised fill is already there
+  assert.equal(cssValue(cssRules('.item.row.open.hl::after'), 'box-shadow'), undefined, 'no ring when lit');
+  assert.equal(cssValue(cssRules('.item.row.open.flash'), 'animation'), 'none', 'flash leaves the open fill alone');
+  assert.equal(cssValue(cssRules('.item.row.open.flash::after'), 'animation'), undefined);
+  assert.equal(cssValue(cssRules('.item.row.open.flash::after'), 'box-shadow'), undefined);
 });
 
 // 0701 starts a chain that 0703 waits on, so open they show their chain mark and padlock; 0702 has no links.
@@ -53,7 +51,7 @@ async function at320(theme, fn) {
 // For Capture's first note, and for Plan's ticket with no links, its chain starter and its waiting ticket (0614: whose
 // mark sits at the end of the line): its title's left edge closed, then open, the row's and its list's boxes, the fill
 // (the row's box and the shadows either side, in the shadows' colour), the box of each piece of text and each mark in
-// it, and the ring a linked id draws while it's lit.
+// it, and (0728) that lighting it adds no ring.
 const MEASURE = `(async () => {
   const frames = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
   const out = {};
@@ -80,13 +78,14 @@ const MEASURE = `(async () => {
     }
     const marks = [...row.querySelectorAll('.line .chain, .line .lock')].map(n => ({ text: n.className, left: n.getBoundingClientRect().left, right: n.getBoundingClientRect().right }));
     texts.push(...marks);
+    const before = getComputedStyle(row).boxShadow;
     row.classList.add('hl');
-    const ring = getComputedStyle(row, '::after'), ringBox = { left: rb.left + parseFloat(ring.left), right: rb.right - parseFloat(ring.right), shadow: ring.boxShadow, events: ring.pointerEvents };
+    const lit = { shadow: getComputedStyle(row).boxShadow, after: getComputedStyle(row, '::after').boxShadow };
     row.classList.remove('hl');
     out[name] = { marks: marks.map(x => x.text), closed, open: row.querySelector('.line .title').getBoundingClientRect().left, row: { left: rb.left, right: rb.right },
       list: { left: list.getBoundingClientRect().left + parseFloat(cs.paddingLeft), right: list.getBoundingClientRect().right - parseFloat(cs.paddingRight) },
       fill: { left, right, colours: shadows.map(s => s.colour), y: shadows.map(s => s.y), background: getComputedStyle(row).backgroundColor, under: cs.backgroundColor },
-      texts, ring: ringBox };
+      texts, lit: { ...lit, before } };
   }
   return out;
 })()`;
@@ -106,10 +105,9 @@ for (const theme of ['light', 'dark']) {
           assert.ok(t.left >= r.fill.left + 12 - 0.5, `${lane}: "${t.text}" is 12 px inside the fill's left edge: ${t.left} vs ${r.fill.left}`);
           assert.ok(t.right <= r.fill.right - 12 + 0.5, `${lane}: "${t.text}" is 12 px inside the fill's right edge: ${t.right} vs ${r.fill.right}`);
         }
-        // a linked id's ring goes round the whole fill, and takes no taps
-        assert.deepEqual([r.ring.left, r.ring.right], [r.fill.left, r.fill.right], `${lane}: the ring round the fill`);
-        assert.match(r.ring.shadow, /inset/, `${lane}: the ring is drawn`);
-        assert.equal(r.ring.events, 'none');
+        // 0728: lighting an open row leaves its fill alone — no ring
+        assert.equal(r.lit.shadow, r.lit.before, `${lane}: lighting leaves the fill's sides`);
+        assert.ok(!/inset/.test(r.lit.after) || r.lit.after === 'none', `${lane}: no ring when lit`);
         // AC2: the title doesn't move sideways
         assert.equal(r.open, r.closed, `${lane}: the title stays put when the row opens`);
       }

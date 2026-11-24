@@ -148,11 +148,9 @@
   .item.row > .bad, .item.row > .bad.refused { margin: 0; padding: 0 0 8px; font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
   .item.row .detail { margin: 0; padding: 8px 0 10px; }
   /* 0614: an open row's raised fill reaches 12 px past its sides, into the lane's margins, so its text has room inside
-     the fill without moving, and the row's own box still spans its list. A linked id's ring is drawn round the whole
-     fill, by a box over the row that takes no taps. */
+     the fill without moving, and the row's own box still spans its list. 0728: lighting it adds no ring — the fill is
+     already there. */
   .item.row.open { position: relative; border-color: var(--line-soft); box-shadow: -12px 0 0 var(--raise), 12px 0 0 var(--raise); }
-  .item.row.open::after { content: ''; position: absolute; inset: 0 -12px; pointer-events: none; }
-  .item.row.open.hl::after { box-shadow: inset 0 0 0 1px var(--text); }
   .item.row.open .line > .chain { margin-right: 4px; } /* 0614: at the line's end, its tilted links reach past its box */
   .item.ticket.row.open .head .line { grid-column: 1 / -1; } /* open, a ticket's title has the whole row and Set ready is under the table */
   .item.ticket.row.open .head .set-ready { grid-column: 1 / -1; grid-row: auto; justify-self: start; margin-top: 8px; }
@@ -166,11 +164,18 @@
   /* 0586: an empty Capture or Plan: speck asleep over its line, centred. 0608: Build and Shipped too */
   #shaping .asleep, #capture .asleep, #queue .asleep, #shipped .asleep { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 40px 24px; font-size: 14px; line-height: 20px; text-align: center; color: var(--muted); }
   @media (prefers-reduced-motion: no-preference) {
-    /* 0154: a ticket gone to from a linked id lights up, then fades back by itself */
+    /* 0154 / 0728: a ticket gone to from a linked id lights with the raised fill, then fades back by itself */
     .item.flash, .q.flash { animation: flash 1.5s ease-out; }
-    @keyframes flash { 0%, 40% { box-shadow: inset 0 0 0 2px var(--text); } } /* 0167: a ring only, so a state's tint stays */
-    .item.row.open.flash { animation: none; } /* 0614: round an open row's whole fill */
-    .item.row.open.flash::after { animation: flash 1.5s ease-out; }
+    @keyframes flash {
+      0%, 40% { background: var(--raise); }
+      100% { background: transparent; }
+    }
+    .item.row:not(.open).flash, .q.row.flash { animation: flash-row 1.5s ease-out; }
+    @keyframes flash-row {
+      0%, 40% { background: var(--raise); box-shadow: -12px 0 0 var(--raise), 12px 0 0 var(--raise); }
+      100% { background: transparent; box-shadow: none; }
+    }
+    .item.row.open.flash { animation: none; } /* 0728: an open row is already filled; no ring */
   }
   .question.exit.to-ship { border-left-color: var(--ok); }
   .question.exit.carried { border-left-color: var(--run); background: var(--raise); } /* 0338: speck run is carrying it on */
@@ -250,7 +255,9 @@
   .ready div { overflow-wrap: anywhere; }
 
   /* 0164: only where the main pointer can hover, as a phone keeps a tapped card's :hover until the next tap */
-  @media (hover: hover) { .item:hover { background: var(--raise); } .item.row:not(.open):hover { box-shadow: -12px 0 0 var(--raise), 12px 0 0 var(--raise); } .item.row.hl:not(.open):hover { box-shadow: inset 0 0 0 1px var(--text), -12px 0 0 var(--raise), 12px 0 0 var(--raise); } } /* 0701: a closed row's fill reaches 12px past its text, as an open row's does (0614) */
+  /* 0701: a closed row's fill reaches 12px past its text, as an open row's does (0614). 0728: a lit chain gets the
+     same raised fill here too (AC1: on a device with hover), with no ring. */
+  @media (hover: hover) { .item:hover { background: var(--raise); } .item.row:not(.open):hover { box-shadow: -12px 0 0 var(--raise), 12px 0 0 var(--raise); } .item.hl, .q.hl { background: var(--raise); } .item.row.hl:not(.open), .q.row.hl { box-shadow: -12px 0 0 var(--raise), 12px 0 0 var(--raise); } }
   .note { margin: 0; color: var(--text); }
   .empty { padding: 10px 14px; color: var(--faint); font-size: 12px; }
 
@@ -274,9 +281,8 @@
   .dep-icon.link::before { left: 0; } .dep-icon.link::after { left: 4px; }
   .dep-icon.arrow::before { content: ''; position: absolute; left: 0; top: 4px; width: 8px; height: 1.5px; background: currentColor; }
   .dep-icon.arrow::after { content: ''; position: absolute; left: 5px; top: 2px; width: 4px; height: 4px; border: solid currentColor; border-width: 1.5px 1.5px 0 0; transform: rotate(45deg); }
-  /* 0185: a hovered ticket and those linked to it get a ring in the text colour inside their border, and keep their fill and
-     text colours. The rest are left exactly as they are, rather than set back with the hover's own fill. */
-  .item.hl, .q.hl { border-color: var(--text); box-shadow: inset 0 0 0 1px var(--text); }
+  /* 0185 / 0728: the lit chain's fill is in the (hover: hover) block above. An open row is already filled (0614), so
+     lighting it adds nothing. */
   /* 0167: a ticket in trouble, blocked or its build stopped, is crimson; one waiting for you to ship it is green (0440:
      magenta was too near the red), as nothing is wrong (0138). Each keeps its border and background whether it's open
      or highlighted. */
@@ -380,9 +386,10 @@
   .item.ticket .facts.chain-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .item.ticket .chain-facts .value { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
   .waits-facts .waits-state { flex: none; color: var(--muted); }
-  /* 0154: a ticket gone to from a dependency box (0467) lights briefly. It fades out over its 1.5 seconds (in the block for motion above), or stays still until they're up when the browser asks for reduced motion */
-  @media (prefers-reduced-motion: reduce) { .item.flash, .q.flash { box-shadow: inset 0 0 0 2px var(--text); } }
-  @media (prefers-reduced-motion: reduce) { .item.row.open.flash::after { box-shadow: inset 0 0 0 2px var(--text); } } /* 0614: round an open row's whole fill */
+  /* 0154 / 0728: a ticket gone to from a dependency box (0467) lights with the raised fill. It fades out over its 1.5
+     seconds (in the block for motion above), or stays still until they're up when the browser asks for reduced motion. */
+  @media (prefers-reduced-motion: reduce) { .item.flash, .q.flash { background: var(--raise); } }
+  @media (prefers-reduced-motion: reduce) { .item.row:not(.open).flash, .q.row.flash { box-shadow: -12px 0 0 var(--raise), 12px 0 0 var(--raise); } }
 
   .full-open { margin: 10px 0 0 8px; box-sizing: border-box; min-height: 44px; padding: 0 16px; font: inherit; font-family: var(--font-ui); font-size: 14px; font-weight: 500; line-height: 20px; color: var(--text); background: none; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; }
   .full-open:hover { border-color: var(--text); }
