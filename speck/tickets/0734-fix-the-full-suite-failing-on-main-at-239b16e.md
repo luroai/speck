@@ -46,6 +46,7 @@ The full suite passes on main again.
 
 ## Notes
 <!-- Constraints, links and decisions. Optional. -->
+Failing before this build: none (the recorded result for this code, the quick suite at bcf42b1, passed; the full suite at 239b16e failed with the tests in the Problem)
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
