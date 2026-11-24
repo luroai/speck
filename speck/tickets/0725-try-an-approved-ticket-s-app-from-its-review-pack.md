@@ -1,7 +1,7 @@
 ---
 id: "0725"
 title: "Try an approved ticket's app from its review pack"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: "speck/ideas/2026-10-10-more-human-gate-actions-in-the-panel.md"        
 after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T15:09:09.757Z"
+approved: "2026-11-24T15:52:19.584Z"
 
 ---
 # 0725 · Try an approved ticket's app from its review pack
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 `speck app <id>` starts a ticket's copy of the app (0634), but only from a terminal. Using the change before shipping is stronger evidence than the review pack, and the panel is where you decide to ship.
@@ -53,9 +54,14 @@ When a code ticket is approved, its review pack now has a Try it button. That st
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 234,223
+- Elapsed since build started: 43 min
+- Changed lines: 169 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ## Review rounds
