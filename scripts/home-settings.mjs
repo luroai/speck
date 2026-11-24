@@ -54,19 +54,24 @@ const unsetMeans = {
   machine_parallel_builds: 'builds have no limit across your projects on this machine',
 };
 
-// `speck config set machine_parallel_tests|machine_parallel_builds <n>`, run in any project: saves it in the home
-// folder's file, or removes it when `raw` is blank. Changes nothing in the repo.
-export function setHomeSetting(key, raw, flagged) {
-  const shown = homeSettingsShown();
-  if (flagged) throw new SpeckError(`${key} is saved in ${shown} for every project of yours on this machine, so it takes no --repo or --machine. Run \`speck config set ${key} <number>\`, or \`speck config set ${key} ""\` to remove it.`);
+// The value `raw` saves for `key`: a whole number of 1 or more, or undefined for blank, which removes it. Refused as
+// `speck config set` refuses it, with a SpeckError. 0707: the panel's Settings view checks it the same way.
+export function homeSettingValue(key, raw) {
   const text = String(raw).trim();
   const value = text === '' ? undefined : /^\d+$/.test(text) && Number.isSafeInteger(Number(text)) && Number(text) >= 1 ? Number(text) : null;
   if (value === null) throw new SpeckError(`${key} must be a whole number of 1 or more, or "" to remove it (got ${JSON.stringify(raw)}). Nothing was changed.`);
+  return value;
+}
+
+// Saves `value` (from homeSettingValue) as `key` in the home folder's file, or removes it when undefined, printing
+// nothing. Returns { before, value, changed }. Refused with a SpeckError, changing nothing. 0707: shared with the panel.
+export function saveHomeSetting(key, value) {
+  const shown = homeSettingsShown();
   const dir = homeSettingsDir();
   if (!dir) throw new SpeckError(`There's no home folder to save ${key} in, so nothing was changed.`);
   const values = homeSettings();
   const before = values[key];
-  if (value === undefined && before === undefined) { console.log(`${key} isn't set, so ${unsetMeans[key] || 'nothing changes'}.`); return; }
+  if (value === before || (value === undefined && !Object.hasOwn(values, key))) return { before, value, changed: false };
   if (value === undefined) delete values[key]; else values[key] = value;
   const keys = HOME_SETTINGS.filter(k => Object.hasOwn(values, k)), file = fileIn(dir);
   try {
@@ -75,6 +80,18 @@ export function setHomeSetting(key, raw, flagged) {
       fs.writeFileSync(file, `# Your own speck settings for every project on this machine. Change them with speck config set.\n${keys.map(k => `${k}: ${yamlValue(values[k])}`).join('\n')}\n`);
     } else fs.rmSync(file, { force: true });
   } catch (e) { throw new SpeckError(`Couldn't save ${key} in ${shown} (${e.message}), so nothing was changed. Make its folder writable, then run this again.`); }
+  return { before, value, changed: true };
+}
+
+// `speck config set machine_parallel_tests|machine_parallel_builds <n>`, run in any project: saves it in the home
+// folder's file, or removes it when `raw` is blank. Changes nothing in the repo.
+export function setHomeSetting(key, raw, flagged) {
+  const shown = homeSettingsShown();
+  if (flagged) throw new SpeckError(`${key} is saved in ${shown} for every project of yours on this machine, so it takes no --repo or --machine. Run \`speck config set ${key} <number>\`, or \`speck config set ${key} ""\` to remove it.`);
+  const value = homeSettingValue(key, raw);
+  if (!homeSettingsDir()) throw new SpeckError(`There's no home folder to save ${key} in, so nothing was changed.`);
+  if (value === undefined && homeSettings()[key] === undefined) { console.log(`${key} isn't set, so ${unsetMeans[key] || 'nothing changes'}.`); return; }
+  const { before } = saveHomeSetting(key, value);
   const show = v => (v === undefined ? 'not set' : JSON.stringify(v));
   console.log(`${key} (every project on this machine, in ${shown}): ${show(before)} → ${show(value)}`);
 }

@@ -31,7 +31,8 @@ test('0406 AC1: Settings has one Building and reviewing group, and no How much r
 test('0406 AC2: the group holds the builder and reviewer settings, then the parallel settings, then the size limits, in order', () => {
   assert.deepEqual(SETTING_GROUPS.find(g => g.title === 'Building and reviewing').settings.map(s => s.key), BUILDING);
   const r = panelRepo();
-  assert.deepEqual(panelSettings(r.dir).groups.find(g => g.title === 'Building and reviewing').settings.map(s => s.key), BUILDING);
+  const served = BUILDING.flatMap(k => (k === 'max_parallel_tests' ? [k, 'machine_parallel_tests'] : [k])); // 0707: yours for every project, from the home folder
+  assert.deepEqual(panelSettings(r.dir).groups.find(g => g.title === 'Building and reviewing').settings.map(s => s.key), served);
 });
 
 test('0406 AC2: each moved setting still reads, explains and saves as it did', () => {
