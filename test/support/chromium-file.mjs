@@ -55,14 +55,28 @@ export async function goneWithin10s({ dir, exited, out }, list = mentioning) {
   assert.deepEqual(left, [], `Chromium still running 10 s after the test file finished:\n${out}`);
 }
 
-// Runs `body` under --test-timeout so the file runs out of time, as runFile does. Its first test should log its
-// Chromium's pid and then wait for ever. On a busy machine Chromium can take longer to start than the time allowed, so
-// a run in which nothing was logged checks that whatever it started has gone, and the next allows twice as long, from
-// 1.5 s up to 12 s (0723). Resolves with the first run that logged something, or the last, with the time it allowed.
-export async function runOutOfTime(body) {
+// Runs a test file with a time limit, from 1.5 s, and again with twice as long, up to 12 s, until `started` says
+// Chromium was up in time: on a busy machine it can take longer to start than the time allowed (0723). A run that is
+// tried again first checks that whatever it started has gone. Resolves with the last run and the time it allowed.
+async function allowingLonger(run, started) {
   for (let ms = 1500; ; ms *= 2) {
-    const f = await runFile(body, [`--test-timeout=${ms}`]);
-    if (f.pids.length || ms >= 12000) return { ...f, allowed: ms };
+    const f = await run(ms);
+    if (started(f) || ms >= 12000) return { ...f, allowed: ms };
     await goneWithin10s(f);
   }
 }
+
+// Runs `body` under --test-timeout so the file runs out of time, as runFile does. Its first test should log its
+// Chromium's pid and then wait for ever; a run in which nothing was logged is tried again with longer.
+export const runOutOfTime = body => allowingLonger(ms => runFile(body, [`--test-timeout=${ms}`]), f => f.pids.length);
+
+// Runs `body(ms)` as runFile does, for a file whose first test has a time limit of its own, `ms` (0743). That test
+// should log a pid once its page is open, and the next should log 0 as it starts: a run in which the 0 came first, so
+// the first test ran out of time before it had its page, is tried again with longer.
+export const runPastItsLimit = body => allowingLonger(ms => runFile(body(ms)), f => f.pids[0] > 0);
+
+// 0182 AC3's file: a test that times out waiting on its page, then one that passes. It logs the first page's pid, 0,
+// and the second page's pid. `first` is code the first test runs once its page is open.
+export const timesOutOnItsPage = (first = '') => runPastItsLimit(ms => `
+test('times out', { timeout: ${ms} }, async () => { const b = await browserPage('about:blank'); ${first} logPid(b.pid); await new Promise(() => {}); });
+test('then another passes', async () => { logPid(0); const b = await browserPage('about:blank'); logPid(b.pid); await b.close(); });`);

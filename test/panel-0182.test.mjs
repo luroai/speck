@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
 import { findChrome, browserPage } from './support/panel.mjs';
-import { runFile, runOutOfTime, goneWithin10s } from './support/chromium-file.mjs';
+import { runFile, runOutOfTime, timesOutOnItsPage, goneWithin10s } from './support/chromium-file.mjs';
 
 const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
 
@@ -120,12 +120,11 @@ test('0182 AC3: Chromium has closed within 10 s of a test file finishing whose t
 });
 
 test('0182 AC3: Chromium has closed within 10 s of a test file finishing whose test timed out waiting on its page', skip, async () => {
-  const f = await runFile(`
-test('times out', { timeout: 1500 }, async () => { const b = await browserPage('about:blank'); logPid(b.pid); await new Promise(() => {}); });
-test('then another passes', async () => { const b = await browserPage('about:blank'); logPid(b.pid); await b.close(); });`);
+  const f = await timesOutOnItsPage();
   assert.notEqual(f.code, 0, f.out);
-  assert.match(f.out, /timed out after 1500ms/);
-  assert.equal(f.pids.length, 2, f.out);
+  assert.match(f.out, new RegExp(`timed out after ${f.allowed}ms`));
+  assert.equal(f.pids.length, 3, f.out);
+  assert.equal(f.pids[1], 0, 'the first test had its page before it ran out of time');
   await goneWithin10s(f);
 });
 
