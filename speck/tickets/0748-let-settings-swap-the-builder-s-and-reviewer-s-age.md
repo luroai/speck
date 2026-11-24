@@ -42,6 +42,7 @@ A change to the builder or reviewer that clashes with the other offers to swap t
 ## Notes
 - From 0731's own note: its refusal used to say "pick it as the reviewer in the same Save", which 0731 removed.
 - Decision: offer the swap in one step, rather than only explaining the way round.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
