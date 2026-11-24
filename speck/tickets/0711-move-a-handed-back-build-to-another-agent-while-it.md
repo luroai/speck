@@ -42,6 +42,7 @@ A handed-back build that stops on a limit moves to a free agent on `builder_benc
 
 ## Notes
 - In `scripts/usage-limit.mjs`, `moveOn` filters on `IN_HAND = ['ready','building','reviewing']`, while the resume path uses `inHand()`, which also accepts approved tickets with `handed_back`. `resumeHandBack` (`scripts/hand-back.mjs`) drops `hand_back` from the record, so its kind and reason need keeping for the message. Take-over is `scripts/build-take-over.mjs` (0648).
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
