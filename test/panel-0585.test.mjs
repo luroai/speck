@@ -89,7 +89,7 @@ test('0585 AC2: the row\'s minutes move on with the clock', async () => {
   const p = await show(board([T('0701', 'building', STARTED)]), { Date: Clock });
   assert.match(whereOf(p, '0701').textContent, /· 18 min$/);
   now += 2 * 60000;
-  [...p.intervals.values()].find(v => v.ms === 1000).fn();
+  [...p.intervals.values()].find(v => v.ms === 250).fn();
   assert.match(whereOf(p, '0701').textContent, /· 20 min$/);
 });
 

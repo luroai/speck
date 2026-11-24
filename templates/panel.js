@@ -1253,9 +1253,9 @@ function queueUpdate(q, t) {
   const sub = rowTimeOf(q);
   if (sub && t.since !== null) { setText(sub, rowTime((t.held_at ?? Date.now()) - t.since)); wholeTip(sub.parentNode, sub.parentNode.more); }
 }
-// The counters run on their own 1-second timer, apart from the state updates and render(), so they move on between updates.
+// The counters run on their own quarter-second timer, apart from the state updates and render(), so they move on between updates.
 // Each tick puts only the counters right, and the timer is cleared once no in-flight ticket in the queue has a started.
-const COUNTER_MS = 1000;
+const COUNTER_MS = 250; // 0705: four ticks a second, so a callback a little early or late never skips or repeats a whole second
 let counters = []; // [counter node, started plus time waited in ms, paused, in minutes (0585: a row's)] for each counter, from the last render
 let counterTimer = null;
 function startCounters(list) {
