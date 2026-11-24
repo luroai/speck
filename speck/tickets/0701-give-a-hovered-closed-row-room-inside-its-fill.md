@@ -1,7 +1,7 @@
 ---
 id: "0701"
 title: "Give a hovered closed row room inside its fill"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-11-10-give-a-hovered-closed-row-room-inside-its-fill.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-24
+started: "2026-11-24T11:55:01.303Z"
 
 ---
 # 0701 · Give a hovered closed row room inside its fill
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 On a computer with a mouse, a closed Plan or Capture row under the pointer gets the raised fill, but its text runs right to the fill's edges. Since 0614 an open row's fill reaches past its text, so a hovered closed row looks cramped beside it.
