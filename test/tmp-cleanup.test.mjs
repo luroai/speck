@@ -44,7 +44,7 @@ test('passes', () => { makeRepo('speck'); });
 test('fails', () => { makeRepo('speck-ship'); assert.fail('on purpose'); });
 test('throws in a child process', () => { makeRepo('speck-remote'); initBare(fs.mkdtempSync(path.join(os.tmpdir(), 'speck-remote-'))); throw new Error('boom'); });
 `);
-  const r = spawnSync(process.execPath, ['--test', file], { env: s.env, encoding: 'utf8' });
+  const r = spawnSync(process.execPath, ['--test', '--test-reporter=tap', file], { env: s.env, encoding: 'utf8' });
   assert.equal(r.status, 1, 'the failing tests fail the run');
   assert.match(r.stdout, /# fail 2/);
   assert.deepEqual(fs.readdirSync(s.tmp), [], 'nothing left in the temporary folder');
