@@ -42,6 +42,7 @@ A `speck test` run that would wait past the shell limit hands back in time and t
 ## Notes
 - From 0711's build: "Waiting for a turn to run the tests: max_parallel_tests is 2, and 2 runs are already going", then killed at 10 minutes.
 - `speck review` hands back with exit 12 and `--wait` (0384), which this can follow.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
