@@ -2,6 +2,7 @@ import './support/tmp.mjs'; // first: sends every temporary folder into one per-
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { T, fakePage, full, page, panelRepo, fm, good, freePort, startPanel, stop, findChrome, browserPage } from './support/panel.mjs';
+import { countEnds, delivered } from './support/touch-ends.mjs';
 
 // ---------- 0476: the lanes as whole cards in a row, slid between by a swipe ----------
 
@@ -28,6 +29,7 @@ async function phone(width = 390) {
   b.end = async () => { await b.close(); await stop(panel); };
   b.repo = r;
   try {
+    await countEnds(b); // 0738
     await b.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 1 });
     await b.send('Emulation.setDeviceMetricsOverride', { width, height: 700, deviceScaleFactor: 1, mobile: width < 700 });
     await b.until(`document.querySelectorAll('#queue .q').length >= 30 && document.querySelectorAll('#shipped tr').length >= 5 && document.querySelectorAll('#shaping .item').length >= 20`, 'the board');
@@ -43,8 +45,13 @@ async function phone(width = 390) {
 const pause = ms => new Promise(r => setTimeout(r, ms));
 // A finger on the screen: down at the first point, through each of the rest with `gap` ms between them, and up. Each
 // event carries the time it happened, `gap` ms (or 10 ms, with no gap) after the one before, so how fast the finger
-// moved doesn't depend on how quickly a busy machine sends them.
+// moved doesn't depend on how quickly a busy machine sends them. 0738: one that lifts is done again when the browser
+// dropped its end before the page got it.
 async function finger(b, points, { gap = 0, lift = true } = {}) {
+  if (lift) return delivered(b, () => press(b, points, gap, true));
+  return press(b, points, gap, false);
+}
+async function press(b, points, gap, lift) {
   const at = ([x, y]) => [{ x, y, id: 1 }];
   const start = Date.now() / 1000, step = (gap || 10) / 1000;
   let i = 0;
@@ -182,11 +189,13 @@ test('0476 AC2: a sideways scroll on a trackpad and the arrow keys change lane i
     await opens(b, 'shipped', 'reduced motion');
     await atRest(b, 'shipped', 'reduced motion: at rest as soon as the key is pressed');
     const [x2, y2] = await middle(b);
-    await finger(b, path([x2, y2], [x2 + 150, y2], 6), { gap: 40, lift: false });
-    const held = await b.cards();
-    assert.equal(held[3].left, 0, 'reduced motion: the card stays put under the finger');
-    assert.equal(held[2].shows, false, 'and the card beside it stays hidden');
-    await b.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await delivered(b, async () => { // 0738
+      await finger(b, path([x2, y2], [x2 + 150, y2], 6), { gap: 40, lift: false });
+      const held = await b.cards();
+      assert.equal(held[3].left, 0, 'reduced motion: the card stays put under the finger');
+      assert.equal(held[2].shows, false, 'and the card beside it stays hidden');
+      await b.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    });
     await opens(b, 'build', 'reduced motion: the swipe');
     await atRest(b, 'build', 'reduced motion: the swipe changes lane at once');
   } finally { await b.end(); }
@@ -289,10 +298,12 @@ for (const width of [390, 1400]) {
       assert.ok(Math.abs(box.left - (box.page - box.width) / 2) <= 1, `centred (${JSON.stringify(box)})`);
       await atRest(b, 'build', 'as the page opens');
       const [x0, y0] = await middle(b);
-      await finger(b, path([x0, y0], [x0 - 40, y0], 4), { gap: 40, lift: false });
-      const cards = await b.cards();
-      assert.deepEqual(cards.map(c => [c.shows, c.width, c.left]), [-2, -1, 0, 1].map(j => [true, Math.round(box.width), j * Math.round(box.width) - 40]), `while a finger drags, the four cards (0520) show in a row, each as wide as the column (${JSON.stringify(cards)})`);
-      await b.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      await delivered(b, async () => { // 0738
+        await finger(b, path([x0, y0], [x0 - 40, y0], 4), { gap: 40, lift: false });
+        const cards = await b.cards();
+        assert.deepEqual(cards.map(c => [c.shows, c.width, c.left]), [-2, -1, 0, 1].map(j => [true, Math.round(box.width), j * Math.round(box.width) - 40]), `while a finger drags, the four cards (0520) show in a row, each as wide as the column (${JSON.stringify(cards)})`);
+        await b.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      });
       await settles(b, 'build', 'after a drag under a quarter');
       const shows = await b.js(`[...document.querySelectorAll('main > section')].filter(s => { const r = s.getBoundingClientRect(); return s.getClientRects().length > 0 && getComputedStyle(s).visibility === 'visible' && r.right > 0 && r.left < innerWidth; }).length`);
       assert.equal(shows, 1, 'one lane shows on the page');

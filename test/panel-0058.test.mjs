@@ -201,6 +201,9 @@ test('0058 AC3 and AC4: in a real browser the counter ticks between polls, and a
     await b.js(`(() => { window.realRender = window.render; window.render = () => {}; })()`);
     await next();
     await next();
+    // 0738: two ticks bring it to 10 min only when the real clock had already passed the 8th minute when it started
+    // ticking, which a slow or a quick start can miss. On to two digits, for the selection of the number below.
+    for (let i = 0; i < 3 && !/^\d\d /.test(await text()); i++) await next();
     await b.js(`window.render = window.realRender`);
     // The number: it stays selected while the counter moves on.
     await select(sub, 0, sub, 2);
