@@ -269,11 +269,11 @@ test('0041 review F1: text selected in an open ticket stays selected when only i
   assert.equal(shaping(p, '0001'), item);
   assert.equal(iconOf(p, item), null, 'the icon went in the same refresh');
   assert.equal(nodes(p, item, 'checks').length, 0, '0463: open, its facts are in a table, with no line saying what it unlocks');
-  assert.equal(nodes(p, item, 'facts').length, 1);
+  assert.equal(p.all(item).filter(n => n.className === 'facts').length, 1);
   await refresh(p);
   assert.ok(kept(), 'and through a new ticket waiting on it');
   assert.equal(iconOf(p, item).title, 'Starts a chain: unlocks 0003');
-  assert.equal(nodes(p, item, 'facts').length, 1);
+  assert.equal(p.all(item).filter(n => n.className === 'facts').length, 1);
   assert.ok(/\bopen\b/.test(item.className));
   click(top(item));
   assert.ok(!/\bopen\b/.test(shaping(p, '0001').className), 'the new top row still opens and closes it');

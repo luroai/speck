@@ -441,7 +441,7 @@
   .tag-row { gap: 18px; }
   .prio-menu button { min-width: 44px; min-height: 44px; }
   .set-ready, .full-open { min-width: 44px; min-height: 44px; }
-  .deps .slot, .waits-facts button.waits-link { min-height: 44px; } /* 0467, 0613 */
+  .deps .slot, .waits-facts button.waits-link, .chain-facts button.chain-id { min-height: 44px; } /* 0467, 0613, 0703 */
   .waits-facts .waits-item { min-height: 44px; align-items: center; } /* 0613: every line the height of a link's, so they stay evenly spaced */
   .dep-chip { min-width: 44px; min-height: 44px; margin: -13px 0; } /* 0468: its pill in the middle, and the title line no taller */
 

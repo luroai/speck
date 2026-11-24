@@ -43,6 +43,10 @@ An open Plan card shows its chain as the facts Waits for and Waiting on it, as t
 ## Notes
 - `depsBox` in `templates/panel.js` calls `chainFacts` only for the full view (`inPane`); the card gets `div.deps.deps-chain`. `chainFacts` links with `depNode(…, true)`, which opens the full view. `isDeps` matches `deps` and `waits-facts` only, so a card redraw would add a second box unless it learns the new one.
 
+- Self-check: no changes
+- Pictures: none, because this repo's board has no open Plan card with a chain to photograph; the real-browser tests (panel-0467 AC3, panel-0154) cover its layout and tap size.
+- Failing before this build: none
+
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
 
