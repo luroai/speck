@@ -1,7 +1,7 @@
 ---
 id: "0735"
 title: "Fix the full suite failing on main at 38407ee"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T14:04:35.663Z"
 approved: "2026-11-24T14:22:08.662Z"
+finished: "2026-11-24T14:34:46.855Z"
 
 ---
 # 0735 · Fix the full suite failing on main at 38407ee
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The full suite fails on main at commit 38407ee (38407eea5126d9502f5230cf95f96f320efed8c7). Failing tests:
