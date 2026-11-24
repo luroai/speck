@@ -1,7 +1,7 @@
 ---
 id: "0708"
 title: "Meet 0161's contrast limits when more contrast is asked for"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -21,7 +21,7 @@ created: 2026-11-24
 ---
 # 0708 · Meet 0161's contrast limits when more contrast is asked for
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 0161 made the panel readable for low vision, with edges at 3:1 and small muted text at 7:1. The redesign's chosen look relaxes both, to about 1.25:1 and 5.8:1, so someone who needs more contrast may find cards and controls harder to see.
