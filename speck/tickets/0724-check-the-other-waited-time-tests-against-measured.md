@@ -1,7 +1,7 @@
 ---
 id: "0724"
 title: "Check the other waited-time tests against measured bounds"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -21,7 +21,7 @@ created: 2026-11-24
 ---
 # 0724 · Check the other waited-time tests against measured bounds
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 The 0166 AC1 tests and the 0217 AC2 test check a waited time against a fixed ±5 s tolerance. Each runs a speck command in between that can take over 5 s on a very busy machine, so a build could see a failure that isn't real.
