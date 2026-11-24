@@ -1,7 +1,7 @@
 ---
 id: "0705"
 title: "Keep build timers counting smoothly"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: "speck/ideas/done/2026-10-11-keep-build-timers-counting-smoothly.md"    
 after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T12:18:40.929Z"
+approved: "2026-11-24T12:48:27.236Z"
 
 ---
 # 0705 · Keep build timers counting smoothly
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The panel's build timers sometimes skip a second (12, 14) or show one twice (13, 13), right where you look to see a build is alive. The ticks run on a plain one-second interval that lands a few milliseconds early or late.
@@ -51,9 +52,15 @@ Build timers now count one second at a time without skipping or repeating a numb
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The simultaneous-build tests observe the same timer twice.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 250,902
+- Elapsed since build started: 30 min
+- Changed lines: 4 (limit 5000)
 - Follow-ups: none. The full view holds one second counter at a time, so two builds never count side by side on screen.
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
