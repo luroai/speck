@@ -1,7 +1,7 @@
 ---
 id: "0748"
 title: "Swap the builder's agent with the reviewer's in Settings"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -21,7 +21,7 @@ created: 2026-11-24
 ---
 # 0748 · Swap the builder's agent with the reviewer's in Settings
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Now that each setting saves by itself, swapping the builder and reviewer between agents, such as a Claude Code builder with a Codex reviewer to the other way round, can't be done: each half is refused on its own, as for a moment both would be the same family. The refusal doesn't say how to get there.
