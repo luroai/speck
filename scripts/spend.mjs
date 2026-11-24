@@ -157,11 +157,24 @@ export function earlierBuilds(runs, id) {
 // 0528: the run record of ticket `id` in `runs`, or null when there's none or it can't be read.
 export const runRecord = (runs, id) => (/^[\w-]+$/.test(String(id ?? '')) ? readRecord(runs, String(id)) : null);
 
+// 0721: each spend file as last parsed, by its path, with what its stat said then. A file whose stat hasn't changed
+// isn't read again, so a board check reads watch and delegated spend once however many tickets there are.
+const parsedLines = new Map(); // path → { key, lines }
+const linesStatKey = file => { const s = fs.statSync(file, { bigint: true }); return `${s.dev}:${s.ino}:${s.size}:${s.mtimeNs}:${s.ctimeNs}`; };
+
 // 0528: each JSON object a line of `name` in `runs` holds, leaving out anything else, or [] when there's no such file.
 export function jsonLines(runs, name) {
-  let text = '';
-  try { text = fs.readFileSync(path.join(runs, name), 'utf8'); } catch { return []; }
-  return text.split('\n').flatMap(l => { try { const v = JSON.parse(l); return plain(v) ? [v] : []; } catch { return []; } });
+  const file = path.join(runs, name);
+  let key;
+  try { key = linesStatKey(file); } catch { parsedLines.delete(file); return []; }
+  const had = parsedLines.get(file);
+  if (had?.key !== key) {
+    let text = '';
+    try { text = fs.readFileSync(file, 'utf8'); } catch { parsedLines.delete(file); return []; }
+    const lines = text.split('\n').flatMap(l => { try { const v = JSON.parse(l); return plain(v) ? [v] : []; } catch { return []; } });
+    parsedLines.set(file, { key, lines });
+  }
+  return parsedLines.get(file).lines;
 }
 const pad = id => String(id ?? '').padStart(4, '0');
 

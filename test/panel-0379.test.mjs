@@ -55,7 +55,7 @@ test('0379 AC2: a setting\'s explanation that would go under the Settings pop-up
     const classes = new Set();
     tip.classList = { add: c => classes.add(c), remove: c => classes.delete(c) };
     tip.getBoundingClientRect = () => classes.has('below') ? { top: 200, bottom: 230 } : { top, bottom: top + 30 };
-    const info = p.all(rowOf(p, key)).find(n => n.tagName === 'button' && /\binfo\b/.test(n.className));
+    const info = p.all(rowOf(p, key)).find(n => n.tagName === 'button' && /\bname\b/.test(n.className)); // 0729: its name shows it, not an info button
     p.press(info);
     assert.equal(tip.hidden, false, `${key}: shown`);
     assert.equal(classes.has('below'), below, `${key}: ${below ? 'under the top line, so below its row' : 'clear of the top line, so above its row'}`);
