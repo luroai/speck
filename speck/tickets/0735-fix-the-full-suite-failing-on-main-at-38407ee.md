@@ -41,6 +41,7 @@ The full suite passes on main again.
 
 ## Notes
 <!-- Constraints, links and decisions. Optional. -->
+- Failing before this build: none (the recorded result is the quick suite's, which passed; the full suite's failures are the two 0469 AC1, AC2 tests this ticket names)
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
