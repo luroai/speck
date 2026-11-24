@@ -40,6 +40,8 @@ The full suite's result and its fix ticket name only the tests that failed again
 
 ## Notes
 - `full-suite.mjs` builds `tests` with `failingTestFiles`, which doesn't drop first-run failures that passed on the retry, as `failingTests` does since 0377.
+- Failing before this build: none
+- Self-check: no changes. A test whose file was left out of the retry because it already fails on the base branch has no pass on the retry, so it is still named; a test that failed only on the retry is named too.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
