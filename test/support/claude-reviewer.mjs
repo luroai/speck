@@ -1,6 +1,7 @@
 // 0292: a review repo whose ticket is reviewed by `reviewer: claude`, with a stand-in for Claude Code's CLI on the PATH
 // that logs how it was run and answers as `claude -p --output-format json` does: a JSON envelope with the verdict in
-// `result` and the session's id in `session_id`.
+// `result` and the session's id in `session_id`. 0719: with `--output-format stream-json` it prints JSON lines ending
+// with that envelope, and FAKE_RATE_EVENT's line, when set, among them.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -16,8 +17,18 @@ const args = process.argv.slice(2);
 fs.appendFileSync(${JSON.stringify(log)}, JSON.stringify({ args, stdin: fs.readFileSync(0, 'utf8') }) + '\\n');
 if (process.env.FAKE_RESUME_FAIL && args.includes('--resume')) { console.error('No conversation found'); process.exit(1); }
 const v = ${JSON.stringify(JSON.stringify(changesVerdict))};
-console.log(JSON.stringify({ type: 'result', subtype: 'success', is_error: false, session_id: process.env.FAKE_SESSION || 'S1',
-  result: 'Here is my review.\\n\`\`\`json\\n' + v + '\\n\`\`\`', usage: { input_tokens: 100, output_tokens: 20 } }));
+const result = { type: 'result', subtype: 'success', is_error: false, session_id: process.env.FAKE_SESSION || 'S1',
+  result: 'Here is my review.\\n\`\`\`json\\n' + v + '\\n\`\`\`', usage: { input_tokens: 100, output_tokens: 20 },
+  ...(process.env.FAKE_COST ? { total_cost_usd: Number(process.env.FAKE_COST) } : {}) };
+const i = args.indexOf('--output-format');
+if (args[i + 1] === 'stream-json') {
+  // 0719: as stream-json --verbose prints it: an init line, the rate_limit_event lines, the turns, then the result.
+  const sid = result.session_id;
+  console.log(JSON.stringify({ type: 'system', subtype: 'init', session_id: sid }));
+  if (process.env.FAKE_RATE_EVENT) console.log(process.env.FAKE_RATE_EVENT);
+  console.log(JSON.stringify({ type: 'assistant', message: { content: [{ type: 'text', text: result.result }] }, session_id: sid }));
+  console.log(JSON.stringify(result));
+} else console.log(JSON.stringify(result));
 `, { mode: 0o755 });
   const PATH = `${bin}${path.delimiter}${process.env.PATH}`;
   const review = (env = {}, ...a) => r.runEnv({ PATH, ...env }, 'review', '1', ...a);
