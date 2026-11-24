@@ -42,6 +42,7 @@ A home-folder setting caps how many builds go at once across every project on th
 - The rest of one panel for every project, which stays in the idea.
 
 ## Notes
+- Failing before this build: none
 - Follow 0678's pattern for test turns: `scripts/home-settings.mjs` (`HOME_SETTINGS`) and its machine-wide turn-taking.
 - Shares `scripts/home-settings.mjs` with the ticket that shows the machine-wide test limit in Settings; left unchained, as one adds a setting and the other adds the panel's save path.
 
