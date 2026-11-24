@@ -18,7 +18,7 @@ source: "speck/ideas/done/2026-11-12-let-speck-set-blank-a-ticket-s-level.md"   
 after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T14:23:00.891Z"
-approved: "2026-11-24T14:33:18.371Z"
+approved: "2026-11-24T16:13:02.130Z"
 
 ---
 # 0716 · Let speck set blank a ticket's build settings
@@ -54,13 +54,14 @@ From the terminal you can now take a level, builder or reviewer setting off a ti
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 123,418
-- Elapsed since build started: 10 min
-- Changed lines: 8 (limit 5000)
+- Reviewer tokens: 206,541
+- Elapsed since build started: 110 min
+- Changed lines: 10 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ## Review rounds
@@ -134,6 +135,81 @@ Round 1 (codex): approve.
     "findings": [],
     "escalation_question": "",
     "summary": "The terminal command now clears a ticket's level and builder/reviewer settings and confirms they are blank. Existing protection against changes during a build remains in place. The tests pass, and I found no blocking issues."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "c753574feab3a9579f7fd4949852263c1eb8cb3b",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a20df9-4c71-74a3-b711-9dd4281e53b7",
+    "builder_response": "Merge round. Failing after merging main: 0078 AC2 and 0270 AC2 (scripts/speck.mjs reached 602 lines). Moved the BLANKABLE list to scripts/set-ready.mjs so speck.mjs is 600 lines. Test files run: test/set-0716.test.mjs, test/split-0078.test.mjs, test/split-0270.test.mjs (149 pass).\n",
+    "seconds": 16,
+    "usage": {
+      "input_tokens": 205418,
+      "cached_input_tokens": 162048,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1123,
+      "reasoning_output_tokens": 16
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 5741,
+      "cached": 76928,
+      "write": 0,
+      "output": 454
+    },
+    "cost_usd": 0.0237148,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-24T16:12:59.499Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs cmdSet still accepts an explicit empty level and confirms it is blank. Passing test '0716 AC1' verifies clearing quick writes level: \"\"."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/set-ready.mjs exports all seven BLANKABLE fields, imported by cmdSet. Passing test '0716 AC2' exercises every field through the CLI and verifies empty values and confirmation."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "cmdSet still calls checkNotBeingBuilt before any write for every field. Passing test '0716 AC3' verifies refusal during a worktree build and unchanged ticket contents."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "cmdSet retains its usage guard for empty values outside the permitted fields. Passing test '0716 AC4' verifies empty title and status produce the usage message."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified the latest test output: 149 passed, three skipped, zero failed. The ticket tests and both affected file-size test files passed; no existing tests were weakened."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The merged change preserves the approved behaviour. Moving the field list into the existing helper fixes the file-size failures without changing how settings are cleared. All tests run for this round pass; no blocking concerns remain."
   }
 }
 ```
