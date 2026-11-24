@@ -1,7 +1,7 @@
 ---
 id: "0703"
 title: "Show a Plan card's chain as facts"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: "speck/ideas/done/2026-11-10-show-a-plan-card-s-chain-as-facts.md"      
 after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T11:55:04.332Z"
+approved: "2026-11-24T12:40:19.135Z"
 
 ---
 # 0703 · Show a Plan card's chain as facts
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 An open Plan card still shows a ticket's chain in the old Chain box, a bordered box of circles over ids, while the full view shows it as facts since 0603. Since 0613 a Plan card shows Waits on as plain facts, so cards with a chain still look different.
@@ -54,9 +55,15 @@ An open card in the Plan lane now shows what a ticket waits for and what waits o
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The chain facts inherit the ordinary three-column facts table's nowrap and overflow:hidden rules.; F2 The refresh test uses an unchanged board throughout.; F3 The review's test evidence still contains a failure and predates the final assertion change.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 577,297
+- Elapsed since build started: 45 min
+- Changed lines: 31 (limit 5000)
 - Follow-up (tidy-up, no idea written): the old `.deps` / `.deps-slots` chain-box CSS and its test checks are now unused.
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
