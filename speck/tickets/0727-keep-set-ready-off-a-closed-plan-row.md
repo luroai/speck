@@ -1,7 +1,7 @@
 ---
 id: "0727"
 title: "Keep Set ready off a closed Plan row"                # one outcome, no "and"
-status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,12 +19,13 @@ after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T15:15:49.304Z"
 approved: "2026-11-24T17:25:35.044Z"
-blocked_at: "2026-11-24T17:36:10.238Z"
+blocked_at: ""
+waited_seconds: 10
 
 ---
 # 0727 · Keep Set ready off a closed Plan row
 
-**Status:** ⛔ blocked
+**Status:** 🔨 building
 
 ## Problem
 Every closed draft in Plan has a Set ready button on its row, so a ticket can be set ready without ever being opened, and the button takes space the title needs. Gate 1 should come after at least a scan of the ticket.
@@ -48,6 +49,7 @@ Set ready shows only once a draft is open, on its open row or in its full view, 
 - `ticketHead` in `templates/panel.js` adds `setReadyButton` to every draft's top row; the closed row's grid gives it column 2 (`.item.row .head .set-ready` in `templates/panel-cards.css`). The brief's Plan description is in the `speck panel` row of `docs/brief.md` ("with Set ready and priority on the row").
 - Failing before this build: test/tmp-cleanup.test.mjs AC1 AC2 (expects TAP `# fail 2`; Node 24's default reporter prints `ℹ fail 2`). Recorded suite for this code: passed.
 - Self-check: AC4 brief test uses names that survive 0267 rewording, not a fixed sentence
+- Went with the recommendation: Hold other brief panel-description ships until this lands, then try again (chosen by speck, as watch is decide, 2026-11-24 17:36 UTC).
 
 ## In plain words
 Closed drafts in Plan no longer show Set ready on the row, so each title has the room the button used to take. Open a draft (or its full view) to set it ready, with the same checks and “Setting ready…” behaviour as before. Priority stays on the closed row.
