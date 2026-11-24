@@ -1,7 +1,7 @@
 ---
 id: "0734"
 title: "Fix the full suite failing on main at 239b16e"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T13:27:45.922Z"
+blocked_at: "2026-11-24T14:36:50.738Z"
 
 ---
 # 0734 · Fix the full suite failing on main at 239b16e
 
-**Status:** 🔍 reviewing
+**Status:** ⛔ blocked
 
 ## Problem
 The full suite fails on main at commit 239b16e (239b16e6fde6e470eed2ae32434e151fef98fed1). Failing tests:
@@ -60,7 +61,11 @@ Self-check: capped 0202's wait for its kept process at 30 s, so one that never s
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
 
 ## Blocked question
-<!-- Filled in by speck only when status is blocked. -->
+0517 AC3 promises that a lane change's first frame comes within 50 ms, but on this machine at a load of 90 every try took 46–131 ms on the clock while the page itself spent only 15–24 ms of work on each frame, so it fails the full suite by chance. Should the test hold the page to 50 ms of its own work (CPU time), still checking that the slide starts on the very first frame with no redraw in it, or keep 50 ms on the clock and accept that it fails now and then on a busy machine, or keep 50 ms on the clock but skip only that timing check when the machine is overloaded? I recommend 50 ms of the page's own work: it's how the other timing tests here were made steady (0207, 0557), it still fails a slide that's held back or redraws, and the reviewer asked for your say before 0517's promise is measured this way.
+Recommended: Hold the page to 50 ms of its own work (CPU time), with the first-frame and no-redraw checks
+Other options: Keep 50 ms on the clock and accept chance failures on a busy machine; Keep 50 ms on the clock but skip that timing check when the machine is overloaded
+Changes what you'd notice: no
+Clear winner: yes
 
 ## Review log
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
@@ -149,6 +154,90 @@ Self-check: capped 0202's wait for its kept process at 30 s, so one that never s
     ],
     "escalation_question": "",
     "summary": "The selected tests pass, and several changes reasonably accommodate slow test setup. However, two changes make performance tests pass by relaxing what they measure. Restore the promised response-time checks and remove source-text checks that do not verify behaviour before approval."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "b34383a03907f314bc03e13596cf47c150570822",
+    "session": "continued",
+    "thread_id": "01a20df2-5075-7041-bae8-4176949c4041",
+    "builder_response": "- Tests run: test/steady-0734.test.mjs test/house-rules-full-0657.test.mjs test/panel-0061.test.mjs test/panel-0208.test.mjs test/panel-0476.test.mjs test/panel-0517.test.mjs test/stall-0202.test.mjs (with the commands.checks files): 191 pass, 0 fail.\n- F2: fixed. 0208 AC1's panel test no longer adds a baseline: the limit is a hard 1 s again. The panel's keep-alive is 60 s, so a missed worktree takes a minute rather than the 5 to 15 s 0208's Problem describes. To steady it, the change is tried up to three times, each in a fresh worktree on its own branch with its own status (the one before is removed first), and the test passes when one of them reaches both pages within 1 s, as 0517 AC3 has done since 0670. Checked that it still catches the bug: with the watch on git's list of worktrees turned off (and the new worktree's tickets folder unwatched) for a moment, it fails with \"reached every page within 1 s in one of 3 tries: not within 10 s, not within 10 s, not within 10 s\". The panel code is unchanged.\n- F1: partly fixed, partly disputed. Fixed: in the first frame after each lane change, the test now checks that the four cards' slide is already running with no delay, which is what 0517 AC3's criterion says (\"a slide starts on the first frame after the lane change\"). So a slide held back by a timer, or a frame put off to later, fails, as does any redraw in that frame (unchanged) and any frame costing over 50 ms of the page's own CPU time. Disputed: keeping 50 ms on the clock as the pass condition. In the run at 4dda328, every one of the three tries went over (46–131 ms on the clock) at a load of 90 on 16 cores, while the page's main thread spent 15–24 ms of CPU on each of those frames. The rest is the operating system running other builds' processes, which the test can't schedule around: the suite already runs its heavy files at most 2 at a time, and other builds and speck run's full suite share the machine. Measuring CPU time rather than time on the clock is how this repo already makes timing checks steady under load (test/support/timing.mjs from 0207, 0557's spendCpu, 0176's statusMs). The clock times are still reported in the failure message.\n- F3: fixed. test/steady-0734.test.mjs now holds only the direct findChrome checks. Every source-text match is gone; the named tests themselves are the behavioural checks.\n- Seen while checking F1: one run of 0517 AC3 failed its unchanged \"nothing redrawn before the slide's first frame\" check. 15 more runs passed, 10 of them at the same time to add load. That check covers the time between the lane change and the first frame, and this change only adds work after that frame (pausing the slide) and before the change (reading the CPU time), so it looks like the existing chance failure the flaky log shows for this test (30 entries before this build).\n",
+    "seconds": 23,
+    "usage": {
+      "input_tokens": 206959,
+      "cached_input_tokens": 153728,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1839,
+      "reasoning_output_tokens": 110
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 11139,
+      "cached": 90752,
+      "write": 0,
+      "output": 794
+    },
+    "cost_usd": 0.0392932,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-24T14:36:32.651Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "The reported run passes all selected files. However, panel-0517.test.mjs still asserts 50 ms of ThreadTime rather than the required elapsed time. The new sliding assertion checks that animations exist in the first callback, but does not establish that this callback arrives within 50 ms. The other named tests retain behavioural coverage."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The round reports 191 passes and no failures. The changes since round 1 are confined to the reviewed tests and ticket records. The whole-suite regression check remains the ship gate."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/panel-0517.test.mjs",
+        "issue": "The elapsed-time guarantee remains untested. Counting four animations with zero configured delay does not bound when the first frame arrives. CPU time excludes waiting, so a frame arriving after 50 ms can still pass. Existing CPU-based tests demonstrate a useful technique for measuring computational cost, but do not authorise replacing this explicit visible-response deadline.",
+        "suggested_fix": "Restore the elapsed-time assertion for the 50 ms requirement, retaining the first-frame and no-redraw checks. Address contention through controlled test execution. If the deadline must instead become a CPU budget, obtain an explicit product decision changing that requirement.",
+        "state": "dispute_rejected"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "test/panel-0208.test.mjs",
+        "issue": "The variable baseline has been removed. Each fresh-worktree attempt now uses the original one-second deadline, with bounded retries and a 60-second keep-alive to distinguish missed watches.",
+        "suggested_fix": "No further change requested for this finding.",
+        "state": "resolved"
+      },
+      {
+        "id": "F3",
+        "severity": "blocking",
+        "file": "test/steady-0734.test.mjs",
+        "issue": "The source-pattern assertions and unrelated CPU waiting demonstration have been removed. The remaining test directly exercises findChrome for the new sentinel and an explicit browser path.",
+        "suggested_fix": "No further change requested.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The builder fixed two concerns: the worktree test again uses a one-second deadline, and the new helper test checks actual behaviour. The selected tests pass. Approval remains blocked because the slide test still replaces the promised 50 ms response time with CPU time, allowing visibly late frames to pass."
   }
 }
 ```
