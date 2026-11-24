@@ -41,6 +41,8 @@ The README's terminal install command is one of the tested README facts.
 ## Notes
 - The rule text is in `docs/brief.md` (Criteria about documents), `skills/speck-ticket/SKILL.md`, `templates/reviewer-prompt.md`, and `test/docs-0491.test.mjs` (`TESTED`, `ALLOWED`). The setup prompt's command is tested in `test/install-0253.test.mjs`.
 - Failing before this build: none
+- Self-check: no changes
+- Note: commands.checks' tmp-cleanup AC1 AC2 fails on this Node: the fixture spawn's default reporter prints ℹ fail 2, not # fail 2. Not caused by this ticket; leave for a fix ticket.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
