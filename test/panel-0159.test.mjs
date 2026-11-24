@@ -83,9 +83,10 @@ test('0159 AC3: a DevTools call Chrome never answers fails in its time limit, na
 test('0159 AC3: b.js() and b.until() give up in their time limits, naming what they waited for', skip, async () => {
   const b = await browserPage('about:blank');
   try {
-    const err = await within(2500, b.js('new Promise(() => {})', 1000).then(() => null, e => e));
+    // 0736: 10 s on the clock for a 1 s Chrome limit, as under load a full-suite retry saw 2588 ms for the first call alone
+    const err = await within(10000, b.js('new Promise(() => {})', 1000).then(() => null, e => e));
     assert.match(err?.message || '', /^Chrome didn't answer Runtime\.evaluate within 1 s: new Promise\(\(\) => \{\}\)$/);
-    const late = await within(2500, b.until('false', 'a thing that never happens', 1000).then(() => null, e => e)); // 0429: a limit of its own, as b.js() has
+    const late = await within(10000, b.until('false', 'a thing that never happens', 1000).then(() => null, e => e)); // 0429: a limit of its own, as b.js() has
     assert.match(late?.message || '', /^timed out waiting for a thing that never happens$/);
   } finally { await b.close(); }
 });
@@ -95,7 +96,8 @@ test('0159 AC3: b.loaded() gives up when the page never arrives, naming the page
   const url = `http://127.0.0.1:${s.port}/`;
   const b = await browserPage(url);
   try {
-    const err = await within(2500, b.loaded(1000).then(() => null, e => e)); // 0429: a limit of its own
+    // 0736: same 10 s budget as b.js() / b.until() above (named in the same full-suite failure)
+    const err = await within(10000, b.loaded(1000).then(() => null, e => e)); // 0429: a limit of its own
     assert.equal(err?.message, `timed out waiting for ${url} to load`);
   } finally { await b.close(); s.close(); }
 });
