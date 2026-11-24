@@ -16,6 +16,7 @@ import { codexBuilds, codexStartWords } from './codex-build.mjs';
 import { MAX_DECIDED, fixingOf } from './foreman.mjs';
 import { allowedLine } from './review.mjs';
 import { cursorBuilds, cursorStartWords } from './cursor-build.mjs';
+import { hasBuildRoom } from './build-turns.mjs'; // 0726
 
 // What the build's session is told when speck run resumes it. `skill` is how its agent names /speck-build. 0286: `by`
 // 'foreman' when the Foreman chose it (watch: fix), not the user.
@@ -152,7 +153,7 @@ export function goWithQueue({ cfg, words, max, settings = () => ({ cfg, words, m
         continue;
       }
       const s = settings();
-      if (!s || running.size >= s.max) return;
+      if (!s || !hasBuildRoom(running.size, s.max)) return;
       const { argv, why } = resumeFor(s.words, s.cfg, t.id, rec, goWithMessage(t.id, g.option, rec.agent === 'codex' ? '$speck-build' : '/speck-build', g.by, g.split === true, g.watch === 'decide' ? 'decide' : 'fix'));
       if (!argv) {
         try { save(file, { ...kept, exited: rec.exited, exit_code: rec.exit_code }); } catch { /* said again next check */ }

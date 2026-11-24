@@ -27,7 +27,7 @@ import { askKey, dealtWith, readReplies, cmdForemanReply } from './foreman-answe
 import { cursorCli, CURSOR_HEADLESS } from './cursor-build.mjs';
 import { knownProviders, cantRun } from './custom-providers.mjs';
 import { providerNamed } from './provider-review.mjs';
-import { PROVIDER_SCRIPT, CLAUDE_FLAGS, FOREMAN_MODE } from './provider-build.mjs';
+import { PROVIDER_SCRIPT, CLAUDE_FLAGS, FOREMAN_MODE } from './provider-build.mjs'; import { hasBuildRoom } from './build-turns.mjs'; // 0726
 import { onPath } from './install.mjs';
 import { recordWatchSpend } from './spend.mjs';
 import { providerKey } from './keys.mjs';
@@ -446,7 +446,7 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, set
     for (const t of tickets) {
       if (!s.resumes.some(x => x.id === t.id && due(x)) || running.has(t.id) || t.build_running || heldBuild(t.id)) continue; // 0622
       const now = settings(); // 0549: the builder settings as they are now, or null while they can't start a build
-      if (!now || running.size >= now.max) break;
+      if (!now || !hasBuildRoom(running.size, now.max)) break;
       resume(s, t, now);
       changed = true;
     }

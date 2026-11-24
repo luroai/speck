@@ -32,6 +32,7 @@ import { processRows, signalBuild, carryOn } from './build-procs.mjs';
 export { processRows, buildProcesses, sessionInUse, runningPids } from './build-procs.mjs';
 import { resumeHint, saveRecord, stoppedBySpeck, buildKilled, lastTicketCommit, buildTicket, readyOnBase, markStillReady, readyAgain, readyAfterStop, heldByStop } from './build-records.mjs';
 export { DEFAULT_RESUME_COMMAND, resumeHint, resumeCommandOf, buildKilled, buildTicket } from './build-records.mjs';
+import { machineClaims, machineBuildWait, hasBuildRoom } from './build-turns.mjs'; // 0726
 
 // ---------- run (start a non-interactive build for each ready ticket) ----------
 
@@ -136,6 +137,7 @@ function runOn(worker) {
   const launched = new Set(before); // every ticket this speck run, or the one it replaced, launched: none is launched twice
   const held = new Set(); // ready tickets whose last build speck stop ended, each reported once
   const uncommitted = new Set(); // ready tickets not yet committed as ready on the base branch, each reported once
+  const slots = machineClaims(); // 0726: machine_parallel_builds claims for builds this speck run counts
   // The builds running, and the approved tickets to ship (0193), handing back each that needs work on it (0194).
   const running = new Set(), ships = shipQueue(repo, cfg, { handBack: h => handBacks.keep(h), waiting: id => handBacks.waiting(id), stuck: x => agents.stuck(x) });
   const prs = prMode(cfg) ? prQueue(repo, cfg, { handBack: h => handBacks.keep(h), waiting: id => handBacks.waiting(id) }) : null; // 0295: in pull request mode, it opens pull requests instead of shipping; 0323: handing back a conflict
@@ -174,6 +176,7 @@ function runOn(worker) {
   const finished = (...end) => { if (kept) kept.push(end); else endOf(...end); };
   const endOf = (id, log, code, signal, failed, recordFile) => {
     running.delete(id);
+    slots.drop(id);
     fill(id);
     if (recordFile) stopPanelsOfRun(id, recordFile); if (!failed) cancels.ended(id); // 0619. 0686: a ticket its build cancelled on its branch, cancelled on the base branch too
     if (failed) console.log(`${id} build couldn't start: ${failed}`);
@@ -237,6 +240,7 @@ function runOn(worker) {
     const dir = runsDir(repo), pid = rec.pid, fresh = !launched.has(id);
     launched.add(id);
     running.add(id);
+    try { slots.adopt(typeof rec.cwd === 'string' ? rec.cwd : repo, id, pid); } catch (e) { console.error(`${id}: couldn't claim a build slot on this machine (${e.message}).`); } // 0726
     const session = rec.session ?? 'unknown';
     adopted.set(id, { pid, session, file, log: path.join(dir, `${id}.log`), seen: rec.seen === true, fresh });
     console.log(`${id} ${what} (session ${session}, process ${pid}), so speck run won't launch it. It counts towards max_parallel_builds until it stops.${buildPaused(dir, id) ? ` It's paused: run \`speck play ${id}\` to carry it on.` : ''}`);
@@ -252,6 +256,7 @@ function runOn(worker) {
       if (!b?.seen || inHand.has(t.id)) continue;
       adopted.delete(t.id);
       running.delete(t.id);
+      slots.drop(t.id);
       if (b.fresh) launched.delete(t.id);
       recordExit(t.id, b.file, null);
       console.log(`${t.id} is ${t.status}, so its build outside speck run no longer counts towards max_parallel_builds.`);
@@ -286,6 +291,7 @@ function runOn(worker) {
       b.session = fill(id)?.session ?? b.session;
       adopted.delete(id);
       running.delete(id);
+      slots.drop(id);
       stopPanelsOfRun(id, b.file); cancels.ended(id); // 0619. 0686
       if (b.seen && b.fresh) launched.delete(id);
       const byStop = stoppedBySpeck(b.file), inHand = killedInHand(id);
@@ -349,7 +355,9 @@ function runOn(worker) {
   // Starts a build in its own process group, logging to <id>.log (opened with `flags`), and keeps its run record:
   // record(pid) is its text, written with pid null before it starts and again with its pid once it has. `shown` is the
   // session it reports, and `session` the one in its environment (buildEnv): the same, unless it's a Codex build's (0289).
-  const startBuild = (id, command, cwd, shown, flags, record, session = shown) => {
+  const startBuild = (id, command, cwd, shown, flags, record, session = shown) => { // 0726: machine slot first
+    try { if (!slots.takeForStart(cwd || repo, id)) return false; }
+    catch (e) { console.log(`${id} build couldn't start: ${e.message}`); return false; }
     const argv = timedArgv(command); // 0342: a Codex build through codex-times.mjs, so its log has times
     launched.add(id); running.add(id);
     const dir = runsDir(repo);
@@ -368,11 +376,13 @@ function runOn(worker) {
     child.on('exit', (code, signal) => { if (!done) { done = true; finished(id, log, code, signal, null, recordFile); } });
     child.unref();
     if (child.pid) {
+      slots.point(id, child.pid);
       try { fs.writeFileSync(recordFile, record(child.pid)); } catch (e) {
         console.error(`${id}: couldn't save its process id in ${path.relative(repo, recordFile)} (${e.message}). The build is running as process ${child.pid}, session ${shown ?? 'not known yet'}.`);
       }
       console.log(`${flags === 'a' ? 'Resumed' : 'Launched'} ${id} (session ${shown ?? 'read from its log once Codex writes it'}). Log: ${path.relative(repo, log)}`);
     }
+    return true;
   };
 
   const limits = limitQueues({ repo, runs: () => runsDir(repo), settings, running, startBuild, resumeHint, countStop, statusOf: id => statusData(repo).tickets.find(t => t.id === id)?.status ?? null, takeOver: buildTakeOver({ repo, runs: () => runsDir(repo), startBuild, countStop, heldAgent: agent => limits.holdsAgent(agent), readyAgents: readyAgentsEvery(repo), speak: text => console.log(speckSays(text)) }) }), heldBuild = id => limits.holdsBuild(id), standIns = builderStandIn({ repo, heldAgent: agent => limits.holdsAgent(agent), readyAgents: readyAgentsEvery(repo), speak: text => console.log(speckSays(text)), fmOf: id => findTicket(repo, id).fm }); // 0622: Claude's usage limit holds every start on Claude until it resets. 0623: and a reviewer's, each build that stopped on it. 0648: or moves it to builder_bench
@@ -448,7 +458,7 @@ function runOn(worker) {
       const rec = buildKilled(runs, t.id);
       if (!rec || heldBuild(t.id)) continue;
       if (Object.hasOwn(rec, 'resumed')) { reportStopped(t.id, rec, 'speck run had already resumed it once, so it won\'t resume it again'); continue; }
-      if (now && running.size < now.max) resumeKilled(t.id, rec);
+      if (now && hasBuildRoom(running.size, now.max)) resumeKilled(t.id, rec);
     }
     handBacks.check(tickets);
     const ready = []; // 0285: why each ready ticket it doesn't launch isn't building
@@ -459,8 +469,9 @@ function runOn(worker) {
       if (own) { wait(t, own.kind, own.why); continue; }
       if (t.ship?.running === true) continue; // 0196: a ship of it is running, whatever its copy here says
       if (!now) { wait(t, 'builder', live.why()); continue; }
-      const limited = limits.heldSays(launchAgent(now.cfg, now.command, t)), on = limited && standIns.pick(now.cfg, now.command, t, running.size < now.max); if (limited && !on) { wait(t, 'limit', limited); continue; } // 0622; 0644: Codex's and Cursor's too. 0647: or on builder_bench
-      if (running.size >= now.max) { wait(t, 'slots', `all ${now.max} build slot${now.max === 1 ? '' : 's'} in use`); continue; }
+      const room = hasBuildRoom(running.size, now.max);
+      const limited = limits.heldSays(launchAgent(now.cfg, now.command, t)), on = limited && standIns.pick(now.cfg, now.command, t, room); if (limited && !on) { wait(t, 'limit', limited); continue; } // 0622; 0644: Codex's and Cursor's too. 0647: or on builder_bench
+      if (!room) { wait(t, 'slots', machineBuildWait() || `all ${now.max} build slot${now.max === 1 ? '' : 's'} in use`); continue; }
       if (on) launch({ ...t, builder: on }, true); else launch(t);
       if (!launched.has(t.id) && failed.has(t.id)) wait(t, failed.get(t.id).kind, failed.get(t.id).why);
     }
@@ -478,10 +489,9 @@ function runOn(worker) {
   watchBoard();
 }
 
-// ---------- pause and play (hold a build speck run launched, then carry it on) ----------
+// ---------- pause and play ----------
+function runRecord(repo, args, usage) { // build record in speck/.cache/runs/
 
-// The run record of a ticket's build, from the main checkout's speck/.cache/runs/, with what pause and play need.
-function runRecord(repo, args, usage) {
   if (!args[0]) throw new SpeckError(`Usage: speck ${usage} <id>`);
   if (process.platform === 'win32') throw new SpeckError(`speck ${usage} needs signals that Windows doesn't have, so it works on macOS and Linux only.`);
   const t = findTicket(repo, args[0]);
@@ -493,14 +503,13 @@ function runRecord(repo, args, usage) {
   try { rec = JSON.parse(fs.readFileSync(file, 'utf8')); } catch { /* no record */ }
   if (!rec || typeof rec !== 'object' || Array.isArray(rec)) rec = null;
   const pid = rec?.pid;
-  // Running: no exit recorded, and its pid still leads its own process group, as a build speck run launched does.
+  // Running: no exit, and its pid still leads its process group, as a build speck run launched does.
   const running = !!rec && !Object.hasOwn(rec, 'exited') && Number.isInteger(pid) && pid > 0 && pidAlive(pid)
     && processRows().some(([p, , g]) => p === pid && g === pid);
   return { id, rec, pid, running, mark: path.join(path.dirname(file), `${id}.paused`), paused: running && buildPaused(path.dirname(file), id) };
 }
 
-// Stops the build, then marks it paused. If either fails, whatever it stopped is carried on again. Returns what it
-// did, for `speck pause` to print and the panel's pause icon to answer with.
+// Stops the build, then marks it paused (panel's pause icon uses the return value).
 export function pauseBuild(repo, args) {
   const b = runRecord(repo, args, 'pause');
   if (!b.running) throw new SpeckError(`${b.id} has no running build launched by speck run, so there's nothing to pause.`);
@@ -515,9 +524,7 @@ export function pauseBuild(repo, args) {
 }
 export function cmdPause(args) { console.log(pauseBuild(findRepoRoot(), args)); }
 
-// Adds the time a build has been paused to its ticket's waited_seconds and commits that, while the build is still
-// stopped so it can't be writing the ticket too. The mark then starts from now, so a play run again after something
-// failed counts only the time since. Returns a note for play to add when the time couldn't be recorded.
+// Adds paused time to the ticket's waited_seconds while still stopped; mark restarts from now.
 function countPause(repo, b) {
   let at, t;
   try { ({ at, t } = buildTicket(repo, loadConfig(repo), b.id)); } catch { return ' Its paused time couldn\'t be added to its ticket, which wasn\'t found.'; }
@@ -530,8 +537,7 @@ function countPause(repo, b) {
   return '';
 }
 
-// Counts the paused time, carries the build on, then drops the paused mark. Until all have worked it stays marked
-// paused, so play can be run again.
+// Counts paused time, carries on, then drops the mark (stays marked until all of that works).
 export function playBuild(repo, args) {
   const b = runRecord(repo, args, 'play');
   if (!b.paused) throw new SpeckError(`${b.id} isn't paused, so there's nothing to play.`);
@@ -545,18 +551,14 @@ export function playBuild(repo, args) {
 }
 export function cmdPlay(args) { console.log(playBuild(findRepoRoot(), args)); }
 
-// ---------- stop (end a build speck run launched for good, and block its ticket) ----------
-
-// Ends the build, then blocks its ticket and commits that where the build keeps it. A <id>.stopped mark is left first,
-// so speck run knows the build ended because of this rather than reporting it as a build that stopped or failed.
-// `say` gets each line it reports, for `speck stop` to print and the panel's Stop build button to answer with.
+// ---------- stop ----------
+// Ends the build, blocks its ticket, leaves <id>.stopped first so speck run knows. `say` gets each report line.
 export function stopBuild(repo, args, say) {
   const cfg = loadConfig(repo);
   const b = runRecord(repo, args, 'stop');
   if (!b.running) throw new SpeckError(`${b.id} has no running or paused build launched by speck run, so there's nothing to stop.`);
   const stopMark = path.join(path.dirname(b.mark), `${b.id}.stopped`);
   const pausedAt = b.paused ? pausedSince(b.mark) : null;
-  // The ticket's commit as the build ends, so speck run can tell when it has been committed again since.
   const ticketCommit = () => { try { const { at, t } = buildTicket(repo, cfg, b.id); return lastTicketCommit(at, path.relative(at, t.file)); } catch { return null; } };
   const mark = { session: b.rec.session ?? null, pid: b.pid, stopped: new Date().toISOString(), ticket_commit: ticketCommit() };
   try { saveRecord(stopMark, mark); } catch (e) {
@@ -576,7 +578,6 @@ export function stopBuild(repo, args, say) {
     throw new SpeckError(`Couldn't end all of ${b.id}'s build: process${left.length === 1 ? '' : 'es'} ${left.join(', ')} ${left.length === 1 ? 'is' : 'are'} still running. End ${left.length === 1 ? 'it' : 'them'} with \`kill -9 ${left.join(' ')}\`. Its ticket is unchanged.`);
   fs.rmSync(b.mark, { force: true });
   say(`${b.id} stopped (session ${b.rec.session ?? 'unknown'}).`);
-
   const now = ticketCommit();
   if (now !== mark.ticket_commit) try { saveRecord(stopMark, { ...mark, ticket_commit: now }); } catch { /* the earlier commit stays: it's still held */ }
   const { at, t } = buildTicket(repo, cfg, b.id);
@@ -584,16 +585,14 @@ export function stopBuild(repo, args, say) {
   const d = new Date();
   const question = `Stopped by you on ${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}.`;
   const comments = old => (old.match(/<!--[\s\S]*?-->/g) || []).map(c => `${c}\n`).join('');
-  // A pause ends where the block begins: its time is added, and the blocked time starts now (0166).
-  let text = waitFields(setField(addPaused(t, pausedAt), 'status', 'blocked'), t.fm.status, 'blocked');
+  let text = waitFields(setField(addPaused(t, pausedAt), 'status', 'blocked'), t.fm.status, 'blocked'); // 0166: pause ends where the block begins
   text = /^## Blocked question[ \t]*$/m.test(text) ? replaceSection(text, 'Blocked question', old => `${comments(old)}${question}`, t.file)
     : `${text.replace(/\s*$/, '')}\n\n## Blocked question\n${question}\n`;
   fs.writeFileSync(t.file, syncHeader(text));
   const commit = commitTicketOnly(at, t.file, t.raw, `speck(${b.id}): stopped`);
   if (commit.status !== 0)
     throw new SpeckError(`${b.id}'s build is stopped, but its ticket couldn't be committed in ${at}, so it's unchanged:\n${(commit.stderr || commit.stdout || '').trim().split('\n').slice(-5).join('\n')}\nFix that, then run \`speck set ${b.id} status blocked\` there and commit it.`);
-  // No branch: the build hadn't run speck start, so there's nothing kept, and speck start starts it again (0219).
-  const branched = sh('git', ['for-each-ref', '--format=%(refname)', `refs/heads/${cfg.branch_prefix}${b.id}-*`], { cwd: repo }).stdout.trim();
+  const branched = sh('git', ['for-each-ref', '--format=%(refname)', `refs/heads/${cfg.branch_prefix}${b.id}-*`], { cwd: repo }).stdout.trim(); // 0219: no branch yet
   say(branched ? `${b.id} is blocked, with its branch and work kept. Resume its session, or run /speck-build ${b.id}, to carry on.`
     : `${b.id} is blocked. It was stopped before it started its ticket, so it has no branch or work yet. /speck-build ${b.id} starts it again.`);
 }

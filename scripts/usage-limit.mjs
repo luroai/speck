@@ -8,6 +8,7 @@ import { saveRecord } from './build-records.mjs';
 import { resumeFor, resumedRecord } from './hand-back.mjs';
 import { configBuilder } from './build-model.mjs';
 import { codexLimitInLog, cursorLimitInLog } from './agent-limit.mjs';
+import { hasBuildRoom } from './build-turns.mjs'; // 0726
 
 export { keepUsageOfLog } from './agent-usage.mjs'; // 0642: for the watch agent's runs
 
@@ -167,7 +168,7 @@ export function usageLimitQueue({ repo, runs, settings, running, startBuild, res
     for (const id of [...s.builds]) {
       const t = tickets.find(x => String(x.id) === id), rec = readRec(path.join(runs(), `${id}.json`)), current = settings();
       if (!t || !inHand(t.status, rec) || t.build_running || running.has(id) || !rec || !Object.hasOwn(rec, 'exited')) continue;
-      if (!current || running.size >= current.max) return;
+      if (!current || !hasBuildRoom(running.size, current.max)) return;
       const start = takeOver(agent, id, rec, current, s);
       if (!start) continue;
       s.builds = s.builds.filter(x => x !== id);
@@ -189,7 +190,7 @@ export function usageLimitQueue({ repo, runs, settings, running, startBuild, res
       const t = tickets.find(x => String(x.id) === id), rec = readRec(path.join(runs(), `${id}.json`));
       const movedOn = !t || !inHand(t.status, rec) || t.build_running || running.has(id) || !rec || !Object.hasOwn(rec, 'exited');
       const current = movedOn ? null : settings();
-      if (!movedOn && (!current || running.size >= current.max)) return;
+      if (!movedOn && (!current || !hasBuildRoom(running.size, current.max))) return;
       s.builds = s.builds.filter(x => x !== id);
       if (!save(agent, s)) return; // saved before it starts, so it's never resumed twice
       if (!movedOn) resume(agent, id, rec, current);

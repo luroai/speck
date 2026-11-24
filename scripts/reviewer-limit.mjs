@@ -10,6 +10,7 @@ import { mainCheckout } from './output.mjs';
 import { GRACE_MS, RETRY_MS, FURTHEST_MS, clock, carryOn, usageLimitQueue, readLimit } from './usage-limit.mjs';
 import { keepBuildUsage } from './agent-usage.mjs';
 import { reviewerRefused, resetIn } from './limit-words.mjs';
+import { hasBuildRoom } from './build-turns.mjs'; // 0726
 export { reviewerRefused, resetIn };
 
 export const REVIEWER_LIMITED = 18;
@@ -180,7 +181,7 @@ export function reviewerLimitQueue({ repo, runs, settings, running, startBuild, 
       if (movedOn) { drop(s.id); continue; }
       if (heldBuild(s.id)) continue;
       const current = settings();
-      if (!current || running.size >= current.max) return;
+      if (!current || !hasBuildRoom(running.size, current.max)) return;
       if (!drop(s.id)) return;
       const who = typeof s.stand_in === 'string' ? `The usage limit of ${s.stand_in}, standing in for the ${s.reviewer} reviewer,` : `The ${s.reviewer} reviewer's usage limit`; // 0693
       carryOn({ repo, runs, startBuild, resumeHint, countStop, now, speak }, s.id, rec, current, who,

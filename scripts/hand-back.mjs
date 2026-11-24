@@ -15,6 +15,7 @@ import { knownProviders } from './custom-providers.mjs';
 import { providerNamed } from './provider-review.mjs';
 import { providerStartWords } from './provider-build.mjs';
 import { limitWaiting } from './usage-limit.mjs';
+import { hasBuildRoom } from './build-turns.mjs'; // 0726
 
 // What a killed build is told when speck run resumes it.
 const resumeMessage = (id, skill = '/speck-build') => `The build of ticket ${id} was stopped unexpectedly before it finished, and speck run has resumed it. Carry on with ${skill} ${id} from where you left off.`;
@@ -147,7 +148,7 @@ export function handBackQueue({ repo, cfg, words, max, settings = () => ({ cfg, 
       if (!p.live) { const { hand_back: _, ...kept } = p.rec; try { saveRecord(p.file, kept); } catch { /* tried again next check */ } continue; }
       if (shipState(runs(), t.id)?.running) continue;
       const s = settings();
-      if (!s || running.size >= s.max) return;
+      if (!s || !hasBuildRoom(running.size, s.max)) return;
       resumeHandBack(t.id, p.file, p.rec, s);
     }
   };
