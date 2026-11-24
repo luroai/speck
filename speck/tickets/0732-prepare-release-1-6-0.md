@@ -1,7 +1,7 @@
 ---
 id: "0732"
 title: "Prepare release 1.6.0"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -21,7 +21,7 @@ created: 2026-11-24
 ---
 # 0732 · Prepare release 1.6.0
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Since 1.5.0, speck's Claude models are named properly (0700), and 0701 to 0731 make the panel look and work like part of Cursor (Settings laid out like Cursor's and saving each change straight away, a soft highlight for chained tickets, Set ready only on an open ticket), add Try it from a review pack, a build limit across projects and a usage warning on the bridge, and fix stalls around tickets built on others. Anyone following the setup prompt, or updating speck in a project, still gets 1.5.0.
