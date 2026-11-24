@@ -41,6 +41,7 @@ A bare main checkout shows under Needs you, in the panel and `speck status`, wit
 
 ## Notes
 - `bareMain()` in `scripts/bare-main.mjs` (0740).
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
