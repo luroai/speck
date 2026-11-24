@@ -128,6 +128,21 @@ function holders(dir, max) {
   return out;
 }
 
+// 0744: how long `speck test` waits for a turn before it gives up its place in the queue, so it ends before a builder's
+// 10-minute shell limit stops it, and the command to run again. Only `speck test` sets it: ship and the full suite wait.
+export const GAVE_UP_EXIT = 19;
+const GIVE_UP_MINUTES = 8;
+let giveUp = null;
+// SPECK_TURN_WAIT_MS sets the wait directly, for speck's own tests, which can't wait minutes.
+export function turnWaitMs() {
+  const ms = Number(process.env.SPECK_TURN_WAIT_MS);
+  return Number.isSafeInteger(ms) && ms > 0 ? ms : GIVE_UP_MINUTES * 60 * 1000;
+}
+const gaveUp = () => {
+  const { ms } = giveUp, minutes = ms / 60000, seconds = Math.ceil(ms / 1000);
+  return `Gave up this run's place in the queue after waiting ${Number.isInteger(minutes) ? `${minutes} minute${minutes === 1 ? '' : 's'}` : `${seconds} second${seconds === 1 ? '' : 's'}`} for a turn to run the tests, so a shell's time limit doesn't stop it partway. No tests were run. Run the same command again, \`${giveUp.command}\`, to wait for the next free turn.`;
+};
+
 // The turn this process holds now, if any, as its folder and its run's files: a run started while it holds one runs
 // in it (0239). 0678: and the folder of the turn it holds on this machine, if any.
 let holding = null, machineHolding = '';
@@ -181,6 +196,7 @@ export function inTurn(repo, cfg, fn, { lane = '' } = {}) {
   const slots = lane ? [lane] : [...Array(max).keys()], mslots = [...Array(mmax ?? 0).keys()];
   const mine = claimFile(dir, run, text), mmine = mmax ? claimFile(mdir, run, mtext) : '';
   let lock = null, mlock = null, saidRepo = false, saidMachine = false;
+  const giveUpAt = giveUp ? Date.now() + giveUp.ms : Infinity;
   try {
     for (;;) {
       lock = freeTurn(dir, slots, mine);
@@ -201,6 +217,7 @@ export function inTurn(repo, cfg, fn, { lane = '' } = {}) {
         console.log(`Waiting for a turn to run the tests: max_parallel_tests is ${max}, and ${going.length === 1 ? 'a run is' : `${going.length || max} runs are`} already going${going.length ? ` (${going.join('; ')})` : ''}. This run starts when one ends.`);
         saidRepo = true;
       }
+      if (Date.now() >= giveUpAt) throw new SpeckError(gaveUp(), GAVE_UP_EXIT); // 0744: holds no turn here
       sleep(POLL_MS * (0.5 + Math.random())); // spread out, so runs that backed off together don't clash again
     }
   } catch (e) { if (lock && read(lock) === text) forget(lock, text); throw e; }
@@ -257,6 +274,12 @@ const printNext = files => console.log(`${NEXT_RUN}speck test --files ${files.ma
 // fails with an exit code, it ends with a line giving the `speck test --files` command to run next (0676), unless its
 // output doesn't say which file each failing test is in. A run that stalled or was stopped gets no line.
 export function cmdTest(args) {
+  // 0744: only while this command runs, as another command may run later in the same process (0231).
+  giveUp = { ms: turnWaitMs(), command: ['speck', 'test', ...args].map(a => /^[\w./@%+=:,-]+$/.test(a) ? a : shellWord(a)).join(' ') };
+  try { return testCommand(args); } finally { giveUp = null; }
+}
+
+function testCommand(args) {
   // 0677: --fresh comes first, or just after --files or --related.
   const listed = a => a === '--files' || a === '--related';
   const at = args[0] === '--fresh' && listed(args[1]) ? 0 : listed(args[0]) && args[1] === '--fresh' ? 1 : -1;
