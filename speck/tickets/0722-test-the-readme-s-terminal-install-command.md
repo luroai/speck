@@ -1,7 +1,7 @@
 ---
 id: "0722"
 title: "Test the README's terminal install command"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: "speck/ideas/done/2026-10-24-test-the-readme-s-terminal-install-command.
 after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T14:40:52.880Z"
+approved: "2026-11-24T15:14:15.218Z"
 
 ---
 # 0722 · Test the README's terminal install command
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The README's command to run in a terminal (under Without an agent) isn't tested, since 0491 kept only four README facts under test. A wrong command there breaks installs for anyone who skips the setup prompt.
@@ -51,9 +52,16 @@ The command under Without an agent in the README is now checked so it stays the 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The matcher compares package references rather than complete commands.
+Round 2 (codex): changes requested.
+Round 3 (codex): approve.
 
 ## Delivery log
+- Review rounds: 3
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 322,933
+- Elapsed since build started: 33 min
+- Changed lines: 10 (limit 5000)
 Follow-ups:
 - Fix tmp-cleanup for Node's default reporter (`ℹ fail 2` vs `# fail 2`) → inbox `speck/ideas/2026-11-24-fix-tmp-cleanup-for-nodes-default-reporter.md`
 
