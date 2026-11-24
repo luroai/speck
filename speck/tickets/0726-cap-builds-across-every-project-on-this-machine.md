@@ -42,7 +42,7 @@ A home-folder setting caps how many builds go at once across every project on th
 - The rest of one panel for every project, which stays in the idea.
 
 ## Notes
-- Failing before this build: none (from the recorded full-suite result). Separately, test/tmp-cleanup.test.mjs AC1 fails under `node --test` on Node 24, which no longer emits TAP `# fail 2` for a piped child; that check is unchanged here.
+- Failing before this build: test/tmp-cleanup.test.mjs AC1 (Node 24 no longer emits TAP `# fail 2` for a piped `node --test` child; also breaks several 0676 location parses the same way). Unchanged here. The recorded full-suite result was pass.
 - Self-check: no changes (invalid home values refuse; unset leaves projects alone; a freed claim opens a slot again; adopted builds force-claim so they still count)
 - Follow 0678's pattern for test turns: `scripts/home-settings.mjs` (`HOME_SETTINGS`) and its machine-wide turn-taking.
 - Shares `scripts/home-settings.mjs` with the ticket that shows the machine-wide test limit in Settings; left unchained, as one adds a setting and the other adds the panel's save path.
