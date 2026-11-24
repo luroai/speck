@@ -1,7 +1,7 @@
 ---
 id: "0734"
 title: "Fix the full suite failing on main at 239b16e"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -21,11 +21,12 @@ started: "2026-11-24T13:27:45.922Z"
 blocked_at: ""
 waited_seconds: 41
 approved: "2026-11-24T14:40:00.420Z"
+finished: "2026-11-24T14:51:44.087Z"
 
 ---
 # 0734 · Fix the full suite failing on main at 239b16e
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The full suite fails on main at commit 239b16e (239b16e6fde6e470eed2ae32434e151fef98fed1). Failing tests:
