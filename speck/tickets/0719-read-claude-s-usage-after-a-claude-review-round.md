@@ -8,7 +8,7 @@ risk: low                # low | high (auth, payments, data deletion, migrations
 kind: code               # code | task (what the build does: changes the project's code, or does a task and leaves its result in outputs/)
 type: ""                 # blank | bug (a ticket that fixes a defect) | fix (fixes a broken base branch, at priority 0)
 level: ""                # blank: no level, so the settings decide. Otherwise one of the levels in speck/config.yml, such as quick, balanced or deep
-builder: ""              # blank: the builder your settings give when the build starts
+builder: cursor              # blank: the builder your settings give when the build starts
 builder_model: ""        # blank: your settings' builder_model, given only to the builder they name
 builder_effort: ""       # blank: your settings' builder_effort. Otherwise low | medium | high | xhigh | max
 reviewer: ""             # blank: the reviewer your settings give when each review round starts
@@ -43,6 +43,7 @@ After a review round on Claude Code, speck keeps Claude's latest usage reading, 
 - `CLAUDE_READ_ONLY` in `scripts/reviewers.mjs` uses `--output-format json`; `keepUsage` passes the output to `claudeUsageInLog` (`scripts/agent-usage.mjs`), which looks for `rate_limit_event` lines. `verdictFromOutput`/`jsonIn` parse the whole output as one JSON value.
 - Checked 2026-11-24: `claude -p --output-format stream-json --verbose` prints `rate_limit_event` lines and ends with a `type: "result"` line carrying `session_id`, `total_cost_usd` and `usage` (Claude Code 2.1.331, `claude --help` and a saved build log).
 - Failing before this build: none
+- Builder: Cursor took over this build from Claude at 2026-11-24 14:40 UTC, because Claude's usage limit was reached until 2026-11-24 16:10 UTC, more than an hour away.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
