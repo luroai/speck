@@ -45,6 +45,7 @@ A hovered ticket and the tickets chained to it are lit with the same soft raised
 - Raised by the user on 2026-11-24 from a screenshot of the panel in Cursor's browser pane: three chained drafts lit as black boxes. It must keep looking like part of Cursor.
 - The ring is `.item.hl, .q.hl` and `.item.row.open.hl::after` in `templates/panel-cards.css`, set by `lightUp` in `templates/panel.js`; the tap flash is `.item.flash`, `.q.flash` and `@keyframes flash`, with reduced-motion rules near the end of the file.
 - Waits for 0701, which gives a hovered closed row its 12 px of fill.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
