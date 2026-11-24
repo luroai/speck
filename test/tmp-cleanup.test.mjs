@@ -9,6 +9,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const HELPER = pathToFileURL(path.join(HERE, 'support', 'tmp.mjs')).href;
+const GIT_ENV = pathToFileURL(path.join(HERE, 'support', 'git-env.mjs')).href; // 0740: initBare
 
 // A stand-in for the system temporary folder, and a test file that makes repos and fake tool folders in it.
 const sandbox = () => {
@@ -19,6 +20,7 @@ const sandbox = () => {
   return { tmp, code, env };
 };
 const fixtureHead = `import ${JSON.stringify(HELPER)};
+import { initBare } from ${JSON.stringify(GIT_ENV)};
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -40,7 +42,7 @@ test('AC1 AC2: a run with passing and failing tests leaves nothing in the tempor
   fs.writeFileSync(file, fixtureHead + `
 test('passes', () => { makeRepo('speck'); });
 test('fails', () => { makeRepo('speck-ship'); assert.fail('on purpose'); });
-test('throws in a child process', () => { makeRepo('speck-remote'); spawnSync('git', ['init', '-q', '--bare', fs.mkdtempSync(path.join(os.tmpdir(), 'speck-remote-'))]); throw new Error('boom'); });
+test('throws in a child process', () => { makeRepo('speck-remote'); initBare(fs.mkdtempSync(path.join(os.tmpdir(), 'speck-remote-'))); throw new Error('boom'); });
 `);
   const r = spawnSync(process.execPath, ['--test', file], { env: s.env, encoding: 'utf8' });
   assert.equal(r.status, 1, 'the failing tests fail the run');

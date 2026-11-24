@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { copied } from './copy.mjs';
 import { speck } from './cli.mjs';
 import { keepLatestReceipt } from './receipts.mjs';
+import { initBare } from './git-env.mjs';
 
 export const CLI = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', 'scripts', 'speck.mjs');
 export const env = { ...process.env, GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@t', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@t' };
@@ -83,8 +84,7 @@ function buildShipRepo(dir, test) {
 
 // Gives main a bare remote, then pushes a commit to it from elsewhere that writes `file`.
 export function remoteMoves(r, file, content) {
-  const bare = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-remote-'));
-  gIn(bare, 'init', '-q', '--bare', '-b', 'main');
+  const bare = initBare(fs.mkdtempSync(path.join(os.tmpdir(), 'speck-remote-')));
   r.g('remote', 'add', 'origin', bare);
   r.g('push', '-q', '-u', 'origin', 'main');
   const other = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-other-'));

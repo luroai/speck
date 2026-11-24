@@ -6,6 +6,9 @@
 // started (see reap.mjs). A run that is killed outright leaves at most this folder
 // with the files of the test that was running, and the test helpers that wait on a
 // file in it end by themselves once it's removed.
+// 0740: before anything else, git-env.mjs takes the variables that point git at a repository, such as GIT_DIR, out
+// of the process's environment, so every git command a test runs goes to the folder it's run in.
+import './git-env.mjs';
 import { after, afterEach, beforeEach } from 'node:test';
 import fs from 'node:fs';
 import os from 'node:os';

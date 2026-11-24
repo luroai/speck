@@ -8,6 +8,7 @@ import { spawnSync } from 'node:child_process';
 import { parseYaml, parseTicket } from '../scripts/speck.mjs';
 import { ROOT, CLI, good, gitEnv, approveVerdict, shipRepo, startRepo } from './support/speck.mjs';
 import { keepLatestReceipt } from './support/receipts.mjs';
+import { initBare } from './support/git-env.mjs';
 
 function worktreeShipRepo({ addFile = false, autoShip = false, remote = false, test = 'true' } = {}) {
   const r = shipRepo({ approve: false, test });
@@ -28,8 +29,7 @@ function worktreeShipRepo({ addFile = false, autoShip = false, remote = false, t
   r.g('add', '-A'); r.g('commit', '-qm', 'approved');
   let bare = null;
   if (remote) {
-    bare = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-remote-'));
-    gIn(bare, 'init', '-q', '--bare', '-b', 'main');
+    bare = initBare(fs.mkdtempSync(path.join(os.tmpdir(), 'speck-remote-')));
     r.g('remote', 'add', 'origin', bare);
     r.g('push', '-q', '-u', 'origin', 'main');
     r.g('push', '-q', '-u', 'origin', 'speck/0001-export-bookings');

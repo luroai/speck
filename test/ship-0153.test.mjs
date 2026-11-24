@@ -9,6 +9,7 @@ import { spawn } from 'node:child_process';
 import { CLI, env, gIn, runIn, shipRepo } from './support/ship.mjs';
 import { freePort, startPanel, stop, request, post, tokenOf } from './support/panel.mjs';
 import { gated, gateDir, waitFor } from './support/gate.mjs';
+import { initBare } from './support/git-env.mjs';
 
 // Sets `key: value` in speck/config.yml on both branches and commits it, so both checkouts stay clean.
 const configure = (r, key, value) => {
@@ -259,8 +260,7 @@ test('0153 AC2: when the record can\'t be written, speck ship says so plainly an
 test('0153 AC1: a ship held up in its push still shows as running once the ticket is done', async () => {
   const gate = path.join(gateDir(), 'go');
   const r = shipRepo();
-  const bare = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-remote-'));
-  gIn(bare, 'init', '-q', '--bare', '-b', 'main');
+  const bare = initBare(fs.mkdtempSync(path.join(os.tmpdir(), 'speck-remote-')));
   r.g('remote', 'add', 'origin', bare);
   r.g('push', '-q', '-u', 'origin', 'main');
   fs.writeFileSync(path.join(bare, 'hooks', 'pre-receive'), `#!/bin/sh\n${waitFor(gate)}\n`, { mode: 0o755 });

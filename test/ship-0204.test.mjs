@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { shipRepo, gIn } from './support/ship.mjs';
+import { initBare } from './support/git-env.mjs';
 import { T, fakePage, round, panelModel, shippedRows } from './support/panel.mjs';
 import { panelBoard } from '../scripts/board-feed.mjs';
 
@@ -12,8 +13,7 @@ import { panelBoard } from '../scripts/board-feed.mjs';
 
 // Gives main a bare remote, pushed to once, whose pre-receive hook then refuses every push, until `allow()`.
 function refusingRemote(r) {
-  const bare = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-remote-'));
-  gIn(bare, 'init', '-q', '--bare', '-b', 'main');
+  const bare = initBare(fs.mkdtempSync(path.join(os.tmpdir(), 'speck-remote-')));
   r.g('remote', 'add', 'origin', bare);
   r.g('push', '-q', '-u', 'origin', 'main');
   const hook = path.join(bare, 'hooks', 'pre-receive');
