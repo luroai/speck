@@ -61,7 +61,7 @@ test('0368 AC1: Settings is a pop-up over the whole window, its settings in a ce
     assert.ok(rules(sel).length >= 1, `${sel} is styled`);
     assert.ok(rules(sel).every(r => rules(shared).includes(r)), `${sel} shares ${shared}'s rules`);
   }
-  assert.ok(rules('#settings > .savebar').some(r => /margin: 16px auto 0/.test(r)), 'Save stays in the column');
+  // 0731: Save, which stayed in the column, is gone
 });
 
 test('0368 AC1: pressing Settings opens the pop-up as a modal dialog with a Close button', async () => {
@@ -99,13 +99,12 @@ for (const [how, close] of Object.entries(WAYS)) {
     assert.equal(pop(p).hidden, true, 'closed');
     assert.equal(p.focused(), p.byId('settings-open'));
   });
-  test(`0368 AC3: ${how} with a change not saved asks first`, async () => {
+  test(`0368 AC3, since 0731: ${how} just after a change closes it too, asking nothing`, async () => {
     const p = await opened();
     changeTo(p, 'limits.max_review_rounds', '4');
     close(p);
     await p.settle();
-    assert.equal(p.byId('settings-unsaved').hidden, false, 'asks');
-    assert.equal(pop(p).hidden, false, 'still open behind the question');
+    assert.equal(pop(p).hidden, true, 'closed');
   });
 }
 
@@ -141,14 +140,14 @@ test('0368 AC3: a drag from the column, such as selecting a setting\'s text, end
 
 // ---------- AC4: the same view as the side pane showed ----------
 
-test('0368 AC4: the pop-up shows the groups, controls, this-machine choices and Save, as the side pane did', async () => {
+test('0368 AC4: the pop-up shows the groups, controls and this-machine choices, as the side pane did (0731: and no Save)', async () => {
   const p = await opened();
   const kids = pop(p).children;
   const titles = kids.filter(n => /\bsgroup\b/.test(n.className || '')).map(g => p.all(g).find(n => n.tagName === 'h4')?.textContent);
   // 0652: no empty engineering manager group any more: its settings are on its card in Your team, and this view has none
   for (const t of ['Shipping', 'How much runs at once', 'Ticket size limits']) assert.ok(titles.includes(t), `the ${t} group`);
   assert.ok(p.all(pop(p)).some(n => n.tagName === 'select' || n.tagName === 'input'), 'controls');
-  assert.ok(p.all(pop(p)).some(n => n.tagName === 'button' && /\bsave-all\b/.test(n.className || '')), 'Save');
+  assert.ok(!p.all(pop(p)).some(n => n.tagName === 'button' && /\bsave-all\b/.test(n.className || '')), '0731: no Save');
   assert.match(pop(p).textContent, /What max_parallel_builds does\./, '0397: where a change is saved is said in the explanation, not marked');
 });
 

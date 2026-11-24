@@ -2,7 +2,7 @@ import './support/tmp.mjs'; // first: sends every temporary folder into one per-
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fakePage, deferred } from './support/panel.mjs';
-import { openSettings, rowOf, controlOf, changeTo, tick, saveButton, posted } from './support/settings.mjs';
+import { openSettings, rowOf, controlOf, changeTo, tick, posted } from './support/settings.mjs';
 import { CLAUDE_MODELS } from '../scripts/settings.mjs';
 
 // ---------- 0370: keep Settings still when a setting changes ----------
@@ -19,13 +19,14 @@ function page(views, { saves = [], models = MODELS } = {}) {
   const fetch = async (url, opts = {}) => {
     const u = String(url), method = (opts.method || 'GET').toUpperCase();
     calls.push({ url: u, method, headers: opts.headers || {} });
+    if (method === 'POST' && !saves.length) return new Promise(() => {}); // 0731: a save given no answer stays on its way
     let body = method === 'POST' ? saves.shift() : u.startsWith('/api/agent-models') ? models[new URLSearchParams(u.split('?')[1]).get('agent')]
       : u.startsWith('/api/settings') ? views.shift() : { tickets: [], ideas: [], resume_command: '' };
     if (body && body.then) body = await body;
     if (body && body.status) return { ok: false, status: body.status, json: async () => body.body };
     return { ok: true, status: 200, json: async () => body };
   };
-  const p = fakePage([], { fetch });
+  const p = fakePage([], { fetch, confirm: () => true }); // 0731: a change that asks first is confirmed, and saves at once
   p.settingsCalls = calls;
   return p;
 }
@@ -125,17 +126,15 @@ test('0370 AC1: models read after a change redraw only the settings that show th
 test('0370 AC2: what a change must show still updates', async () => {
   const p = page([view({ builder: 'claude', reviewer: 'codex', foreman: 'claude' })]);
   await openSettings(p);
-  assert.equal(saveButton(p).disabled, true);
-  // The builder: the line under it, Save, and its models and the Foreman's (which follows the builder).
+  // The builder: the line under it, while its save is on its way (0731), and its models and the Foreman's (which follows the builder).
   changeTo(p, 'builder', 'codex');
   await p.settle();
   assert.ok(said(p, 'builder').some(t => /Saving changes who builds every ticket that doesn't name its own builder/.test(t)), said(p, 'builder').join(' | '));
-  assert.equal(saveButton(p).disabled, false);
+  assert.deepEqual(posted(p), ['/api/settings/save?repo%3Abuilder=codex'], '0731: saved at once');
   assert.deepEqual(options(p, 'builder_model'), ['', 'gpt-new', 'gpt-old']);
   changeTo(p, 'builder', 'claude');
   await p.settle();
   assert.ok(!said(p, 'builder').some(t => /names one keeps it/.test(t)));
-  assert.equal(saveButton(p).disabled, true);
   // The reviewer and its model: the model and effort lists.
   changeTo(p, 'reviewer', 'cursor');
   await p.settle();
@@ -156,33 +155,24 @@ test('0370 AC2: what a change must show still updates', async () => {
   assert.equal(asks(), 0);
 });
 
-test('0370 AC3: saving, a refusal and the question on closing with unsaved changes work after a change redraws rows', async () => {
+test('0370 AC3: saving and a refusal work after a change redraws rows, and closing asks nothing (0731)', async () => {
   // Saved: one request with the change, then the view reads the settings again.
   let p = page([view(), view({ builder: 'cursor' })], { saves: [{ saved: true }] });
   await openSettings(p);
   changeTo(p, 'builder', 'cursor');
   await p.settle();
-  p.press(saveButton(p));
   await p.settle();
   assert.deepEqual(posted(p), ['/api/settings/save?repo%3Abuilder=cursor']);
   assert.equal(controlOf(p, 'builder').value, 'cursor');
-  assert.equal(saveButton(p).disabled, true);
-  // Refused: the reason beside the setting, with the change kept.
+  // 0731: refused: the reason beside the setting, which goes back to the saved value.
   const why = "reviewer can't be cursor here.";
   p = page([view()], { saves: [{ status: 422, body: { error: why, refused: { reviewer: why } } }] });
   await openSettings(p);
   changeTo(p, 'reviewer', 'cursor');
   await p.settle();
-  p.press(saveButton(p));
-  await p.settle();
   assert.ok(said(p, 'reviewer').includes(why), said(p, 'reviewer').join(' | '));
-  assert.equal(controlOf(p, 'reviewer').value, 'cursor');
-  // Closing with the change unsaved asks first, and Keep editing leaves it as it was.
+  assert.equal(controlOf(p, 'reviewer').value, 'codex');
+  // Closing asks nothing.
   p.press(p.all(p.byId('settings')).find(n => n.tagName === 'button' && n.className === 'close'));
-  assert.equal(p.byId('settings-unsaved').hidden, false);
-  assert.match(p.byId('settings-unsaved').textContent, /unsaved changes/i);
-  p.press(p.all(p.byId('settings-unsaved')).find(n => n.tagName === 'button' && n.textContent === 'Keep editing'));
-  assert.equal(p.byId('settings-unsaved').hidden, true);
-  assert.equal(p.byId('settings').hidden, false);
-  assert.equal(controlOf(p, 'reviewer').value, 'cursor');
+  assert.equal(p.byId('settings').hidden, true);
 });

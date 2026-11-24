@@ -49,6 +49,7 @@ Each setting saves the moment it changes, and Settings has no Save button and no
 - Today: one Save (`save-all`) posts every change to `/api/settings/save` (`templates/panel-settings.js`, `scripts/settings.mjs` `panelSaveRequest`/`checkChange`), and `settings-unsaved` asks on closing. Levels save straight away through `/api/levels/…` (`levelAction`), which this can follow.
 - A change made while an earlier save of the same setting is under way waits for it, so saves land in the order made.
 - Failing before this build: not checked
+- Self-check: a box drawn again while typed in (after another setting's save) had no change event to send when left, so leaving it now saves too (blur), with a test; the save queue is reset when the view closes, so a save still on its way from a closed view doesn't hold up the next one's.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

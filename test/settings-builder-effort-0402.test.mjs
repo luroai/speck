@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { panelRepo, gitEnv } from './support/panel.mjs';
-import { settingsPage, openSettings, rowOf, controlOf, changeTo, saveButton, posted } from './support/settings.mjs';
+import { settingsPage, openSettings, rowOf, controlOf, changeTo, posted } from './support/settings.mjs';
 import { panelSettings, panelSaveRequest, CLAUDE_MODELS, EDITABLE } from '../scripts/settings.mjs';
 import { machineConfig, MACHINE_SETTINGS } from '../scripts/machine.mjs';
 import { checkConfigValue } from '../scripts/config.mjs';
@@ -99,7 +99,6 @@ test('0402 AC2: the Settings view saves the builder\'s effort for this machine',
   const p = settingsPage([view({ builder: 'codex' }), view({ builder: 'codex', builder_effort: 'ultra' })], [{ ok: true, changed: ['builder_effort'] }]);
   await openSettings(p);
   changeTo(p, 'builder_effort', 'ultra');
-  p.press(saveButton(p));
   await p.settle();
   const q = saveQuery(p);
   assert.equal(q.get('machine:builder_effort'), 'ultra');

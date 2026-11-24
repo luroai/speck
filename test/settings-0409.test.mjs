@@ -2,7 +2,7 @@ import './support/tmp.mjs'; // first: sends every temporary folder into one per-
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { deferred } from './support/panel.mjs';
-import { settingsPage, openSettings, controlOf, changeTo, saveButton } from './support/settings.mjs';
+import { settingsPage, openSettings, controlOf, changeTo } from './support/settings.mjs';
 import { CLAUDE_MODELS } from '../scripts/settings.mjs';
 
 // ---------- 0409: Settings opens straight onto its groups, with no full-view loading line ----------
@@ -95,7 +95,6 @@ test('0409 AC3: after a Save, the groups stay with the last lists while they are
   await p.settle();
   const seen = paints(p);
   changeTo(p, 'max_parallel_builds', '3');
-  p.press(saveButton(p));
   await p.settle();
   assert.equal(pane(p).hidden, false);
   assert.ok(groupTitles(p).includes('Building and reviewing'), 'the groups stay while the settings are read again');

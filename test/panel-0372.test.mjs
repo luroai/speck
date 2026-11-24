@@ -6,7 +6,7 @@ import { page, findChrome, browserPage, full, T, styles } from './support/panel.
 import fs from 'node:fs';
 import { sharedPanel } from './support/shared-panel.mjs';
 import { reload } from './support/reload.mjs';
-import { settingsPage, openSettings, saveButton, posted } from './support/settings.mjs';
+import { settingsPage, openSettings, posted } from './support/settings.mjs';
 
 // ---------- 0372: move the light/dark control into Settings ----------
 
@@ -122,16 +122,15 @@ test('0372 AC3: storage the browser refuses still switches the look', async () =
   assert.equal(root.dataset.theme, 'dark');
 });
 
-test('0372 AC3: the look is not sent to the server, Save stays off, and Close asks nothing', async () => {
+test('0372 AC3: the look is not sent to the server, and Close asks nothing', async () => {
   const { p } = await lookPage({ theme: 'light' });
   pick(p, 'dark');
   await p.settle();
   assert.deepEqual(posted(p), [], 'nothing posted');
-  assert.equal(saveButton(p).disabled, true, 'no unsaved change');
+  // 0731: there's no Save to stay off
   const close = p.all(p.byId('settings')).find(n => n.tagName === 'button' && n.className === 'close');
   p.press(close);
   await p.settle();
-  assert.equal(p.byId('settings-unsaved').hidden, true, 'no question about unsaved changes');
   assert.equal(p.byId('settings').hidden, true, 'Settings closed');
   assert.ok(!p.settingsCalls.some(c => /look|theme/.test(c.url)), 'no request names the look');
 });

@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { panelRepo, headOf, gitEnv } from './support/panel.mjs';
-import { settingsPage, openSettings, saveButton, changeTo, posted } from './support/settings.mjs';
+import { settingsPage, openSettings, changeTo, posted } from './support/settings.mjs';
 import { fakeAgents, READY } from './support/agents.mjs';
 import { speck } from './support/cli.mjs';
 import { panelSaveSettings, panelSaveRequestAsync } from '../scripts/settings.mjs';
@@ -84,7 +84,6 @@ test('0311 AC1: the view says builder_model was cleared, and why', async () => {
   await p.settle();
   await openSettings(p);
   changeTo(p, 'builder', 'codex');
-  p.press(saveButton(p));
   await p.settle();
   assert.equal(posted(p).length, 1);
   const said = p.all(p.byId('settings')).find(n => n.tagName === 'p' && /builder_model/.test(n.textContent) && /cleared/i.test(n.textContent));

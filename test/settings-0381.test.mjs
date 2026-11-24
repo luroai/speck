@@ -2,7 +2,7 @@ import './support/tmp.mjs'; // first: sends every temporary folder into one per-
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fakePage, deferred } from './support/panel.mjs';
-import { openSettings, rowOf, controlOf, changeTo, saveButton, posted } from './support/settings.mjs';
+import { openSettings, rowOf, controlOf, changeTo, posted } from './support/settings.mjs';
 import { CLAUDE_MODELS } from '../scripts/settings.mjs';
 
 // ---------- 0381: put each agent's model beside its family ----------
@@ -21,6 +21,7 @@ function page(views, { saves = [], models = MODELS } = {}) {
   const fetch = async (url, opts = {}) => {
     const u = String(url), method = (opts.method || 'GET').toUpperCase();
     calls.push({ url: u, method });
+    if (method === 'POST' && !saves.length) return new Promise(() => {}); // 0731: a save given no answer stays on its way
     let body = method === 'POST' ? saves.shift() : u.startsWith('/api/agent-models') ? models[new URLSearchParams(u.split('?')[1]).get('agent')]
       : u.startsWith('/api/settings') ? views.shift() : { tickets: [], ideas: [], resume_command: '' };
     if (body && body.then) body = await body;
@@ -84,19 +85,21 @@ test('0381 AC2: choosing an agent fills its row\'s model list before saving, and
     assert.deepEqual(options(p, model), want, `${model} after picking ${pick}`);
     assert.ok(inside(p, rowOf(p, agent), controlOf(p, model)), `${model} is still in ${agent}'s row`);
   }
-  assert.deepEqual(posted(p), [], 'nothing saved');
+  // 0731: each saved as it's picked, one at a time: the first is on its way, and the rest wait for it.
+  assert.deepEqual(posted(p), ['/api/settings/save?repo%3Abuilder=cursor']);
 });
 
-test('0381 AC3: Save writes each pair as two settings', async () => {
-  const p = page([view(), view({ builder: 'codex', builder_model: 'gpt-old' })], { saves: [{ saved: true }] });
+test('0381 AC3: each pair is two settings, each saved as it changes (0731)', async () => {
+  const p = page([view(), view({ builder: 'codex' }), view({ builder: 'codex', builder_model: 'gpt-old' }), view({ builder: 'codex', builder_model: 'gpt-old' })],
+    { saves: [{ saved: true }, { saved: true }, { saved: true }] });
   await openSettings(p);
   changeTo(p, 'builder', 'codex');
   await p.settle();
   changeTo(p, 'builder_model', 'gpt-old');
-  changeTo(p, 'reviewer_model', 'gpt-new');
-  p.press(saveButton(p));
   await p.settle();
-  assert.deepEqual(posted(p), ['/api/settings/save?repo%3Abuilder=codex&repo%3Abuilder_model=gpt-old&repo%3Areviewer_model=gpt-new']);
+  changeTo(p, 'reviewer_model', 'gpt-new');
+  await p.settle();
+  assert.deepEqual(posted(p), ['/api/settings/save?repo%3Abuilder=codex', '/api/settings/save?repo%3Abuilder_model=gpt-old', '/api/settings/save?repo%3Areviewer_model=gpt-new']);
   assert.equal(controlOf(p, 'builder_model').value, 'gpt-old');
   assert.ok(inside(p, rowOf(p, 'builder'), controlOf(p, 'builder_model')));
 });

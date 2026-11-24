@@ -2,7 +2,7 @@ import './support/tmp.mjs'; // first: sends every temporary folder into one per-
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { panelRepo, heldTimeouts } from './support/panel.mjs';
-import { settingsPage, openSettings, rowOf, saveButton, posted } from './support/settings.mjs';
+import { settingsPage, openSettings, rowOf, posted } from './support/settings.mjs';
 import { panelSettings, SETTING_GROUPS, EDITABLE } from '../scripts/settings.mjs';
 import { TEAM_KEYS } from '../scripts/team.mjs';
 import { MACHINE_SETTINGS } from '../scripts/machine.mjs';
@@ -69,13 +69,12 @@ test('0397 AC3: this machine\'s own value is said in the explanation, which offe
   assert.equal(buttonIn(tipOf(p, 'reviewer_effort'), p, 'Clear this machine\'s value'), undefined, 'the repo\'s value has none');
   assert.doesNotMatch(tipOf(p, 'reviewer_effort').textContent, /own value/);
 
-  // Pressing it keeps the explanation open, now saying the value is cleared on Save, with a button to keep it.
+  // Pressing it keeps the explanation open, saying the value is being cleared (0731: at once, with nothing to keep it).
   p.press(clear);
   const after = tipOf(p, 'reviewer_model');
   assert.equal(after.hidden, false);
-  assert.match(after.textContent, /cleared when you save/);
-  assert.ok(buttonIn(after, p, 'Keep this machine\'s value'));
-  p.press(saveButton(p));
+  assert.match(after.textContent, /is being cleared/);
+  assert.equal(buttonIn(after, p, 'Keep this machine\'s value'), undefined);
   await p.settle();
   assert.deepEqual(posted(p), ['/api/settings/save?machine%3Areviewer_model=']);
   assert.equal(buttonIn(tipOf(p, 'reviewer_model'), p, 'Clear this machine\'s value'), undefined);

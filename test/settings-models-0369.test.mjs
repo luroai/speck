@@ -19,6 +19,7 @@ function modelsPage(view, models = READ) {
   const fetch = async (url, opts = {}) => {
     const u = String(url), method = (opts.method || 'GET').toUpperCase();
     calls.push({ url: u, method });
+    if (method === 'POST') return new Promise(() => {}); // 0731: each change saves at once; the save stays on its way, leaving the view as picked
     let body = u.startsWith('/api/agent-models') ? models[new URLSearchParams(u.split('?')[1]).get('agent')]
       : u.startsWith('/api/settings') && method === 'GET' ? view : { tickets: [], ideas: [], resume_command: '' };
     if (body && body.unreachable) throw new Error('unreachable');
@@ -46,7 +47,7 @@ const said = (p, key) => p.all(rowOf(p, key)).filter(n => n.tagName === 'p' && !
 const asked = p => p.calls69.filter(c => c.url.startsWith('/api/agent-models')).map(c => c.url);
 const saved = p => p.calls69.filter(c => c.method === 'POST');
 
-test('0369 AC1: choosing cursor, codex or claude as the builder lists its models, as when it is saved, without saving', async () => {
+test('0369 AC1: choosing cursor, codex or claude as the builder lists its models, as when it is saved, while its save is on its way (0731)', async () => {
   for (const [from, to] of [['claude', 'cursor'], ['claude', 'codex'], ['cursor', 'claude'], ['codex', 'cursor']]) {
     const want = modelsPage(view({ builder: to }));
     await openSettings(want);
@@ -56,7 +57,7 @@ test('0369 AC1: choosing cursor, codex or claude as the builder lists its models
     await p.settle();
     assert.equal(controlOf(p, 'builder_model').tagName, 'select', `${from} to ${to}`);
     assert.deepEqual(options(p, 'builder_model'), options(want, 'builder_model'), `${from} to ${to}`);
-    assert.deepEqual(saved(p), []);
+    assert.equal(saved(p).length, 1, '0731: saved as it\'s chosen');
     assert.equal(p.byId('settings').hidden, false);
   }
 });
@@ -71,7 +72,7 @@ test('0369 AC2: choosing cursor or codex as the reviewer lists its models, witho
     await p.settle();
     assert.deepEqual(options(p, 'reviewer_model'), options(want, 'reviewer_model'), `${from} to ${to}`);
     assert.ok(!said(p, 'reviewer_model').some(t => /open Settings again/.test(t)), said(p, 'reviewer_model').join(' | '));
-    assert.deepEqual(saved(p), []);
+    assert.equal(saved(p).length, 1, '0731: saved as it\'s chosen');
   }
   // Codex's efforts come with its models.
   const p = modelsPage(view({ reviewer: 'cursor' }));

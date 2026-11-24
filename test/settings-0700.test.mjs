@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { panelRepo, gitEnv, T, fakePage, items, top } from './support/panel.mjs';
-import { settingsPage, openSettings, controlOf, changeTo, saveButton, posted } from './support/settings.mjs';
+import { settingsPage, openSettings, controlOf, changeTo, posted } from './support/settings.mjs';
 import { AGENTS_FOUND, YOURS_VIEW, agentsPage } from './support/your-agents.mjs';
 import { settingsAnswer, panelSettings, CLAUDE_MODELS } from '../scripts/settings.mjs';
 import { levelBuilds } from '../scripts/level-builds.mjs';
@@ -72,8 +72,6 @@ test('0700 AC1: picking Sonnet saves sonnet as the model', async () => {
     const p = settingsPage([view({ claudeDefault }), view({ builder_model: 'sonnet', claudeDefault })], [{ ok: true, changed: ['builder_model'] }]);
     await openSettings(p);
     changeTo(p, 'builder', 'claude|sonnet');
-    assert.equal(saveButton(p).disabled, false, 'Sonnet is a change from a blank model');
-    p.press(saveButton(p));
     await p.settle();
     assert.equal(saveQuery(p).get('machine:builder_model'), 'sonnet');
   }
@@ -89,7 +87,6 @@ test('0700 AC2: each list offers Claude Code · its own default, whose words nam
     for (const [, name] of MODEL_NAMES) assert.ok(!CLAUDE_OWN.includes(name));
   }
   changeTo(p, 'builder', 'claude|');
-  p.press(saveButton(p));
   await p.settle();
   assert.equal(saveQuery(p).get('blank:builder_model'), '');
 });
@@ -152,7 +149,7 @@ test('0700 AC4: a saved sonnet shows Claude Code · Sonnet as the choice, and a 
     assert.equal(labelOf(p, 'builder', controlOf(p, 'builder').value), 'Claude Code · Sonnet');
     assert.equal(controlOf(p, 'reviewer').value, 'claude|');
     assert.equal(labelOf(p, 'reviewer', controlOf(p, 'reviewer').value), CLAUDE_OWN);
-    assert.equal(saveButton(p).disabled, true, 'nothing changed');
+    assert.deepEqual(posted(p), [], 'nothing is saved unless you change it'); // 0731
   }
 });
 

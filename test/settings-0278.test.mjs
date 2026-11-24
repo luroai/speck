@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { panelRepo } from './support/panel.mjs';
-import { settingsPage, openSettings, controlOf, saveButton, changeTo, posted } from './support/settings.mjs';
+import { settingsPage, openSettings, controlOf, changeTo, posted } from './support/settings.mjs';
 import { panelSettings, reviewerModels, CLAUDE_MODELS } from '../scripts/settings.mjs';
 
 // ---------- 0278: offer Claude's models when Claude reviews ----------
@@ -42,7 +42,6 @@ test('0278 AC1: with reviewer claude-subagent, reviewer_model is a list: (defaul
   assert.equal(options(p, 'reviewer_model')[0].text, '(default)');
   assert.ok(!shown(p).some(t => /can't list its models/.test(t)), 'no line saying there is no list');
   changeTo(p, 'reviewer_model', 'opus');
-  saveButton(p).listeners.click();
   await p.settle();
   assert.deepEqual(posted(p), ['/api/settings/save?repo%3Areviewer_model=opus']);
 
@@ -71,10 +70,9 @@ test('0278 AC3: a saved model not in the list still shows, marked, and is left a
   await openSettings(p);
   assert.equal(controlOf(p, 'reviewer_model').value, 'claude-opus-5-5');
   assert.deepEqual(options(p, 'reviewer_model')[0], { value: 'claude-opus-5-5', text: 'claude-opus-5-5 (not offered)', disabled: true });
-  assert.equal(saveButton(p).disabled, true, 'nothing changes unless you change it');
+  assert.deepEqual(posted(p), [], 'nothing is saved unless you change it'); // 0731
   changeTo(p, 'reviewer_effort', 'high');
   assert.equal(controlOf(p, 'reviewer_model').value, 'claude-opus-5-5');
-  saveButton(p).listeners.click();
   await p.settle();
   assert.deepEqual(posted(p), ['/api/settings/save?repo%3Areviewer_effort=high']);
 });

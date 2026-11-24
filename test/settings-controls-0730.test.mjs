@@ -3,7 +3,7 @@ import './support/tmp.mjs'; // first: sends every temporary folder into one per-
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { cssRules, cssValue, styles, findChrome, browserPage, freePort, startPanel, stop, panelRepo } from './support/panel.mjs';
-import { settingsPage, openSettings, controlOf, changeTo, saveButton, posted } from './support/settings.mjs';
+import { settingsPage, openSettings, controlOf, changeTo, posted } from './support/settings.mjs';
 
 const S = (key, value, o = {}) => ({ key, value, default: false, explain: `What ${key} does.`, editable: true, ...o });
 const VIEW = () => ({ groups: [
@@ -62,7 +62,6 @@ test('0730 AC1: flipping auto_ship and allow_same_model_review keeps their value
   changeTo(p, 'allow_same_model_review', 'true');
   assert.equal(controlOf(p, 'auto_ship').attrs['aria-checked'], 'true');
   assert.equal(controlOf(p, 'allow_same_model_review').value, 'true');
-  p.press(saveButton(p));
   await p.settle();
   assert.ok(posted(p).some(u => /auto_ship=true/.test(u)), posted(p).join(' | '));
   assert.ok(posted(p).some(u => /allow_same_model_review=true/.test(u)), posted(p).join(' | '));
@@ -145,7 +144,6 @@ test('0730 AC4: flipping a switch both ways leaves the same saving behaviour', a
   const p = await opened([VIEW(), after], [{ ok: true, changed: ['auto_ship'] }]);
   assert.equal(controlOf(p, 'auto_ship').value, 'false');
   changeTo(p, 'auto_ship', 'true');
-  p.press(saveButton(p));
   await p.settle();
   assert.match(posted(p)[0] || '', /auto_ship=true/);
 });

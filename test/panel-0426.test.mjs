@@ -79,7 +79,7 @@ test('0426 AC1: the page, cards, text and inputs are the redesign\'s (0577)', ()
     same(look['--input'], c.input, `${name}: inputs`);
   }
   for (const sel of ['body', 'header', '.tabs']) uses(sel, 'background', '--bg');
-  for (const sel of ['section', /* 0477: the lane in view is no longer a tab on --panel */ '.prio-menu', '#tag-tip', '#settings', '#full-ticket', '#settings-unsaved .box'])
+  for (const sel of ['section', /* 0477: the lane in view is no longer a tab on --panel */ '.prio-menu', '#tag-tip', '#settings', '#full-ticket']) // 0731: Settings' question on closing is gone
     assert.match(rule(sel), /background(?:-color)?: var\(--panel\)/, `${sel} is on --panel`);
   for (const sel of ['#settings .setting .edit, #settings .arow .edit', '.foreman-ask .ask-answer', '#full-ticket .changes-note, #doc-view .changes-note'])
     uses(sel, 'background', '--input');

@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { panelRepo, gitEnv } from './support/panel.mjs';
-import { settingsPage, openSettings, rowOf, controlOf, changeTo, saveButton, posted } from './support/settings.mjs';
+import { settingsPage, openSettings, rowOf, controlOf, changeTo, posted } from './support/settings.mjs';
 import { AGENTS_FOUND } from './support/your-agents.mjs';
 import { settingsAnswer, panelSaveRequest, CLAUDE_MODELS } from '../scripts/settings.mjs';
 import { yourAgentsFile } from '../scripts/your-agents.mjs';
@@ -95,8 +95,6 @@ test('0400 AC2: choosing an entry sets the role\'s agent and model together, sav
   const p = settingsPage([view({ reviewer: 'claude', reviewer_model: 'sonnet' }), view({ reviewer: 'codex', reviewer_model: 'gpt-6.1-sol' })], [{ ok: true, changed: ['reviewer', 'reviewer_model'] }]);
   await openSettings(p);
   changeTo(p, 'reviewer', 'codex|gpt-6.1-sol');
-  assert.equal(saveButton(p).disabled, false);
-  p.press(saveButton(p));
   await p.settle();
   const q = saveQuery(p);
   assert.equal(q.get('machine:reviewer'), 'codex');
@@ -106,7 +104,6 @@ test('0400 AC2: choosing an entry sets the role\'s agent and model together, sav
   const d = settingsPage([view({ reviewer: 'codex', reviewer_model: 'gpt-6.1-sol' })], [{ ok: true, changed: ['reviewer_model'] }]);
   await openSettings(d);
   changeTo(d, 'reviewer', 'codex|');
-  d.press(saveButton(d));
   await d.settle();
   assert.equal(saveQuery(d).get('blank:reviewer_model'), '');
   assert.equal(saveQuery(d).has('machine:reviewer'), false, 'the agent is unchanged');
@@ -157,7 +154,6 @@ test('0400 AC3: the reviewer list has the Claude subagent under Claude Code, and
   assert.match(first.textContent, /Codex/, 'naming the agent that is now');
   assert.ok(!offered(p, 'builder').includes('|') && !offered(p, 'reviewer').includes('|'));
   changeTo(p, 'watch_agent', '|');
-  p.press(saveButton(p));
   await p.settle();
   const q = saveQuery(p);
   assert.equal(q.get('blank:watch_agent'), '', 'today\'s blank Foreman');
@@ -175,11 +171,12 @@ test('0400 AC4: a choice the same-model check refuses is refused when saved, say
   for (const refusedKeys of [['reviewer', 'reviewer_model'], ['reviewer_model']]) {
     const p = settingsPage([view({ reviewer: 'claude', builder_model: 'opus' })], [{ status: 422, body: { error: why, refused: Object.fromEntries(refusedKeys.map(k => [k, why])) } }]);
     await openSettings(p);
+    const was = controlOf(p, 'reviewer').value;
     changeTo(p, 'reviewer', 'claude|opus');
-    p.press(saveButton(p));
     await p.settle();
     assert.equal(said(p, 'reviewer').split(why).length - 1, 1, `${refusedKeys}: said once in the reviewer's row: ${said(p, 'reviewer')}`);
-    assert.equal(controlOf(p, 'reviewer').value, 'claude|opus', 'what you chose stays');
+    assert.notEqual(controlOf(p, 'reviewer').value, 'claude|opus', '0731: it goes back to the saved choice');
+    assert.equal(controlOf(p, 'reviewer').value, was);
   }
 });
 
@@ -217,7 +214,6 @@ test('0400 AC2 self-check: clearing this machine\'s value for a role clears its 
   await openSettings(p);
   const clear = p.all(rowOf(p, 'reviewer')).find(n => n.tagName === 'button' && n.textContent === 'Clear this machine\'s value');
   p.press(clear);
-  p.press(saveButton(p));
   await p.settle();
   const q = saveQuery(p);
   assert.equal(q.get('machine:reviewer'), '');
@@ -230,11 +226,9 @@ test('0400 AC2 F1: declining to replace a hand-set build_command puts the builde
   const p = settingsPage([v], [], { confirm: () => false });
   await openSettings(p);
   changeTo(p, 'builder', 'codex|gpt-6.1-sol');
-  p.press(saveButton(p));
   await p.settle();
   assert.equal(posted(p).length, 0, 'nothing saved');
   assert.equal(controlOf(p, 'builder').value, 'claude|sonnet', 'back as it was, model and all');
-  assert.equal(saveButton(p).disabled, true, 'nothing left to save');
 });
 
 test('0400 AC2 F2: a role whose model alone is this machine\'s own can still be cleared, back to the project\'s', async () => {
@@ -245,9 +239,8 @@ test('0400 AC2 F2: a role whose model alone is this machine\'s own can still be 
   const tip = () => rowOf(p, 'reviewer').children.find(n => n.tagName === 'p' && /\bexplain\b/.test(n.className || '')); // its own, not its effort's
   assert.match(tip().textContent, /used over the project's: Codex \(default\)/);
   p.press(p.all(rowOf(p, 'reviewer')).find(n => n.tagName === 'button' && n.textContent === 'Clear this machine\'s value'));
-  assert.equal(controlOf(p, 'reviewer').value, 'Codex (default)', 'shows the project\'s, which Save leaves');
-  assert.match(tip().textContent, /This machine's value, Codex · GPT-6\.1 Sol, is cleared when you save/);
-  p.press(saveButton(p));
+  assert.equal(controlOf(p, 'reviewer').value, 'Codex (default)', 'shows the project\'s, which clearing leaves');
+  assert.match(tip().textContent, /This machine's value, Codex · GPT-6\.1 Sol, is being cleared/); // 0731: at once
   await p.settle();
   const q = saveQuery(p);
   assert.equal(q.get('machine:reviewer_model'), '');

@@ -73,9 +73,8 @@ const VIEWS = [
   ['the full ticket', `${openLane('plan')}, document.querySelector('#shaping .item.open .full-open').click(), true`, `!document.getElementById('full-ticket').hidden && !!document.querySelector('#full-ticket .close')`],
   ['a review pack with a document', `closeFull(), packOf = ${PACK}, fullId = '0002', fullFrom = null, render(), true`, `!!document.querySelector('#full-ticket .pack-document')`],
   ['a document', `docOpen = { id: '0002', path: 'outputs/0002/plan.md', state: 'ok', text: '# Plan\\n\\nWords.' }, drawDoc(), true`, `!document.getElementById('doc-view').hidden && !!document.querySelector('#doc-view .close')`],
-  ['Settings', `closeDoc(), closeFull(), document.getElementById('settings-open').click(), true`, `document.querySelectorAll('#settings .setting').length >= 10 && !!document.querySelector('#settings .save-all')`],
-  ['Settings\' question about unsaved changes', `settingsLeaving = { saving: false }, renderLeaving(), true`, `!document.getElementById('settings-unsaved').hidden && document.querySelectorAll('#settings-unsaved button').length === 3`],
-  ['the Foreman', `keepEditing(), closeSettings(), document.getElementById('run').click(), true`, `!document.getElementById('foreman').hidden && !!document.querySelector('#foreman .log-filter')`],
+  ['Settings', `closeDoc(), closeFull(), document.getElementById('settings-open').click(), true`, `document.querySelectorAll('#settings .setting').length >= 10`], // 0731: no Save, nor its question on closing
+  ['the Foreman', `closeSettings(), document.getElementById('run').click(), true`, `!document.getElementById('foreman').hidden && !!document.querySelector('#foreman .log-filter')`],
 ];
 // Opens the panel at a size and pixel ratio, then each view in turn, calling `each(view, buttons)` with what MEASURE gives.
 async function eachView(b, port, width, dpr, each) {
@@ -129,7 +128,8 @@ test('0453 AC1 AC3: at every width and pixel ratio, every button sits on whole p
         }
       });
     }
-    for (const name of ['Close', 'Save', 'Full ticket', 'Set ready', 'Ship', 'Ask for changes', 'plan.md', 'notes/', 'Light', 'Discard', 'Keep editing']) // 0562: plan.md named from inside its output folder, and notes/ a folder's button
+    for (const name of ['Close', 'Full ticket', 'Set ready', 'Ship', 'Ask for changes', 'plan.md', 'notes/', 'Light']) // 0731: Settings' Save, Discard and Keep editing are gone
+      // 0562: plan.md named from inside its output folder, and notes/ a folder's button
       assert.ok(seen.has(name) || [...seen].some(t => t.startsWith(name)), `the ${name} button was checked`);
   } finally { await b.close(); await stop(panel); }
 });
@@ -143,8 +143,7 @@ const NAMED = [
   ['a review pack with a document', '#full-ticket .pack-document'],
   ['a document', '#doc-view .close'],
   ['Settings', '#settings .close'],
-  ['Settings', '#settings .save-all'],
-  ['Settings\' question about unsaved changes', '#settings-unsaved .secondary'], // 0612: its Save is filled in the accent, with no border to show
+  // 0731: Settings' Save and its question on closing are gone
   ['the Foreman', '#foreman .log-filter'], // 0592: its filters, as its back link is a link with no border. 0606: as is Shipped's All figures
 ];
 const sidesShown = (png, r, dpr) => {
@@ -161,7 +160,7 @@ const sidesShown = (png, r, dpr) => {
     right: side(along(T, B), y => [[R, y], [R - 1, y]], y => [R - 5, y]),
   };
 };
-test('0453 AC2: on a phone at a pixel ratio of 3, Full ticket (0587: on a Plan ticket), Close, Save, a document\'s button and the Pipeline log\'s filter show all four sides of their border', { skip }, async () => {
+test('0453 AC2: on a phone at a pixel ratio of 3, Full ticket (0587: on a Plan ticket), Close, a document\'s button and the Pipeline log\'s filter show all four sides of their border', { skip }, async () => {
   const r = repo();
   const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
   const b = await browserPage('about:blank');

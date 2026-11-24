@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { panelRepo, gitEnv, freePort, startPanel, stop, findChrome, browserPage } from './support/panel.mjs';
-import { openSettings, rowOf, controlOf, changeTo, saveButton } from './support/settings.mjs';
+import { openSettings, rowOf, controlOf, changeTo } from './support/settings.mjs';
 import { agentsPage, YOURS_VIEW, AGENTS_FOUND } from './support/your-agents.mjs';
 import { panelSettings, panelSaveSettings, settingsAnswer, EDITABLE, CLAUDE_MODELS } from '../scripts/settings.mjs';
 import { teamNow, teamShown, TEAM_KEYS } from '../scripts/team.mjs';
@@ -74,19 +74,16 @@ test('0652 AC1: each card holds the agent, model and effort its member runs on, 
   assert.equal(bench('watch_bench'), 'Blank: your agents in order: Claude Code.', 'the watch agent runs on a Codex builder\'s agent');
 });
 
-test('0652 AC2: a card\'s agent, model, effort and bench are saved with Save, each for this machine', async () => {
+test('0652 AC2: a card\'s agent, model, effort and bench are each saved as they change (0731), each for this machine', async () => {
   const p = await opened(viewOf(panelRepo().dir));
-  changeTo(p, 'qa_agent', 'claude|opus');
-  changeTo(p, 'qa_effort', 'high');
-  changeTo(p, 'builder_bench', 'codex');
-  changeTo(p, 'reviewer', 'claude|opus');
-  assert.equal(saveButton(p).disabled, false);
-  p.press(saveButton(p));
-  await p.settle();
-  const [sent] = p.posts().map(c => decodeURIComponent(c.url));
-  assert.ok(sent.startsWith('/api/settings/save?'), sent);
-  for (const part of ['machine:qa_agent=claude', 'machine:qa_model=opus', 'machine:qa_effort=high', 'machine:builder_bench=codex', 'machine:reviewer=claude', 'machine:reviewer_model=opus'])
-    assert.ok(sent.split('?')[1].split('&').includes(part), `${part} in ${sent}`);
+  for (const [key, value] of [['qa_agent', 'claude|opus'], ['qa_effort', 'high'], ['builder_bench', 'codex'], ['reviewer', 'claude|opus']]) {
+    changeTo(p, key, value);
+    await p.settle();
+  }
+  const sent = p.posts().map(c => decodeURIComponent(c.url));
+  assert.ok(sent.every(u => u.startsWith('/api/settings/save?')), sent.join(' '));
+  assert.deepEqual(sent.map(u => u.split('?')[1].split('&')), [['machine:qa_agent=claude', 'machine:qa_model=opus'], ['machine:qa_effort=high'],
+    ['machine:builder_bench=codex'], ['machine:reviewer=claude', 'machine:reviewer_model=opus']], 'each by itself, an agent with its model');
 });
 
 test('0652 AC2: the server saves Your team\'s settings for this machine only, with the same checks as speck config set', () => {
