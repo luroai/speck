@@ -177,7 +177,9 @@ test('0058 AC5: the Shipped rows and the median stat keep whole minutes', async 
 
 test('0058 AC3 and AC4: in a real browser the counter ticks between polls, and a selection in or across it stays', chrome, async () => {
   const r = panelRepo();
-  r.write('0003-t.md', fm({ id: '"0003"', title: "'A long build'", status: 'building', started: iso(Date.now() - (7 * 60 + 58) * 1000) }), good);
+  // 0739: 8 min 30 s ago, so it reads 8 min until the test moves its clock on, however long the panel takes to start
+  // (up to 30 seconds), and 10 min after two minutes, with 9 min to 10 min among the changes.
+  r.write('0003-t.md', fm({ id: '"0003"', title: "'A long build'", status: 'building', started: iso(Date.now() - (8 * 60 + 30) * 1000) }), good);
   const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
   const { port } = panel;
   const b = await browserPage(`http://127.0.0.1:${port}/`);
