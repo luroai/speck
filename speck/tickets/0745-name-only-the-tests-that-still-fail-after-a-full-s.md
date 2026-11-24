@@ -1,7 +1,7 @@
 ---
 id: "0745"
 title: "Name only the tests that still fail after a full-suite retry"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -22,7 +22,7 @@ started: "2026-11-24T23:16:24.266Z"
 ---
 # 0745 · Name only the tests that still fail after a full-suite retry
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 When the full suite's retry clears some of the first run's failures, `latest.json` and the fix ticket still name every first-run failure. On a busy machine that makes oversized fix tickets: 0736 named 22 tests when only 0159 AC3 still failed.
@@ -44,7 +44,7 @@ The full suite's result and its fix ticket name only the tests that failed again
 - Self-check: no changes. A test whose file was left out of the retry because it already fails on the base branch has no pass on the retry, so it is still named; a test that failed only on the retry is named too.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When the full suite fails on the main branch and some of its failing tests pass when they're run once more, speck now treats those as chance failures: the panel's note about the failing suite and the fix ticket speck writes name only the tests that failed again. A busy machine no longer turns one real failure into a fix ticket listing twenty. You'll see it the next time the full suite fails: the fix ticket's list should be short. If every failing test fails again, they're all named, as before.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -53,4 +53,71 @@ The full suite's result and its fix ticket name only the tests that failed again
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups: none.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "c3ddd447f221bb571e10f7d876347be5a7e61804",
+    "session": "fresh",
+    "thread_id": "01a20fed-f7f1-7310-b89b-9e6591abc127",
+    "builder_response": "- Tests run: test/full-suite-0745.test.mjs (with --related: test/full-fix-0658.test.mjs, test/full-suite-0630.test.mjs, test/full-suite-panel-0655.test.mjs, and the commands.checks files)\n- The fix: full-suite.mjs's names() now uses tap.mjs's failingTests, which already leaves out a first-run failure that passed on the retry (0377), in place of failingTestFiles. Both latest.json writes (runFull and latestFull's kept path) and the fix ticket (which reads latestFull's tests) go through names().\n",
+    "seconds": 20,
+    "usage": {
+      "input_tokens": 89348,
+      "cached_input_tokens": 30976,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 568,
+      "reasoning_output_tokens": 59
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 58372,
+      "cached": 30976,
+      "write": 0,
+      "output": 568
+    },
+    "cost_usd": 0.1255216,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-24T23:40:03.403Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/full-suite.mjs names() now uses failingTests(), which removes first-run failures that pass on retry. Both runFull() and latestFull() use it. The two passing 0745 AC1 tests check latest.json and the fix ticket."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The passing 0745 AC2 tests verify that latest.json and the fix ticket retain both names when both tests fail again, and that results without a retry retain all failures."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The saved related test run reports 184 passed, 0 failed and 3 skipped. The branch change is limited to the failure-name helper, its tests and the ticket; retry scheduling is unchanged."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The full-suite result and automatic fix ticket now omit tests that pass on retry while keeping tests that still fail. The targeted and related tests pass, and I found no blocking concerns."
+  }
+}
+```
+
+</details>
