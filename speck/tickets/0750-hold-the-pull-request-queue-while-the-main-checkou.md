@@ -1,7 +1,7 @@
 ---
 id: "0750"
 title: "Hold the pull request queue while the main checkout is bare"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 4              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -21,7 +21,7 @@ created: 2026-11-24
 ---
 # 0750 · Hold the pull request queue while the main checkout is bare
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 In pull request mode, a ship refused because the main checkout is bare counts as a try, so once it's set back the ticket waits until its pull request, the base branch or its branch changes, and auto-ship looks stuck. The local ship queue doesn't count it (0740).
