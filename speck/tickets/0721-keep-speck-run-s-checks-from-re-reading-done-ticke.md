@@ -1,7 +1,7 @@
 ---
 id: "0721"
 title: "Keep speck run's checks from re-reading done tickets' logs"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: "speck/ideas/done/2026-11-15-keep-speck-run-s-checks-from-re-reading-bui
 after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T14:39:13.738Z"
+approved: "2026-11-24T15:14:44.452Z"
 
 ---
 # 0721 · Keep speck run's checks from re-reading done tickets' logs
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 An idle speck run still spends about 1.7 s of processor time per check on this repo, mostly reading every ticket's build log and run records and running git, done tickets included. The cost grows with the project's history, on a machine where tests already fail under load.
@@ -54,9 +55,15 @@ An idle speck run no longer re-reads every finished ticket's build log or asks g
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 closedDeps tracks only the ticket and five run files, but caches the entire board entry.; F2 recent_spend is frozen inside each cached closed entry.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 410,618
+- Elapsed since build started: 36 min
+- Changed lines: 173 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none to the inbox. Known limit: the tip of the base branch is re-read once per board check; shipped-criteria answers grow with distinct tip+criteria pairs until the process ends.
 
