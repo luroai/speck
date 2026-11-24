@@ -18,7 +18,7 @@ source: "speck/ideas/2026-10-11-show-all-your-projects-in-one-panel.md"         
 after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T15:15:44.235Z"
-approved: "2026-11-24T16:19:25.214Z"
+approved: "2026-11-24T17:16:17.514Z"
 
 ---
 # 0726 · Cap builds across every project on this machine
@@ -58,13 +58,14 @@ You can set `machine_parallel_builds` once for the whole machine (in your home f
 Round 1 (codex): changes requested: F1 Claim cleanup is not synchronised with claim writes.; F2 Resume paths commit their one-time state before startBuild acquires a machine slot, and ignore its new false return.
 Round 2 (codex): changes requested.
 Round 3 (codex): approve.
+Round 4 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 3
+- Review rounds: 4, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 625,598
-- Elapsed since build started: 64 min
-- Changed lines: 324 (limit 5000)
+- Reviewer tokens: 916,211
+- Elapsed since build started: 121 min
+- Changed lines: 326 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ## Review rounds
@@ -325,6 +326,94 @@ Round 3 (codex): approve.
     ],
     "escalation_question": "",
     "summary": "The home-folder setting now caps builds across projects while preserving each project's own limit. Both concurrency findings are resolved and covered by passing regressions. The only reported test failure predates this change."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 4 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 4,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "ae30d7c633820bca2f6b3492ed947f3d26c5cb2e",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a20e4b-6a6f-7f41-9a4a-6b77409bdc89",
+    "builder_response": "- Tests run: test/build-take-over-0711.test.mjs test/go-with-0284.test.mjs test/machine-builds-0726.test.mjs (with commands.checks alongside). All 0711, 0284 and 0726 tests passed. The only failure is test/tmp-cleanup.test.mjs AC1, listed as failing before this build.\n- Merge: merged `main` into the ticket branch. Conflict in `docs/brief.md` (logic): kept main's newer panel and speck-run wording, and kept this ticket's `machine_parallel_builds` paragraph after `max_parallel_builds`.\n- Why the ship failed: 0726 treated any falsy `startBuild` / take-over start return as \"no machine slot\". Take-over (and older test mocks) return `undefined` on success, so `!start()` always put handed-back builds back on the usage-limit wait list and never started them — breaking 0711.\n- Fix: treat only an explicit `false` as a refused machine slot (`=== false`) in usage-limit take-over, go-with, hand-back, foreman resume and resumeKilled; take-over's launcher now returns `startBuild`'s result.\n",
+    "seconds": 23,
+    "usage": {
+      "input_tokens": 912741,
+      "cached_input_tokens": 779008,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 3470,
+      "reasoning_output_tokens": 175
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 30667,
+      "cached": 259200,
+      "write": 0,
+      "output": 746
+    },
+    "cost_usd": 0.094714,
+    "saved_at": "2026-11-24T17:16:13.434Z"
+  },
+  "verdict": {
+    "round": 4,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "home-settings.mjs retains home-folder persistence and display after max_parallel_builds. The 0726 AC1 CLI tests pass after the merge."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Locked machine claims enforce capacity. Passing 0726 AC2 and F1/F2 tests cover cross-project waiting, release, concurrent updates and resume retries. Take-over now propagates startBuild's result, and callers treat only explicit false as capacity refusal."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "hasBuildRoom retains the project limit check. The 0726 AC3 integration test passes with a project limit of one and machine limit of five."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Shared home-setting validation and unset behaviour remain intact. Both 0726 AC4 tests pass after the merge."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The supplied run passes all executed 0711, 0284 and 0726 tests. Its only failure is the unchanged tmp-cleanup failure recorded before this build. The return-value compatibility regression is fixed without weakening tests."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/build-turns.mjs",
+        "issue": "Resolved: atomic claim publication and locked inspection remain intact after the merge; the concurrent regression passes.",
+        "suggested_fix": "None required.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/usage-limit.mjs",
+        "issue": "Resolved: refused claims preserve pending resume state and the original run record. Explicit false checks also preserve successful launchers that return undefined. Resume regressions and existing take-over tests pass.",
+        "suggested_fix": "None required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Approved after the merge. The documentation preserves main's newer behaviour and the machine-wide build cap. The launch compatibility fix passes the affected tests, and both earlier findings remain resolved. The only reported test failure predates this change."
   }
 }
 ```
