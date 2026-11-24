@@ -19,7 +19,7 @@ after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T13:27:45.922Z"
 blocked_at: ""
-waited_seconds: 28
+waited_seconds: 41
 
 ---
 # 0734 · Fix the full suite failing on main at 239b16e
