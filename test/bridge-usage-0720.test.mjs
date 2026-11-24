@@ -48,6 +48,12 @@ test('0720 AC1: a Codex limit whose type naming no window still warns, with each
   assert.deepEqual(usageWarnings({ codex: over }, NOW), [], 'windows that have already reset are not warned about');
 });
 
+test('0720 AC1 AC2: a recognised Codex limit that has already reset does not warn about another low window', () => {
+  const expired = { read_at: at(-10), limit_reached: true, limit_type: 'primary',
+    windows: { five_hour: { used_percent: 100, resets_at: at(-5) }, seven_day: { used_percent: 20, resets_at: at(2000) } } };
+  assert.deepEqual(usageWarnings({ codex: expired }, NOW), [], 'the five-hour limit has reset; 20% of the week is not a warning');
+});
+
 test('0720 AC2: each agent at or over 90% is named; one under 90% everywhere, or with no reading, is not', () => {
   const cursor = { read_at: at(-1), resets_on: '2026-12-12', windows: { included: { used_percent: 90 }, auto: { used_percent: 0 } } };
   const ws = usageWarnings({ claude: claude(89.9, 10), codex: { read_at: at(-1), windows: { five_hour: { used_percent: 95, resets_at: at(60) } } }, cursor }, NOW);

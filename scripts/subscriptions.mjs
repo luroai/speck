@@ -135,15 +135,25 @@ export async function subscriptionsAnswer(repo, { find = findAgentsAsync, readCu
 const USAGE_NAMES = Object.freeze({ claude: 'Claude Code', codex: 'Codex', cursor: 'Cursor' });
 const stillOpen = (w, now) => !(w.resets_at && Date.parse(w.resets_at) <= now);
 const asWarn = (w, limited = w.limited) => ({ label: w.label, used_percent: w.used_percent, limited, resets_at: w.resets_at, resets_on: w.resets_on });
+// Which Codex window limit_type names, as readingShown/codexRefused map it, or null when the type names none (the bridge
+// then falls back below). Recognised names that have already reset must not fall back onto another window.
+function codexLimitWindow(reading) {
+  if (reading.limit_reached !== true) return false;
+  const said = String(reading.limit_type ?? '').toLowerCase();
+  if (/primary|five|5h|hour/.test(said)) return 'five_hour';
+  if (/secondary|week|seven|7d/.test(said)) return 'seven_day';
+  return null;
+}
 export function usageWarnings(usage, now = Date.now()) {
   if (!plain(usage)) return [];
   return Object.keys(USAGE_NAMES).filter(id => Object.hasOwn(usage, id) && plain(usage[id])).flatMap(id => {
     const reading = usage[id], shown = readingShown(id, reading, now);
     if (!shown.read_at) return [];
     let windows = shown.windows.filter(w => w.high && stillOpen(w, now)).map(w => asWarn(w));
-    // An explicit limit_reached whose type readingShown can't map (and whose windows are under 100%) still counts for
-    // the bridge: name the agent and every open window with the reset times speck has, marked limited.
-    if (!windows.length && reading.limit_reached === true)
+    // An explicit limit_reached whose type names no window (and whose windows are under 100%) still counts for the
+    // bridge: name the agent and every open window with the reset times speck has, marked limited. A recognised type
+    // that has already reset is left out: its window is no longer limited.
+    if (!windows.length && codexLimitWindow(reading) === null)
       windows = shown.windows.filter(w => stillOpen(w, now)).map(w => asWarn(w, true));
     return windows.length ? [{ id, name: USAGE_NAMES[id], windows }] : [];
   });
