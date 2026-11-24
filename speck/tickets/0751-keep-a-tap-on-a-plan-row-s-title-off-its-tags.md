@@ -1,7 +1,7 @@
 ---
 id: "0751"
 title: "Keep a tap on a Plan row's title off its tags"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-11-24-keep-a-tap-on-a-plan-row-s-title-off-its-tags.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-24
+started: "2026-11-24T23:42:36.610Z"
 
 ---
 # 0751 · Keep a tap on a Plan row's title off its tags
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Since 0727 took Set ready off a closed Plan row, its title sits 2 px above its tags. On a touch screen a tap near the start of the title can land on the priority tag below, as 0739's build saw at 375 px with touch, so someone opening a ticket gets a menu instead.
