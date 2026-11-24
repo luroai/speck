@@ -1,7 +1,7 @@
 ---
 id: "0731"
 title: "Save each setting as soon as it changes"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,13 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0730"]                # ticket ids that must be done first
 created: 2026-11-24
+built_on: "0730"
+started: "2026-11-24T19:20:50.859Z"
 
 ---
 # 0731 · Save each setting as soon as it changes
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Settings makes you press a Save button fixed to the bottom of the view, and asks what to do with unsaved changes when you close it. Cursor's settings, which the panel sits beside, save each change the moment it's made, and the user found the Save step a let-down. Build levels already save straight away (0661).
