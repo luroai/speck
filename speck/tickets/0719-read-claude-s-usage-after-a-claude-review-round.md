@@ -1,7 +1,7 @@
 ---
 id: "0719"
 title: "Read Claude's usage after a Claude review round"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-11-11-read-claude-s-usage-after-a-claude-review-round.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-24
+started: "2026-11-24T14:27:38.321Z"
 
 ---
 # 0719 · Read Claude's usage after a Claude review round
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 speck runs Claude reviewers with `--output-format json`, which has no usage-limit lines, so a review round on Claude, as reviewer or as a stand-in from `reviewer_bench`, gives no reading. Claude's usage in `speck agents` and Settings can be stale just when it nears its limit.
