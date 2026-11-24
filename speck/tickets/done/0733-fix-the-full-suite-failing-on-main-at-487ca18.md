@@ -1,7 +1,7 @@
 ---
 id: "0733"
 title: "Fix the full suite failing on main at 487ca18"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: cancelled            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,13 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-24
+cancel_reason: "The failures came from an overloaded machine, not code: the named tests pass on their own and main's full suite passed again at 9cc01e9"
+cancelled: 2026-11-24
 
 ---
 # 0733 · Fix the full suite failing on main at 487ca18
 
-**Status:** 📋 ready
+**Status:** ❌ cancelled
 
 ## Problem
 The full suite fails on main at commit 487ca18 (487ca183b955d7bd0f1c3f015b336cfd6303e6d0). Failing tests:
