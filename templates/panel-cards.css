@@ -96,6 +96,13 @@
   .foreman .reload, #doc-view .close, #settings .close, #settings-unsaved button.secondary { min-height: 44px; } /* 0603: their height here, as every control's for every pointer is (0469); the rest of their style in their own files */
   #foreman.log-view .log-filter, #full-ticket .ship, #doc-view .ship, #full-ticket .ask-changes, #doc-view .ask-changes, #full-ticket .pack-document, #full-ticket .pack-folder,
     #settings .setting .save, #settings .arow .save, #settings .save-all, #settings-unsaved button { min-height: 44px; } /* 0612: the same, for the last small buttons */
+  /* 0729: every other control in Settings a 44 px target too, for every pointer: a setting's name with its short line,
+     the whole of which its button reaches over, the switches, lists and boxes, a risk's box with its word, and a level's
+     Remove are at least 44 px; and Appearance's buttons, which keep their size, reach 44 px from their middle, above and
+     below. The rest of their style is in panel-settings.css. */
+  #settings .switch-row .label, #settings .setting .label, #settings .levels .ltextbtn, #settings [role="switch"], #settings select.edit, #settings input.edit:not([type="checkbox"]), #settings .setting .risk { min-height: 44px; }
+  #settings .setting .risk, #settings .levels .ltextbtn, #settings .looks [role="radio"] { min-width: 44px; flex: none; } /* never squeezed narrower than their words, which a minimum width would otherwise allow */
+  #settings .looks [role="radio"]::after { content: ''; position: absolute; inset: min(0px, calc((100% - 44px) / 2)) 0; }
   .q .stop-build:hover { color: var(--bad); border-color: var(--bad); }
   .q .stop-build:disabled { cursor: default; opacity: .6; }
   /* 0602: Full log and Stop build in the redesign's secondary style: a 1 px border in the line colour, 10 px corners, the text colour, 44 px tall, for every pointer as the cards' controls are (0469) */

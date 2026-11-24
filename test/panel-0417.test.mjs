@@ -73,7 +73,8 @@ test('0417 AC2: the touch screen rules apply at any width and keep each 44 px mi
 
 // The rules for narrow windows that aren't about a control's size, as they were before this ticket. 0418: the panel's
 // own layout is the same at every width, so only those for Settings and for class names shared with the lanes are left.
-const NARROW = ['#settings .switch-row .info::after, #settings .setting .info::after', '#settings .looks [role="radio"]',
+// 0729: Settings' info buttons are gone, and with them their bigger tap areas on a phone.
+const NARROW = ['#settings .looks [role="radio"]',
   '#settings .switch-row .row, #settings .setting .row, #settings .arow .row', '.sh', '.detail', '.ready', '.resume', '.resume .cmd'];
 
 test('0417 AC3: the other rules for narrow windows are still under 700 px', () => {

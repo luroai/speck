@@ -20,7 +20,7 @@ const view = (o = {}) => ({ groups: [
 const KEYS = ['reviewer_model', 'reviewer_effort', 'limits.max_review_rounds', 'ship_mode'];
 const cls = (n, c) => new RegExp(`\\b${c}\\b`).test(n.className || '');
 const tipOf = (p, key) => p.all(rowOf(p, key)).find(n => n.tagName === 'p' && cls(n, 'explain'));
-const infoOf = (p, key) => p.all(rowOf(p, key)).find(n => n.tagName === 'button' && cls(n, 'info'));
+const nameOf = (p, key) => p.all(rowOf(p, key)).find(n => n.tagName === 'button' && cls(n, 'name')); // 0729: shows its explanation, as its info button did
 const buttonIn = (node, p, label) => p.all(node).find(n => n.tagName === 'button' && n.textContent === label);
 // A row's text outside its explanation: what it shows without being asked.
 const shownText = (p, key) => { const tip = tipOf(p, key), all = rowOf(p, key).textContent; return tip ? all.replace(tip.textContent, '') : all; };
@@ -80,31 +80,20 @@ test('0397 AC3: this machine\'s own value is said in the explanation, which offe
   assert.equal(buttonIn(tipOf(p, 'reviewer_model'), p, 'Clear this machine\'s value'), undefined);
 });
 
-test('0397 AC3: the focus or the pointer can move from the info button to the explanation\'s button without it closing', async () => {
+// 0729: a press on the setting's name shows its explanation and keeps it, so nothing the focus or the pointer does closes it
+test('0397 AC3: the focus or the pointer can move from the setting\'s name to the explanation\'s button without it closing', async () => {
   const clock = heldTimeouts();
   const p = await opened([view()], [], { setTimeout: clock.setTimeout, clearTimeout: clock.clearTimeout });
-  const info = infoOf(p, 'reviewer_model'), tip = tipOf(p, 'reviewer_model');
+  const name = nameOf(p, 'reviewer_model'), tip = tipOf(p, 'reviewer_model');
   const clear = buttonIn(tip, p, 'Clear this machine\'s value');
-  tip.contains = n => p.all(tip).includes(n);
-  info.listeners.focus();
+  p.press(name);
   assert.equal(tip.hidden, false);
-  info.listeners.blur({ relatedTarget: clear });
-  tip.listeners.focusin({ target: clear });
-  assert.equal(tip.hidden, false, 'kept open while its button has the focus');
-  tip.listeners.focusout({ relatedTarget: null });
-  assert.equal(tip.hidden, true, 'closed once the focus leaves it');
-
-  info.listeners.mouseenter();
-  info.listeners.focus(); // shown, as after the pause
-  info.listeners.blur({ relatedTarget: null });
-  assert.equal(tip.hidden, false, 'the pointer is still over the button');
-  info.listeners.mouseleave({ relatedTarget: clear });
-  tip.listeners.mouseenter();
-  assert.equal(tip.hidden, false, 'the pointer is over the explanation');
-  tip.listeners.mouseleave({ relatedTarget: null });
-  assert.equal(tip.hidden, false, 'a moment to come back');
+  for (const type of ['blur', 'mouseleave', 'focusout']) assert.equal((type === 'focusout' ? tip : name).listeners[type], undefined, `nothing closes it on ${type}`);
+  p.document.listeners.pointerdown({ target: clear }); // 0395: the pointer going down on its button
   clock.rest(500);
-  assert.equal(tip.hidden, true, 'closed once the pointer has left it');
+  assert.equal(tip.hidden, false, 'kept open while its button is pressed');
+  p.document.listeners.pointerdown({ target: p.byId('settings') });
+  assert.equal(tip.hidden, true, 'closed once the pointer goes down elsewhere');
 });
 
 test('0397 AC4: the paragraph starting "What speck uses now" is gone, with nothing in its place', async () => {

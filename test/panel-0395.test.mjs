@@ -1,4 +1,5 @@
-// 0395: an open explanation in Settings closes on a click or tap anywhere outside it and its info button.
+// 0395: an open explanation in Settings closes on a click or tap anywhere outside it and its info button. 0729: and the
+// setting's name, which shows it in place of an info button.
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -18,10 +19,9 @@ async function opened() {
   return p;
 }
 const pop = p => p.byId('settings');
-const infoOf = (p, key) => p.all(rowOf(p, key)).find(n => n.tagName === 'button' && /\binfo\b/.test(n.className));
+const infoOf = (p, key) => p.all(rowOf(p, key)).find(n => n.tagName === 'button' && /\bname\b/.test(n.className)); // 0729: its name
 const tipOf = (p, key) => p.all(rowOf(p, key)).find(n => n.tagName === 'p' && n.textContent === `What ${key} does.`);
 const shown = p => KEYS.filter(k => !tipOf(p, k).hidden);
-const fire = (n, type) => n.listeners[type]({ target: n, currentTarget: n, stopPropagation() {}, preventDefault() {} });
 // A click or tap on `node`, as a browser sends it: the pointer goes down on it, through each node it's in to the
 // document, then the click, the document's listener first. At `x` px from the window's left, with the pop-up's column
 // from 100 to 860 px.
@@ -43,7 +43,7 @@ test('0395 AC1: a click or tap elsewhere in Settings, on another control or besi
     'elsewhere in Settings': p => tap(p, groupOf(p)),
     "another setting's control": p => tap(p, controlOf(p, 'reviewer')),
     'beside the column': p => tap(p, pop(p), 40),
-    "another setting's name": p => tap(p, p.all(rowOf(p, 'max_parallel_builds')).find(n => /\bname\b/.test(n.className || ''))),
+    "another setting's value": p => tap(p, controlOf(p, 'max_parallel_builds')), // 0729: its name opens its own, as AC2 checks
   };
   for (const [where, click] of Object.entries(places)) {
     const p = await opened();
@@ -54,23 +54,22 @@ test('0395 AC1: a click or tap elsewhere in Settings, on another control or besi
   }
 });
 
-test('0395 AC1: an explanation shown by focus or by the pointer resting also closes on a click outside', async () => {
-  for (const how of ['focus', 'mouseenter']) {
-    const p = await opened();
-    const info = infoOf(p, 'reviewer');
-    fire(info, how);
-    if (how === 'mouseenter') p.clock.rest(500);
-    assert.deepEqual(shown(p), ['reviewer'], how);
-    tap(p, groupOf(p));
-    assert.deepEqual(shown(p), [], `${how}: closed`);
-    p.clock.rest(500);
-    assert.deepEqual(shown(p), [], `${how}: no pause left to show it again`);
-  }
+// 0729: focus and the pointer resting show nothing now, so nothing waits to show it again after a click outside
+test('0395 AC1: an explanation closed by a click outside stays closed, as nothing waits to show it again', async () => {
+  const p = await opened();
+  const info = infoOf(p, 'reviewer');
+  for (const how of ['focus', 'mouseenter']) assert.equal(info.listeners[how], undefined, `nothing on ${how}`);
+  tap(p, info);
+  assert.deepEqual(shown(p), ['reviewer']);
+  tap(p, groupOf(p));
+  assert.deepEqual(shown(p), [], 'closed');
+  p.clock.rest(500);
+  assert.deepEqual(shown(p), [], 'no pause left to show it again');
 });
 
 // ---------- AC2: the click still works on what it lands on; beside the column it closes only the explanation ----------
 
-test('0395 AC2: a tap on another info button opens that one, and one on another control still reaches it', async () => {
+test('0395 AC2: a tap on another setting\'s name opens that one, and one on another control still reaches it', async () => {
   const p = await opened();
   tap(p, infoOf(p, 'auto_ship'));
   tap(p, infoOf(p, 'reviewer'));
@@ -96,7 +95,7 @@ test('0395 AC2: a click beside the column with an explanation open closes only t
 
 // ---------- AC3: inside it, its info button and Escape ----------
 
-test('0395 AC3: a click or tap inside the explanation leaves it open, and its info button still opens and closes it', async () => {
+test('0395 AC3: a click or tap inside the explanation leaves it open, and its setting\'s name still opens and closes it', async () => {
   const p = await opened();
   const info = infoOf(p, 'auto_ship'), tip = tipOf(p, 'auto_ship');
   tap(p, info);
@@ -105,12 +104,12 @@ test('0395 AC3: a click or tap inside the explanation leaves it open, and its in
   tap(p, inner);
   assert.deepEqual(shown(p), ['auto_ship'], 'still open');
   tap(p, info);
-  assert.deepEqual(shown(p), [], 'its info button closes it');
+  assert.deepEqual(shown(p), [], 'its name closes it');
   tap(p, info);
   assert.deepEqual(shown(p), ['auto_ship'], 'and opens it again');
 });
 
-test('0395 AC3: after a change to a setting whose row is drawn again, its info button still opens and closes it', async () => {
+test('0395 AC3: after a change to a setting whose row is drawn again, its name still opens and closes it', async () => {
   const p = await opened();
   changeTo(p, 'reviewer', 'claude');
   const info = infoOf(p, 'reviewer');
@@ -133,14 +132,13 @@ test('0395 AC3: Escape still closes the explanation without closing Settings', a
 });
 
 // ---------- AC4: one opened by the pointer resting still closes when the pointer leaves ----------
+// 0729: none opens from the pointer resting now, so none is left open when it leaves.
 
-test('0395 AC4: an explanation opened by resting the pointer closes when the pointer leaves', async () => {
+test('0395 AC4: the pointer resting on a setting\'s name opens nothing, so nothing is left open when it leaves', async () => {
   const p = await opened();
   const info = infoOf(p, 'max_parallel_builds');
   p.document.listeners.pointerover?.({ pointerType: 'mouse' });
-  fire(info, 'mouseenter');
+  for (const how of ['mouseenter', 'mouseleave']) assert.equal(info.listeners[how], undefined, `nothing on ${how}`);
   p.clock.rest(500);
-  assert.deepEqual(shown(p), ['max_parallel_builds']);
-  fire(info, 'mouseleave');
   assert.deepEqual(shown(p), []);
 });

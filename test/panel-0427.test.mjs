@@ -109,8 +109,8 @@ test('0427 AC5: no text is smaller than 12 px, and no text or label is lighter t
 
 test('0427 AC1 self-check: words that were in the monospace only to look like labels are in the interface font', () => {
   for (const sel of ['.lane-n', '.question-fact', '.act', '.foreman .reload', '#settings [role="switch"]', '#settings .looks [role="radio"]', '#settings .agent .state',
-    '#settings .switch-row .name, #settings .arow .name']) assert.equal(family(rule(sel)), UI, sel);
-  // a setting's key and value are code, so they stay in the monospace
+    '#settings .switch-row .name, #settings .setting .name, #settings .arow .name']) assert.equal(family(rule(sel)), UI, sel); // 0729: a setting's name is words too, not its key
+  // a setting's value is code, so it stays in the monospace
   assert.equal(family(rule('#settings .setting .value')), MONO);
 });
 

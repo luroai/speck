@@ -611,7 +611,7 @@ document.addEventListener('keydown', e => {
   else if (foremanOpen && settingsView === null) closeForeman(); // 0285: the Foreman's detail
   else if (buildLogOf !== null && settingsView === null) closeBuildLog(); // 0548: a build log's pop-up
   else if (settingsLeaving !== null) keepEditing(); // 0275: Escape answers the question with Keep editing
-  else if (settingsView !== null && settingTip !== null) { settingHoverWait++; showSettingTip(null, false); } // 0268: the explanation first, then the view. 0371: and no pause left to show it again
+  else if (settingsView !== null && settingTip !== null) showSettingTip(null); // 0268: the explanation first, then the view
   else if (settingsView !== null) leaveSettings();
   else if (priorityMenu !== null || levelMenu !== null || builderMenu !== null) closePriorityMenu();
   else if (fullId !== null) closeFull();

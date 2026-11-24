@@ -33,8 +33,10 @@ test('0593 AC1: a group has no card border, shadow or rounding', () => {
   }
 });
 
-test('0593 AC1: a group\'s heading has a divider under it', () => {
-  assert.match(rules('#settings .sgroup .sh'), /border-bottom: [^;]*var\(--line\)/);
+// 0729: a group's heading is a small muted label over its rows' block now, with no divider, as Cursor's settings have it
+test('0593 AC1: a group\'s heading has no divider under it (0729)', () => {
+  assert.doesNotMatch(rules('#settings .sgroup .sh'), /border-bottom:/);
+  assert.match(rules('#settings .sgroup .sh'), /border: 0/, 'it takes away the line every section head has');
 });
 
 test('0593 AC1: a setting\'s row has no line or inset of a card', () => {
@@ -44,13 +46,14 @@ test('0593 AC1: a setting\'s row has no line or inset of a card', () => {
   }
 });
 
-test('0593 AC1: each setting keeps its label, control and info button, and its explanation is in muted text', async () => {
+test('0593 AC1: each setting keeps its label and control, its name is the button that shows its explanation (0729: not an info button), and its explanation is in muted text', async () => {
   const p = await opened();
   for (const key of ['speck_name', 'watch', 'ship_mode']) {
     const r = rowOf(p, key), kids = p.all(r), cls = c => kids.find(n => new RegExp(`\\b${c}\\b`).test(n.className || ''));
     assert.ok(cls('label'), `${key}: its label`);
     assert.ok(cls('control'), `${key}: its control`);
-    assert.equal(cls('info')?.tagName, 'button', `${key}: its info button stays`);
+    assert.equal(cls('name')?.tagName, 'button', `${key}: its name is a button`);
+    assert.equal(cls('info'), undefined, `${key}: no info button`);
     assert.equal(cls('explain')?.textContent, `What ${key} does.`, `${key}: its explanation`);
   }
   assert.match(rules('#settings .setting p.explain'), /color: var\(--muted\)/);

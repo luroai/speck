@@ -41,13 +41,11 @@ let settingsSaid = null; // 0311: what the last Save changed that you didn't, su
 let settingsBar = null;
 let settingRowsDrawn = new Map(); // 0370: key → its row, and its explanation's number, as drawn
 let settingControls = new Map(); // 0276: key → its control, as drawn // 0274: the Save button, as drawn
-// 0268: each setting's explanation sits behind an info button beside its name. It shows while the pointer is over the
-// button or the button has focus, and a tap or click keeps it until the next tap or click on it. One shows at a time.
-let settingTip = null, settingTipKept = false, settingHover = null, settingFocus = null; // keys, or null
-let settingHoverWait = 0; // 0371: counts the pointer's moves onto and off info buttons, so a pause that's been cut short shows nothing
-const SETTING_TIP_PAUSE = 500;
+// 0268: each setting's explanation, one at a time. 0729: a press on the setting's name or its short line shows it, and
+// the next press there hides it, as Cursor's settings have no info buttons. Nothing shows from the pointer resting on a row.
+let settingTip = null; // the key whose explanation shows, or null
 let settingTips = new Map(); // key → its explanation, in the view as it's drawn
-let settingInfos = new Map(); // 0395: key → its info button, in the view as it's drawn
+let settingInfos = new Map(); // 0395: key → the button that shows it, its name, in the view as it's drawn
 // 0275: closing the view with changes not saved asks first. null, or the question being asked, as { saving }.
 let settingsLeaving = null;
 $('settings-open').addEventListener('click', openSettings);
@@ -68,14 +66,13 @@ function besideColumn(e, pane = $('settings')) {
   const r = col.getBoundingClientRect();
   return e.clientX < r.left || e.clientX >= r.right;
 }
-// 0395: the pointer going down anywhere but on the open explanation or its info button closes it, and the click still
-// reaches what it lands on. Beside the column, it closes only the explanation, not Settings. On the way up, after the
-// pop-up's own listener, so that one's "beside" is taken back. A press inside it, such as one selecting its text, keeps it.
+// 0395: the pointer going down anywhere but on the open explanation or the name that shows it closes it, and the click
+// still reaches what it lands on. Beside the column, it closes only the explanation, not Settings. On the way up, after
+// the pop-up's own listener, so that one's "beside" is taken back. A press inside it, such as one selecting its text, keeps it.
 document.addEventListener('pointerdown', e => {
   if (settingsView === null || settingTip === null) return;
   if (within(e.target, settingTips.get(settingTip)) || within(e.target, settingInfos.get(settingTip))) return;
-  settingHoverWait++; // 0371: no pause left to show it again
-  showSettingTip(null, false);
+  showSettingTip(null);
   settingsDownBeside = false;
 });
 renderSettings(); // closed
@@ -216,8 +213,7 @@ function closeSettings() {
   settingAgentModels = new Map();
   settingsLeaving = null;
   renderLeaving();
-  settingTip = settingHover = settingFocus = null;
-  settingTipKept = false;
+  settingTip = null;
   settingTyped = new Map();
   settingRefused = new Map();
   settingClear = new Set();
@@ -246,9 +242,6 @@ function renderSettings() {
   settingControls = new Map();
   settingRowsDrawn = new Map();
   settingsBar = null;
-  // Drawn afresh, its buttons are new, so no pointer is over one and none has focus: only a kept explanation stays.
-  settingHover = settingFocus = null;
-  if (!settingTipKept) settingTip = null;
   if (!open) { pane.replaceChildren(); return; }
   const close = el('button', 'close', 'Close');
   close.type = 'button';
@@ -264,8 +257,8 @@ function renderSettings() {
       // 0652: a member's settings go on its card, wherever the server grouped them. 0575: the engineering manager's are Virgil's
       const keyOf = new Map([...settingRowsDrawn].map(([k, d]) => [d.row, k]));
       const left = rows.filter(r => { const k = keyOf.get(r); if (!TEAM_ROW_KEYS.has(k)) return true; teamRows.set(k, r); return false; });
-      // 0593: a plain section, its heading over a divider
-      if (left.length) kids.push(el('section', 'sgroup', null, el('div', 'sh', null, el('h4', null, g.title)), ...left));
+      // 0729: its small label over its rows on a block, as Cursor's settings have them
+      if (left.length) kids.push(settingGroup('sgroup', g.title, el('div', 'block', null, ...left)));
     }
   }
   if (settingsView.state === 'ok' && settingRows().some(x => x.editable === true)) kids.push(saveBar()); // none to change: nothing to save
@@ -275,8 +268,11 @@ function renderSettings() {
   kids.splice(1, 0, ...(ok ? [team, subsGroup()].filter(Boolean) : []), toggleGroup(), ...(ok ? [agentsGroup()] : []));
   pane.replaceChildren(...kids);
   refreshSettings();
-  showSettingTip(settingTips.has(settingTip) ? settingTip : null, settingTipKept);
+  showSettingTip(settingTips.has(settingTip) ? settingTip : null);
 }
+// 0729: a group of the view, `cls` its section's classes: its small muted label, then `blocks`, each a rounded block a
+// shade off the page, with no border, holding its rows.
+const settingGroup = (cls, title, ...blocks) => el('section', cls, null, el('div', 'sh', null, el('h4', null, title)), ...blocks);
 // 0372: kept in this browser rather than speck/config.yml, so it switches the page as it's pressed and Save neither
 // sends it nor counts it as a change. 0412: System, Light and Dark, as radio buttons in one group: Tab reaches the one
 // chosen, and the arrow keys, Home and End choose another, kept between redraws so it keeps focus.
@@ -308,16 +304,17 @@ function drawLook() {
     lookButtons[i].tabIndex = look === chosen ? 0 : -1;
   });
 }
-// 0396: Appearance, then Auto-build, each a row of its name and its switch, above the other groups.
+// 0396: Appearance, then Auto-build, each a row of its name and its switch, above the other groups. 0729: each a name
+// and short line as every setting's, which show its explanation, on a block under a label of their own.
 function toggleGroup() {
   drawLook();
   drawRunSwitch();
-  // An info button, as every setting has, so the rows line up with the others (0277).
-  const [lookInfo, lookTip] = settingInfo({ key: 'Appearance', explain: 'System follows your computer\'s setting; Light and Dark stay as they are. It\'s kept in this browser, not in speck/config.yml.' }, settingTips.size);
-  const [runInfo, runTip] = settingInfo({ key: 'Auto-build', explain: 'On: speck run builds each ready ticket and ships each approved one auto_ship covers. Off: ready tickets wait.' }, settingTips.size);
-  const row = (name, info, sw, ...after) => el('div', 'switch-row', null,
-    el('div', 'row', null, el('span', 'label', null, el('span', 'name', name), info), el('div', 'control', null, sw)), ...after);
-  return el('section', 'switches', null, row('Appearance', lookInfo, lookGroup, lookTip), row('Auto-build', runInfo, runSwitchButton, runSwitchSaid, runTip));
+  const [lookInfo, lookTip] = settingInfo({ key: 'Appearance', label: 'Appearance', summary: 'Light, dark, or as your computer is.',
+    explain: 'System follows your computer\'s setting; Light and Dark stay as they are. It\'s kept in this browser, not in speck/config.yml.' }, settingTips.size);
+  const [runInfo, runTip] = settingInfo({ key: 'Auto-build', label: 'Auto-build', summary: 'Build each ready ticket, and ship what auto-ship covers.',
+    explain: 'On: speck run builds each ready ticket and ships each approved one auto_ship covers. Off: ready tickets wait.' }, settingTips.size);
+  const row = (info, sw, ...after) => el('div', 'switch-row', null, el('div', 'row', null, info, el('div', 'control', null, sw)), ...after);
+  return settingGroup('switches', 'General', el('div', 'block', null, row(lookInfo, lookGroup, lookTip), row(runInfo, runSwitchButton, runSwitchSaid, runTip)));
 }
 // 0381: each agent's model, drawn in the agent's row: key → the agent's key.
 const SETTING_PAIRS = { builder_model: 'builder', reviewer_model: 'reviewer', watch_model: 'watch_agent', qa_model: 'qa_agent' }; // 0652: and QA's
@@ -341,22 +338,23 @@ function pairSettings(rows) {
   }
 }
 // A setting's row, whose explanation is the view's `n`th. 0381: an agent's model's is drawn to sit in the agent's row.
-// 0652: speck's face is its card's character now, not beside its name (0593).
+// 0652: speck's face is its card's character now, not beside its name (0593). 0729: its plain name and short line on the
+// left, which show its explanation, and its control on the right; its key is in the row's tooltip.
 function settingRow(x, n) {
   const role = yourModels() !== null && Object.hasOwn(ROLES, x.key) ? x.key : null; // 0400: a role's one list
   const edit = x.editable === true ? (role !== null ? roleEditor(x) : settingEditor(x)) : null;
-  // 0405: a role's effort, drawn in its row, is explained with the role, under the role's one info button.
-  const effortKey = role !== null ? Object.keys(ROLE_PAIRS).find(k => ROLE_PAIRS[k] === role) : undefined;
-  const effort = effortKey !== undefined && pairedWith(effortKey) !== null && takesEffort(role) ? settingRows().find(r => r.key === effortKey) : undefined;
-  const nested = yourModels() !== null && Object.hasOwn(ROLE_PAIRS, x.key) && pairedWith(x.key) !== null;
+  // 0405: a role's effort, drawn in its row, is explained with the role, from the role's name. 0729: and an agent's model,
+  // drawn in its row (0381), with the agent, as the model's row has no name of its own.
+  const pairs = settingPairs(), partnerKey = Object.keys(pairs).find(k => pairs[k] === x.key && pairedWith(k) !== null);
+  const partner = partnerKey === undefined || (yourModels() !== null && !takesEffort(x.key)) ? undefined : settingRows().find(r => r.key === partnerKey);
+  const model = pairedWith(x.key) !== null; // drawn in its agent's row
   // 0397: where a change is saved, and this machine's own value with its button, are said in the explanation, not marked.
-  const [info, tip] = nested ? [null, null] : effort === undefined ? settingInfo(x, n, ownLine(x))
-    : settingInfo({ key: x.key, explain: sharedEnd(String(x.explain ?? ''), String(effort.explain ?? '')) }, n, [ownLine(x), ownLine(effort, x.key)], typeof effort.explain === 'string' && effort.explain ? effort.explain : null);
+  const [info, tip] = model ? [null, null] : partner === undefined ? settingInfo(x, n, ownLine(x))
+    : settingInfo({ ...x, explain: sharedEnd(String(x.explain ?? ''), String(partner.explain ?? '')) }, n, [ownLine(x), ownLine(partner, x.key)], typeof partner.explain === 'string' && partner.explain ? partner.explain : null);
   const shown = edit ? edit : [el('code', 'value', settingValue(x.value))];
-  const model = pairedWith(x.key) !== null, control = model ? null : el('div', 'control', null, ...shown);
+  const control = model ? null : el('div', 'control', null, ...shown);
   const row = el('div', model ? 'setting model' : 'setting', null,
-    model ? el('span', 'pick', null, settingName(x.key), el('span', 'list', null, ...shown, info))
-      : el('div', 'row', null, el('span', 'label', null, settingName(x.key), info), control),
+    model ? el('span', 'pick', null, el('span', 'list', null, ...shown)) : el('div', 'row', null, info, control),
     role === null && AGENT_KEYS.includes(x.key) && typeof x.missing === 'string' && x.missing ? el('p', null, x.missing) : null, // 0288, 0293, 0393, 0652
     role !== null ? notYoursLine(role) : null, role !== null ? unlistedLine(role) : null, role !== null ? needsClaudeLine() : null, // 0400
     role !== null && cataloguesWhy() !== null ? el('p', 'bad', `Couldn't read your agents' models. ${cataloguesWhy()}`) : null, // 0407
@@ -370,6 +368,8 @@ function settingRow(x, n) {
     role !== null && settingRefused.has(ROLES[role].model) && settingRefused.get(ROLES[role].model) !== settingRefused.get(x.key) ? el('p', 'bad', settingRefused.get(ROLES[role].model)) : null,
     tip);
   if (yourModels() !== null && Object.hasOwn(ROLE_PAIRS, x.key) && !takesEffort(ROLE_PAIRS[x.key])) row.hidden = true; // 0400
+  row.setAttribute('data-key', x.key);
+  row.title = role !== null ? `${x.key} and ${ROLES[role].model}` : x.key; // 0729: a role's one list sets its model too (0400)
   settingRowsDrawn.set(x.key, { row, n, control });
   return row;
 }
@@ -397,7 +397,7 @@ function redrawSettings(keys, kept = null) {
     const had = settingControls.get(key), hadInfo = settingInfos.get(key);
     const row = settingRow(x, drawn.n), made = settingControls.get(key);
     if (key === kept && had && made && made.tagName === had.tagName) {
-      if (hadInfo) settingInfos.set(key, hadInfo); // 0395: its name, and its info button with it, stay as they were
+      if (hadInfo) settingInfos.set(key, hadInfo); // 0395: its name, which shows its explanation, stays as it was
       drawn.row.hidden = row.hidden; // 0407: an effort, shown only for an agent that takes one
       for (const c of [...drawn.row.children].slice(1)) drawn.row.removeChild(c);
       for (const c of [...row.children].slice(1)) drawn.row.appendChild(c);
@@ -410,8 +410,6 @@ function redrawSettings(keys, kept = null) {
       settingRowsDrawn.set(key, drawn);
       continue;
     }
-    if (settingHover === key) settingHover = null; // its info button is a new one
-    if (settingFocus === key) settingFocus = null;
     for (const [m, agent] of Object.entries(settingPairs())) { // 0381: an agent's row keeps its model's
       const model = settingRowsDrawn.get(m);
       if (agent === key && model && drawn.control && model.row.parentNode === drawn.control) settingRowsDrawn.get(key).control.appendChild(model.row);
@@ -421,67 +419,40 @@ function redrawSettings(keys, kept = null) {
   }
   drawTeamLimits(); // 0652: a member's agent picked again
   refreshSettings();
-  showSettingTip(settingTips.has(settingTip) ? settingTip : null, settingTipKept);
+  showSettingTip(settingTips.has(settingTip) ? settingTip : null);
 }
 // 0370: the settings whose rows show what a change to `key` alters: its own lines, and the lists of models and efforts
 // it decides.
 // 0652: and the benches whose order leaves out the member's own agent, and QA's, which can run on the watch agent's.
 const SETTING_AFFECTS = { reviewer: ['reviewer', 'reviewer_model', 'reviewer_effort', 'reviewer_bench'], builder: ['builder', 'builder_model', 'watch_model', 'builder_bench', 'watch_bench', 'qa_agent', 'qa_bench'],
   watch_agent: ['watch_agent', 'watch_model', 'watch_bench', 'qa_agent', 'qa_bench'], reviewer_model: ['reviewer_model', 'reviewer_effort'], qa_agent: ['qa_agent', 'qa_model', 'qa_bench'] };
-// 0273: a setting's name, which a narrow row breaks after a dot or an underscore ("max_parallel_" then "builds"),
-// rather than in the middle of a word.
-function settingName(key) {
-  const parts = String(key).match(/[^._]+[._]?|[._]/g) || [];
-  return el('code', 'name', null, ...parts.flatMap((part, i) => [i > 0 ? el('wbr') : null, el('span', null, part)]));
-}
-// 0268: a setting's info button and its explanation, which a screen reader reads with the button. 0397: `line`, this
-// machine's own value and its button, goes at the end of it, and the pointer or the focus can move into it from the
-// button without it closing.
+// 0729: a setting's plain name, as speck panel gives it, or else words made from its key ("Max parallel builds"), never
+// the key itself; and its short line saying what it does, or none.
+const settingWords = x => ({ name: typeof x.label === 'string' && x.label ? x.label : keyWords(x.key), line: typeof x.summary === 'string' ? x.summary : '' });
+const keyWords = key => { const w = String(key).split('.').filter(Boolean).pop()?.replace(/_+/g, ' ').trim() || 'Setting'; return w.charAt(0).toUpperCase() + w.slice(1); };
+// 0268: a setting's explanation, which a screen reader reads with what shows it. 0729: shown from the setting's plain
+// name over its short muted line, as Cursor's settings have them: the name is a button that shows it on a press and
+// hides it on the next, in place of an info button, and a press on the line is a press on the name. Returns the name
+// and line, and the explanation. 0397: `lines`, this machine's own value and its button, go at the end of it.
 function settingInfo(x, n, lines = null, also = null) {
-  const key = x.key, more = (Array.isArray(lines) ? lines : [lines]).filter(l => l !== null);
-  const line = more.length > 0 ? more : null;
+  const key = x.key, more = (Array.isArray(lines) ? lines : [lines]).filter(l => l !== null), words = settingWords(x);
   const tip = el('p', 'explain', null, el('span', null, x.explain), also !== null ? el('span', null, ` ${also}`) : null, ...more);
-  const inTip = node => line !== null && node != null && typeof tip.contains === 'function' && tip.contains(node);
-  const hide = () => { if (settingTip === key && !settingTipKept && settingFocus !== key && settingHover !== key) showSettingTip(null, false); };
   tip.id = `setting-explain-${n}`;
-  const info = el('button', 'info');
+  const info = el('button', 'name', words.name);
   info.type = 'button';
-  info.setAttribute('aria-label', `About ${key}`);
   info.setAttribute('aria-describedby', tip.id);
-  // 0371: shown once the pointer has rested on the button for SETTING_TIP_PAUSE ms, not as soon as it's over it.
-  info.addEventListener('mouseenter', () => {
-    if (!canHover()) return;
-    settingHover = key;
-    const wait = ++settingHoverWait;
-    if (settingTip !== key) setTimeout(() => { if (wait === settingHoverWait && settingHover === key && settingTip !== key) showSettingTip(key, false); }, SETTING_TIP_PAUSE);
-  });
-  // 0397: with a button in it, the pointer has a moment to cross to it before it closes.
-  const leave = e => {
-    settingHoverWait++;
-    if (inTip(e?.relatedTarget)) return;
-    if (settingHover === key) settingHover = null;
-    if (line === null) hide(); else setTimeout(hide, SETTING_TIP_PAUSE);
-  };
-  info.addEventListener('mouseleave', leave);
-  info.addEventListener('focus', () => { settingFocus = key; settingHoverWait++; if (settingTip !== key) showSettingTip(key, false); });
-  const blur = e => { if (inTip(e?.relatedTarget) || e?.relatedTarget === info) return; if (settingFocus === key) settingFocus = null; hide(); };
-  info.addEventListener('blur', blur);
-  if (line !== null) {
-    tip.addEventListener('mouseenter', () => { settingHover = key; });
-    tip.addEventListener('mouseleave', e => { if (e?.relatedTarget !== info) leave(e); });
-    tip.addEventListener('focusin', () => { settingFocus = key; });
-    tip.addEventListener('focusout', blur);
-  }
-  // 0371: a click or focus settles it, so a pause still running from the pointer shows nothing when it ends.
-  info.addEventListener('click', () => { settingHoverWait++; if (settingTip === key && settingTipKept) showSettingTip(null, false); else showSettingTip(key, true); });
+  info.setAttribute('aria-controls', tip.id);
+  info.setAttribute('aria-expanded', 'false');
+  info.addEventListener('click', () => showSettingTip(settingTip === key ? null : key));
   settingTips.set(key, tip);
   settingInfos.set(key, info);
-  return [info, tip];
+  return [el('span', 'label', null, info, words.line ? el('span', 'desc', words.line) : null), tip];
 }
-function showSettingTip(key, kept) {
+// Shows `key`'s explanation, and hides any other, or hides them all for null.
+function showSettingTip(key) {
   settingTip = key;
-  settingTipKept = key !== null && kept;
   for (const [k, tip] of settingTips) tip.hidden = k !== key;
+  for (const [k, info] of settingInfos) info.setAttribute('aria-expanded', String(k === key));
   if (key !== null) placeSettingTip(settingTips.get(key));
 }
 // 0371: an explanation goes above its row, or below it when the top of the view would cut it off there. 0379: the top
@@ -916,14 +887,14 @@ function teamGroup(rows) {
   const cards = TEAM.map(m => { const mine = m.keys.filter(k => rows.has(k)).map(k => rows.get(k)); return mine.length ? memberCard(m, mine) : null; }).filter(Boolean);
   if (!cards.length) return null;
   drawTeamLimits();
-  return el('section', 'sgroup team', null, el('div', 'sh', null, el('h4', null, 'Your team')), ...cards);
+  return settingGroup('sgroup team', 'Your team', ...cards); // 0729: each member's card a block of its own
 }
 function memberCard(m, rows) {
   const name = m.member === 'manager' ? managerName() : m.name;
   const face = SpeckFace.draw(m.member === 'manager' ? { role: 'manager', mood: 'watching', size: 40, label: `${name}, watching` } : { role: m.member, size: 40 });
   const limit = el('p', 'limit');
   teamLimits.set(m.member, limit);
-  const card = el('div', 'member', null, el('div', 'mhead', null, face, el('div', 'who', null, el('h5', null, name), el('p', 'job', m.job))), limit, ...rows,
+  const card = el('div', 'member block', null, el('div', 'mhead', null, face, el('div', 'who', null, el('h5', null, name), el('p', 'job', m.job))), limit, ...rows,
     m.member === 'builder' ? levelsGroup() : null); // 0661
   card.setAttribute('data-member', m.member);
   return card;
@@ -1148,7 +1119,7 @@ function drawAgents(after = null) {
   const had = document.activeElement;
   const was = had && within(had, box) && typeof had.getAttribute === 'function' ? had.getAttribute('data-focus') : null;
   const view = settingsView !== null ? settingsView.your_agents : null;
-  const kids = [el('div', 'sh', null, el('h4', null, 'Your agents'))];
+  const kids = [];
   if (cataloguesLoading()) kids.push(el('div', 'arow note', null, el('p', 'loading', 'Loading your agents…'))); // 0407
   else if (cataloguesWhy() !== null) kids.push(el('div', 'arow note', null, el('p', 'bad', `Couldn't read your agents. ${cataloguesWhy()}`)));
   else if (view === null || view === undefined) kids.push(el('div', 'arow note', null, el('p', null, 'speck panel didn\'t say which agents are yours. Close Settings and open it again.')));
@@ -1160,7 +1131,7 @@ function drawAgents(after = null) {
     kids.push(...mine.map(agentRow), ...addRows(all.filter(a => a.yours !== true)));
   }
   if (agentsSaid !== null) kids.push(el('div', 'arow note', null, el('p', agentsSaid.bad ? 'bad' : 'said', agentsSaid.text)));
-  box.replaceChildren(...kids);
+  box.replaceChildren(el('div', 'sh', null, el('h4', null, 'Your agents')), el('div', 'block', null, ...kids)); // 0729: its label over its rows on a block
   if (was === null) return;
   const to = [was, after, 'adding'].map(k => (k === null ? null : focusKeyed(box, k))).find(n => n);
   if (to && to.focus) to.focus({ preventScroll: true });
@@ -1191,12 +1162,12 @@ async function loadSubs() {
 function drawSubs() {
   const box = subsBox;
   if (box === null) return;
-  const kids = [el('div', 'sh', null, el('h4', null, 'Your subscriptions'))];
+  const kids = [];
   if (subsView === null || subsView.state === 'loading') kids.push(el('div', 'arow note', null, el('p', 'loading', 'Reading your subscriptions…')));
   else if (subsView.state === 'error') kids.push(el('div', 'arow note', null, el('p', 'bad', subsView.text)));
   else if (!subsView.agents.length) kids.push(el('div', 'arow note', null, el('p', null, 'You have no agents on this machine yet, so there\'s nothing to read.')));
   else kids.push(...subsView.agents.map(subRow));
-  box.replaceChildren(...kids);
+  box.replaceChildren(el('div', 'sh', null, el('h4', null, 'Your subscriptions')), el('div', 'block', null, ...kids)); // 0729: its label over its rows on a block
 }
 const two = n => String(n).padStart(2, '0');
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -1446,7 +1417,7 @@ function clearLine(x, tip = x.key) {
   const value = withRoleModel(x.key).length > 1 ? roleWords(x.key, roleValue(x.key, settingSaved)) : settingValue(x.value); // 0400
   return el('span', 'line', null, el('span', null, `This machine's value, ${value}, is cleared when you save.`), keep);
 }
-const keepSettingTip = key => { settingTip = key; settingTipKept = true; };
+const keepSettingTip = key => { settingTip = key; }; // shown again once the view is drawn again
 const settingRows = () => settingsView !== null && Array.isArray(settingsView.groups)
   ? settingsView.groups.flatMap(g => Array.isArray(g.settings) ? g.settings : []) : [];
 // 0274: each setting whose value differs from the one the view read, as { key, value, machine }: what Save sends.

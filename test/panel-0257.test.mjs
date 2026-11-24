@@ -50,6 +50,8 @@ function settingsPage(answers) {
 const view = (pairs = {}) => ({ groups: GROUPS.map(([title, keys]) => ({ title, settings: keys.map(key => ({ key, value: pairs[key] ?? false, default: !(key in pairs), explain: `What ${key} does.` })) })) });
 const open = async p => { p.press(p.byId('settings-open')); await p.settle(); };
 const pane = p => p.byId('settings');
+// 0729: the value a setting's row shows, the row found by its key, as its name is words now
+const valueIn = (p, key) => p.all(pane(p)).filter(n => n.attrs?.['data-key'] === key).flatMap(r => p.all(r)).find(n => /\bvalue\b/.test(n.className || ''))?.textContent;
 
 test('0257 AC1: the header has a Settings button, which opens the Settings view', async () => {
   const header = page().match(/<header>([\s\S]*?)<\/header>/)[1];
@@ -117,8 +119,12 @@ test('0257 AC2: the view shows each group in order, each setting\'s name and val
   assert.ok(at.every(i => i >= 0), `every group is shown: ${text}`);
   assert.deepEqual([...at].sort((a, b) => a - b), at, 'in order');
   const rows = p.all(pane(p)).filter(n => /\bsetting\b/.test(n.className || ''));
-  assert.deepEqual(rows.map(r => p.all(r).find(n => /\bname\b/.test(n.className || '')).textContent), DRAWN.flatMap(([, keys]) => keys));
-  const row = key => rows.find(r => r.textContent.includes(key) && p.all(r).find(n => /\bname\b/.test(n.className || '')).textContent === key);
+  // 0729: each row keeps its key, which its tooltip shows, and is named in words
+  assert.deepEqual(rows.map(r => r.attrs['data-key']), DRAWN.flatMap(([, keys]) => keys));
+  assert.ok(rows.every(r => r.title.split(' and ').includes(r.attrs['data-key'])), 'each key in its row\'s tooltip');
+  const named = rows.map(r => p.all(r).find(n => /\bname\b/.test(n.className || ''))?.textContent).filter(Boolean);
+  assert.ok(named.length && named.every(t => !/[_.]/.test(t)), `named in words: ${named.join(', ')}`);
+  const row = key => rows.find(r => r.attrs['data-key'] === key);
   const valueOf = key => p.all(row(key)).find(n => /\bvalue\b/.test(n.className || '')).textContent;
   assert.equal(valueOf('auto_ship'), 'true');
   assert.equal(valueOf('auto_ship_risk'), '[low, high]');
@@ -162,11 +168,11 @@ test('0257 AC4: after speck/config.yml changes, opening the view again shows the
   const p = settingsPage([view({ max_parallel_builds: 2 }), view({ max_parallel_builds: 3 })]);
   await p.settle();
   await open(p);
-  assert.match(pane(p).textContent, /max_parallel_builds2/);
+  assert.equal(valueIn(p, 'max_parallel_builds'), '2');
   p.key('Escape');
   await p.settle();
   await open(p);
-  assert.match(pane(p).textContent, /max_parallel_builds3/, 'the new value, from a new request');
+  assert.equal(valueIn(p, 'max_parallel_builds'), '3', 'the new value, from a new request');
   assert.equal(p.settingsCalls.filter(c => c.url.startsWith('/api/settings')).length, 2);
 });
 
@@ -178,17 +184,17 @@ test('0257 AC4: a failed request says why in the view, and opening it again trie
   p.key('Escape');
   await p.settle();
   await open(p);
-  assert.match(pane(p).textContent, /max_parallel_builds3/);
+  assert.equal(valueIn(p, 'max_parallel_builds'), '3');
 });
 
 test('0257 AC5: the view has no control that changes a setting, and opening and closing it sends only GETs', async () => {
   const p = settingsPage([view({ auto_ship: true })]);
   await p.settle();
   await open(p);
-  // 0268: and each setting's info button, which only shows its explanation
+  // 0268: and each setting's info button, which only shows its explanation (0729: its name, in place of the info button)
   // 0285: and the speck run switch in the Foreman group, which turns speck run on or off rather than change a setting
   // 0372: and the list of looks, kept in this browser rather than in speck/config.yml (0412: its three choices)
-  const controls = p.all(pane(p)).filter(n => ['button', 'input', 'select', 'textarea', 'form'].includes(n.tagName) && n.className !== 'info' && !/\brun-switch\b/.test(n.className) && !/^look-/.test(n.id || ''));
+  const controls = p.all(pane(p)).filter(n => ['button', 'input', 'select', 'textarea', 'form'].includes(n.tagName) && n.className !== 'name' && !/\brun-switch\b/.test(n.className) && !/^look-/.test(n.id || ''));
   assert.deepEqual(controls.map(n => n.className), ['close'], 'only the close button');
   p.press(controls[0]);
   await p.settle();
@@ -226,7 +232,8 @@ test('0257 self-check: a press while the view is opening reads the settings once
   slow.resolve(view({ auto_ship: { on: true } }));
   await p.settle();
   assert.equal(pane(p).hidden, false);
-  assert.doesNotMatch(pane(p).textContent, /Loading the settings|max_parallel_builds9/, 'one read, drawn as it came');
-  assert.match(pane(p).textContent, /auto_ship\{"on":true\}/);
+  assert.doesNotMatch(pane(p).textContent, /Loading the settings/, 'one read, drawn as it came');
+  assert.notEqual(valueIn(p, 'max_parallel_builds'), '9', 'one read, drawn as it came');
+  assert.equal(valueIn(p, 'auto_ship'), '{"on":true}');
   assert.equal(p.settingsCalls.filter(c => c.url.startsWith('/api/settings')).length, 1);
 });

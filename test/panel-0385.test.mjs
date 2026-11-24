@@ -54,7 +54,7 @@ async function openAt(b, port, width, height = 700) {
   await b.send('Page.navigate', { url: `http://127.0.0.1:${port}/` });
   await b.until(`location.port === '${port}' && document.readyState === 'complete' && !!document.getElementById('settings-open')`, 'the panel');
   await b.js(`document.getElementById('settings-open').click()`);
-  await b.until(`!!document.querySelector('#settings .setting .info')`, 'the settings');
+  await b.until(`!!document.querySelector('#settings .setting .label button.name')`, 'the settings'); // 0729: a setting's name shows its explanation
 }
 
 test('0385 AC1, AC2, AC3: in a real browser, the pop-up never moves sideways on a phone, nothing in it is too wide, and a desktop sees it as before', { skip }, async () => {
@@ -104,9 +104,9 @@ test('0385 AC1, AC2, AC3: in a real browser, the pop-up never moves sideways on 
           document.documentElement.dataset.theme = ${JSON.stringify(look)};
           const measure = () => ${MEASURE};
           const res = [{ name: 'at rest', ...measure() }];
-          for (const info of document.querySelectorAll('#settings .setting .info')) {
+          for (const info of document.querySelectorAll('#settings .setting .label button.name')) {
             info.click();
-            res.push({ name: info.getAttribute('aria-label'), ...measure() });
+            res.push({ name: info.closest('.setting').getAttribute('data-key'), ...measure() });
             info.click();
           }
           return res;
