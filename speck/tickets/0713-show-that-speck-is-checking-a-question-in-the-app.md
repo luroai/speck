@@ -42,6 +42,7 @@ Such a ticket says speck is checking it in the app, and counts under Needs you o
 ## Notes
 - `fixable`/`decidable` in `scripts/foreman.mjs` exclude questions with a Check in the app line, so `foreman_will` is false for them. The agent's queue (`appCheckable`, `s.checked` in `scripts/foreman-agent.mjs`) never reaches the board.
 - Waits for the ticket that keeps a ticket waiting on its base ticket out of Needs you: both change `buildGroup`, `doingNow` and the Needs you counts.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
