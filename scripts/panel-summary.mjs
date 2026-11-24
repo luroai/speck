@@ -16,7 +16,8 @@ function atShip(t, tickets, runOn) {
   if (t.status !== 'approved' || shipping(t)) return false;
   const s = t.ship && typeof t.ship === 'object' ? t.ship : null, approved = time(t.approved), ended = s ? time(s.ended) ?? time(s.started) : null;
   const failed = !!s && s.running === false && s.auto === true && (approved === null || (ended !== null && ended >= approved));
-  if (!failed) return t.auto_ship !== true || !runOn;
+  // 0709: one built on a ticket that hasn't shipped (ships_after) waits for that one, not for you.
+  if (!failed) return !(typeof t.ships_after === 'string' && t.ships_after) && (t.auto_ship !== true || !runOn);
   // Unless speck run carries it on: handed back to its build since, which is at work on it or has other tickets on their way.
   const handed = time(t.handed_back);
   const carried = runOn && handed !== null && (ended === null || handed >= ended)

@@ -487,10 +487,13 @@ function cmdStatus(args = []) {
   for (const s of order) {
     const group = tickets.filter(t => t.fm.status === s).map(t => ({ t, id: t.fm.id, type: ticketType(t), priority: ticketPriority(t) })).sort(byPriority);
     if (!group.length) continue;
-    console.log(`\n${s.toUpperCase()} (${group.length})${s === 'approved' ? ': waiting for you. Read `speck pack <id>`, then run /speck-ship <id>' : ''}`);
+    // 0709: an approved ticket built on one that hasn't shipped waits for that one, not for you.
+    const after = new Map(s === 'approved' ? group.map(({ t }) => [t.fm.id, builtOnWaiting(repo, cfg, t.fm)?.id]).filter(([, on]) => on) : []), yours = group.length - after.size;
+    console.log(`\n${s.toUpperCase()} (${group.length})${s === 'approved' && yours ? `: ${after.size ? `${yours} ` : ''}waiting for you. Read \`speck pack <id>\`, then run /speck-ship <id>` : ''}`);
     for (const { t, priority } of group) {
       console.log(`  ${t.fm.id}${TYPES.includes(t.fm.type) ? ` ${t.fm.type}` : ''}  P${priority === null ? '-' : typeof priority === 'object' ? JSON.stringify(priority) : priority}  ${t.fm.size}/${t.fm.risk}  ${t.fm.title}`);
       if (t.at) console.log(`        ↳ being built in ${t.at}`);
+      if (after.has(t.fm.id)) console.log(`        ↳ ships after ${after.get(t.fm.id)}, which it was built on: nothing to do until that has shipped`);
       const killed = inHand(t) ? buildKilled(runs, t.fm.id) : null;
       if (killed) console.log(`        ! Build stopped unexpectedly. ${resumeHint(cfg, killed)}`);
       for (const line of foremanTicketLines(foremanOn.get(t.fm.id), contentLines(t.sections['blocked question']).join(' '), name)) console.log(line); // 0317
