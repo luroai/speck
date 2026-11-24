@@ -1,7 +1,7 @@
 ---
 id: "0727"
 title: "Keep Set ready off a closed Plan row"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -21,11 +21,12 @@ started: "2026-11-24T15:15:49.304Z"
 approved: "2026-11-24T17:37:52.477Z"
 blocked_at: ""
 waited_seconds: 10
+finished: "2026-11-24T17:40:25.920Z"
 
 ---
 # 0727 · Keep Set ready off a closed Plan row
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Every closed draft in Plan has a Set ready button on its row, so a ticket can be set ready without ever being opened, and the button takes space the title needs. Gate 1 should come after at least a scan of the ticket.
