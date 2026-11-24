@@ -88,12 +88,13 @@ test('0730 AC1: a switch\'s track is green when on and grey when off, with a whi
 
 test('0730 AC2: every list is a compact menu in the interface font, with no box border until hover or focus, and a chevron', () => {
   assert.equal(cssValue(cssRules('#settings .setting .edit'), 'font-family'), 'var(--font-ui)');
-  const select = cssRules('#settings select.edit');
+  // Beats #settings .setting .edit so the resting menu keeps a transparent border and its chevron (review round 1).
+  const select = cssRules('#settings .setting select.edit');
   assert.equal(cssValue(select, 'appearance'), 'none');
   assert.equal(cssValue(select, 'border-color'), 'transparent');
-  assert.ok(parseFloat(cssValue(cssRules('#settings .setting .edit'), 'border-radius')) >= 6, 'rounded');
-  assert.match(styles(), /#settings select\.edit:(?:hover|focus(?:-visible)?)/);
   assert.match(cssValue(select, 'background-image') || '', /linear-gradient/, 'a chevron drawn on the menu');
+  assert.ok(parseFloat(cssValue(cssRules('#settings .setting .edit'), 'border-radius')) >= 6, 'rounded');
+  assert.match(styles(), /#settings \.setting select\.edit:(?:hover|focus(?:-visible)?)/);
 });
 
 test('0730 AC2: a list still offers the same choices, including Default for a blank', async () => {
@@ -134,7 +135,7 @@ test('0730 AC4: every control keeps a 44 px target and a visible focus ring', ()
   assert.equal(cssValue(cssRules('#settings [role="switch"]'), 'min-height'), '44px');
   assert.equal(cssValue(cssRules('#settings select.edit'), 'min-height'), '44px');
   assert.match(styles(), /:focus-visible\s*\{[^}]*outline:\s*2px solid/);
-  const focusSelect = [...styles().matchAll(/#settings select\.edit:focus(?:-visible)?[^{]*\{([^}]*)\}/g)].map(m => m[1]).join(';');
+  const focusSelect = [...styles().matchAll(/#settings \.setting select\.edit:focus(?:-visible)?[^{]*\{([^}]*)\}/g)].map(m => m[1]).join(';');
   assert.match(focusSelect, /border-color:\s*var\(--line\)/, 'a focused list shows its border');
 });
 
@@ -190,6 +191,34 @@ test('0730 AC1 and AC4: in a real browser the on track is green, the knob white,
       assert.ok(m.shipH >= 44, `${look}: auto_ship target ${m.shipH} px`);
       assert.equal(m.shipTag, 'button', `${look}: auto_ship is a switch`);
       assert.equal(m.shipRole, 'switch', look);
+    }
+  } finally {
+    await b.close();
+    await stop(panel);
+  }
+});
+
+// Round 1 F1: a real settings-row select's computed style, not the rule text alone — transparent border and chevron at rest.
+test('0730 AC2: in a real browser a settings list is borderless with a chevron until hover or focus', skip, async () => {
+  const panel = await startPanel(panelRepo().dir, ['--port', String(await freePort())]);
+  const b = await browserPage('about:blank');
+  try {
+    await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
+    await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && !!document.getElementById('settings-open')`, 'the panel');
+    await b.js(`document.getElementById('settings-open').click(); true`);
+    await b.until(`!!document.querySelector('#settings .setting select.edit') && !/Loading the settings/.test(document.getElementById('settings').textContent)`, 'Settings list', 30000);
+    for (const look of ['light', 'dark']) {
+      const m = await b.js(`(() => {
+        document.documentElement.dataset.theme = '${look}';
+        const sel = document.querySelector('#settings .setting select.edit');
+        sel.blur();
+        const cs = getComputedStyle(sel);
+        const line = (() => { const n = document.createElement('i'); n.style.borderColor = 'var(--line)'; document.body.append(n); const c = getComputedStyle(n).borderColor; n.remove(); return c; })();
+        return { border: cs.borderTopColor, bg: cs.backgroundImage, line, tag: sel.tagName.toLowerCase() };
+      })()`);
+      assert.equal(m.tag, 'select', look);
+      assert.notEqual(m.border, m.line, `${look}: resting border is not the line colour`);
+      assert.match(m.bg, /linear-gradient/i, `${look}: chevron at rest`);
     }
   } finally {
     await b.close();
