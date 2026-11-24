@@ -37,7 +37,7 @@ import { questionFacts } from './question-facts.mjs'; import { cmdSplitOff } fro
 import { goWithResumable, goWithWaiting, callsOf } from './go-with.mjs';
 import { handedBack } from './hand-back.mjs'; import { buildSession } from './build-records.mjs'; import { noteThisBuild } from './seen-builds.mjs';
 import { changesPending } from './changes-asked.mjs'; import { cmdChanges } from './changes.mjs';
-import { cmdApp } from './app.mjs'; import { SET_USAGE, setSeveralReady } from './set-ready.mjs'; // 0634, 0681
+import { cmdApp } from './app.mjs'; import { SET_USAGE, BLANKABLE, setSeveralReady } from './set-ready.mjs'; // 0634, 0681
 import { startWaits, startedOn, mergeBuiltOn, markBuiltOn, builtOnWaiting, CancelledWhy } from './built-on.mjs'; // 0674
 import { cmdBuiltOn } from './built-on-cancelled.mjs'; // 0710
 
@@ -124,8 +124,8 @@ function cmdSet(args) {
   if (/^\d+$/.test(args[1] ?? '')) return setSeveralReady(args, cmdSet); // 0681: `speck set <id> <id>… status ready`
   const [id, key, ...rest] = args;
   const value = rest.join(' ');
-  // priority is the one field that can be cleared, with `speck set <id> priority ""`.
-  if (!id || !key || (!value && !(key === 'priority' && rest.length))) throw new SpeckError(SET_USAGE);
+  // priority and the build settings can be cleared, with `speck set <id> priority ""`.
+  if (!id || !key || (!value && !((key === 'priority' || BLANKABLE.includes(key)) && rest.length))) throw new SpeckError(SET_USAGE);
   checkSetValue(key, value);
   const repo = findRepoRoot();
   const cfg = loadConfig(repo);
@@ -149,7 +149,7 @@ function cmdSet(args) {
     if (commit.status !== 0)
       throw new SpeckError(`Couldn't commit ${posix(path.relative(repo, from))}, so ${t.fm.id} is unchanged:\n${(commit.stderr || commit.stdout || '').trim().split('\n').slice(-5).join('\n')}\nFix that, then run this again.`);
   }
-  console.log(`${t.fm.id} ${key} → ${value}`);
+  console.log(value === '' ? `${t.fm.id} ${key} is now blank` : `${t.fm.id} ${key} → ${value}`);
 }
 
 // `speck set`'s checks and write, shared with the panel so the two can't drift. The checks throw a SpeckError saying

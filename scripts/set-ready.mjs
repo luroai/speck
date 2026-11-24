@@ -1,6 +1,8 @@
 // 0681: `speck set <id> <id>… status ready` sets several tickets ready with one command.
 import { SpeckError } from './core.mjs';
 
+// Fields `speck set` can blank with "", besides priority (0716).
+export const BLANKABLE = ['level', 'builder', 'builder_model', 'builder_effort', 'reviewer', 'reviewer_model', 'reviewer_effort'];
 export const SET_USAGE = 'Usage: speck set <id> <field> <value>, or speck set <id> <id>… status ready';
 
 // Each ticket is set as `speck set <id> status ready` sets it on its own (`setOne` is speck set itself), so each gets
