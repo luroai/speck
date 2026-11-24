@@ -1,7 +1,7 @@
 ---
 id: "0713"
 title: "Show that speck is checking a question in the app"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -20,11 +20,12 @@ created: 2026-11-24
 started: "2026-11-24T13:48:38.552Z"
 blocked_at: ""
 waited_seconds: 21
+approved: "2026-11-24T14:24:10.975Z"
 
 ---
 # 0713 · Show that speck is checking a question in the app
 
-**Status:** 🔨 building
+**Status:** 👍 approved
 
 ## Problem
 While speck's watch agent is about to check a blocked question in the running app, the ticket says "Waiting for you" and counts under Needs you, though speck may carry on by itself. You may check it by hand for nothing.
@@ -64,9 +65,15 @@ Changes what you'd notice: yes
 Clear winner: yes
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): escalate: F1 Criterion 3 requires watch-off tickets to count under Needs you, while the existing watch-off contract explicitly excludes them.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 397,528
+- Elapsed since build started: 36 min
+- Changed lines: 63 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - While speck run is off, a ticket speck would check in the app still says speck is checking it. Skipped as a duplicate of speck/ideas/2026-10-18-foreman-will-take-it-while-speck-run-is-off.md (dropped), which covers the same for recommendations speck will take.
