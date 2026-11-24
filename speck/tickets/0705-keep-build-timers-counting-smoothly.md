@@ -1,7 +1,7 @@
 ---
 id: "0705"
 title: "Keep build timers counting smoothly"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-10-11-keep-build-timers-counting-smoothly.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-24
+started: "2026-11-24T12:18:40.929Z"
 
 ---
 # 0705 · Keep build timers counting smoothly
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 The panel's build timers sometimes skip a second (12, 14) or show one twice (13, 13), right where you look to see a build is alive. The ticks run on a plain one-second interval that lands a few milliseconds early or late.
