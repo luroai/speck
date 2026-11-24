@@ -39,7 +39,7 @@ test('0397 AC1: no setting\'s row shows a repo, repo default, default or this ma
 test('0397 AC2: each explanation ends by saying where a change is saved, and says what speck uses when it\'s left blank', () => {
   const r = panelRepo();
   const all = panelSettings(r.dir).groups.flatMap(g => g.settings);
-  assert.equal(all.length, SETTING_GROUPS.flatMap(g => g.settings).length + TEAM_KEYS.length + 1); // 0652: and Your team's. 0707: and machine_parallel_tests
+  assert.equal(all.length, SETTING_GROUPS.flatMap(g => g.settings).length + TEAM_KEYS.length + 2); // 0652: and Your team's. 0707: and machine_parallel_tests. 0746: and machine_parallel_builds
   for (const x of all) {
     const ending = x.every_project === true ? /saved in \S+config\.yml for every project on this machine, without a commit\.$/ // 0707: in the home folder
       : !EDITABLE.includes(x.key) ? /speck\/config\.yml rather than here, and saved there for the project, with a commit\.$/
