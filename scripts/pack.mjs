@@ -8,6 +8,7 @@ import { criteriaChange, criteriaChangedLines } from './criteria-changed.mjs';
 import { unreceiptedRounds } from './receipts.mjs';
 import { standInWords } from './review-stand-in.mjs';
 import { leftChecks } from './app-check.mjs';
+import { runningApp } from './app.mjs';
 
 // Whether a round continued the reviewer's session or started fresh. Command rounds record it. Codex rounds resume
 // whenever an earlier round saved a session, so that rule gives theirs.
@@ -201,12 +202,13 @@ export function cmdPack(args) {
 export function panelPack(repo, id) {
   let t;
   try { t = findTicket(repo, id); } catch (e) { if (e instanceof SpeckError) return { status: 404, body: { error: e.message } }; throw e; }
+  const withApp = body => { const app = runningApp(repo, id); return { ...body, ...(app ? { app } : {}) }; }; // 0725
   try {
     const pack = reviewPack(repo, id, { pictures: false, documents: false }), pictures = panelPictures(repo, id), documents = panelDocuments(repo, t);
-    return { status: 200, body: { pack, ...(documents.length ? { documents } : {}), ...(pictures.length ? { pictures } : {}) } };
+    return { status: 200, body: withApp({ pack, ...(documents.length ? { documents } : {}), ...(pictures.length ? { pictures } : {}) }) };
   }
   catch (e) {
     if (!(e instanceof SpeckError)) throw e;
-    return e.message === NO_ROUNDS ? { status: 200, body: { pack: null } } : { status: 409, body: { error: e.message } };
+    return e.message === NO_ROUNDS ? { status: 200, body: withApp({ pack: null }) } : { status: 409, body: { error: e.message } };
   }
 }

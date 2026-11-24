@@ -44,6 +44,7 @@ An approved code ticket's review pack has a Try it button that starts its app an
 ## Notes
 - `speck app` is `scripts/app.mjs` (0634); it reads `commands.start` or works one out (0638). Panel actions run through `scripts/panel-run.mjs`.
 - Failing before this build: none
+- Self-check: hide Try it in the document pop-up so its border is styled (0453)
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
