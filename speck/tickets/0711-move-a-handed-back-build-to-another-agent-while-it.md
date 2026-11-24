@@ -1,7 +1,7 @@
 ---
 id: "0711"
 title: "Move a handed-back build to another agent while its limit holds"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: "speck/ideas/done/2026-11-15-move-a-handed-back-build-to-another-agent-w
 after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T12:57:07.169Z"
+approved: "2026-11-24T13:43:45.750Z"
 
 ---
 # 0711 · Move a handed-back build to another agent while its limit holds
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When an approved ticket's handed-back build stops on its agent's usage limit, speck run only waits for the reset, which can be five hours or more. The ticket can't ship meanwhile, even when another agent on the bench is free.
@@ -52,9 +53,14 @@ When speck hands an approved ticket back to its build, for example to sort out a
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 214,853
+- Elapsed since build started: 47 min
+- Changed lines: 87 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - Steady the 0289 killed-Codex-build test, which read a call file the fake Codex was still writing (`Unexpected end of JSON input`) in this build's related run: speck/ideas/2026-11-24-steady-the-0289-killed-codex-build-test-s-reads.md.
