@@ -156,15 +156,15 @@ test('0724 AC3: 0166 AC1 passes when the second leave-blocked takes more than 5 
   const r = panelRepo();
   assert.equal(r.run('set', '1', 'status', 'building').status, 0);
   assert.equal(r.run('set', '1', 'status', 'blocked').status, 0);
+  const since = Date.now();
   backdate(r.file, 'blocked_at', 300);
   assert.equal(r.run('set', '1', 'status', 'building').status, 0);
   assert.equal(r.run('set', '1', 'status', 'blocked').status, 0);
-  const since = Date.now();
   backdate(r.file, 'blocked_at', 200);
+  const slow = Date.now();
   const leave = runCli(slowWaitCli(), r.dir, 'set', '1', 'status', 'approved');
   assert.equal(leave.status, 0, leave.stderr);
-  assert.ok(Date.now() - since > 5000, 'the command took more than 5 s');
-  // First stretch was counted for real (~300); second was slow but correct (~200).
+  assert.ok(Date.now() - slow > 5000, 'the second leave took more than 5 s');
   assertCounted(fmOf(r.file).waited_seconds, 500, since, 'both stretches');
 });
 
