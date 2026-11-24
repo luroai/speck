@@ -1,7 +1,7 @@
 ---
 id: "0718"
 title: "Count a delegated Codex session's later turns"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T14:24:47.320Z"
 approved: "2026-11-24T14:38:19.927Z"
+finished: "2026-11-24T15:57:53.551Z"
 
 ---
 # 0718 · Count a delegated Codex session's later turns
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 A Codex session started in a ticket's worktree is recorded once, with the tokens it had when that build ended. If a later build carries the same session on, the extra tokens aren't counted, so the ticket shows less spend than it really cost.
