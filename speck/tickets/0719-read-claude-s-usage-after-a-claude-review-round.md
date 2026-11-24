@@ -45,6 +45,8 @@ After a review round on Claude Code, speck keeps Claude's latest usage reading, 
 - Checked 2026-11-24: `claude -p --output-format stream-json --verbose` prints `rate_limit_event` lines and ends with a `type: "result"` line carrying `session_id`, `total_cost_usd` and `usage` (Claude Code 2.1.331, `claude --help` and a saved build log).
 - Failing before this build: none
 - Builder: Cursor took over this build from Claude at 2026-11-24 14:40 UTC, because Claude's usage limit was reached until 2026-11-24 16:10 UTC, more than an hour away.
+- Self-check: dropped the brief's claim that a Claude review round reports no usage; provider reviewers stay on a single JSON result.
+- Note: `test/tmp-cleanup.test.mjs` AC1 AC2 fails on this machine (Node 24's default reporter prints `ℹ fail 2`, the check expects `# fail 2` from TAP). It fails with this branch's changes stashed too, so it isn't from this ticket.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
