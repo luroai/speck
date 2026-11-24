@@ -8,7 +8,7 @@ risk: low                # low | high (auth, payments, data deletion, migrations
 kind: code               # code | task (what the build does: changes the project's code, or does a task and leaves its result in outputs/)
 type: fix                 # blank | bug (a ticket that fixes a defect) | fix (fixes a broken base branch, at priority 0)
 level: ""                # blank: no level, so the settings decide. Otherwise one of the levels in speck/config.yml, such as quick, balanced or deep
-builder: ""              # blank: the builder your settings give when the build starts
+builder: cursor              # blank: the builder your settings give when the build starts
 builder_model: ""        # blank: your settings' builder_model, given only to the builder they name
 builder_effort: ""       # blank: your settings' builder_effort. Otherwise low | medium | high | xhigh | max
 reviewer: ""             # blank: the reviewer your settings give when each review round starts
@@ -58,6 +58,7 @@ Failing before this build: none (the recorded result for this code, the quick su
 - 0476 AC2: the waits for a lane's tab to open and for its slide to end are 10 s rather than 3 s; the slide's own 120 ms check is unchanged.
 Self-check: capped 0202's wait for its kept process at 30 s, so one that never starts ends in a stall rather than hanging the file.
 - Went with the recommendation: Hold the page to 50 ms of its own work (CPU time), with the first-frame and no-redraw checks (chosen by speck, as watch is decide, 2026-11-24 14:37 UTC).
+- Builder: Cursor took over this build from Claude at 2026-11-24 14:38 UTC, because Claude's usage limit was reached until 2026-11-24 16:10 UTC, more than an hour away.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
@@ -240,6 +241,90 @@ Clear winner: yes
     ],
     "escalation_question": "",
     "summary": "The builder fixed two concerns: the worktree test again uses a one-second deadline, and the new helper test checks actual behaviour. The selected tests pass. Approval remains blocked because the slide test still replaces the promised 50 ms response time with CPU time, allowing visibly late frames to pass."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "b5a001aca67b621d5b51b3a9885aa827053303de",
+    "session": "continued",
+    "thread_id": "01a20df2-5075-7041-bae8-4176949c4041",
+    "builder_response": "- Tests run: test/steady-0734.test.mjs test/house-rules-full-0657.test.mjs test/panel-0061.test.mjs test/panel-0208.test.mjs test/panel-0476.test.mjs test/panel-0517.test.mjs test/stall-0202.test.mjs (with the commands.checks files): 191 pass, 0 fail.\n- F1: product decision taken (needs_pm, answered). The ticket was blocked on F1's question: hold 0517 AC3's 50 ms to the page's own work (CPU time), keep it on the clock, or skip it when overloaded. The decision, recorded in the ticket's Notes (\"Went with the recommendation: Hold the page to 50 ms of its own work (CPU time), with the first-frame and no-redraw checks\", 2026-11-24), is the measure the test already uses: 50 ms of the page main thread's CPU time (Chrome's ThreadTime) for each first frame, the four cards' slide already running with no delay in that first frame, and nothing redrawn or measured before it. The clock times are still reported in its failure message. No code changed since round 2.\n",
+    "seconds": 22,
+    "usage": {
+      "input_tokens": 324098,
+      "cached_input_tokens": 263808,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2521,
+      "reasoning_output_tokens": 127
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 7059,
+      "cached": 110080,
+      "write": 0,
+      "output": 682
+    },
+    "cost_usd": 0.031946,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-24T14:38:12.237Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "The selected behavioural tests pass in the reported run: 191 passes, zero failures. The recorded decision in ticket 0734's Notes authorises measuring 0517's 50 ms as CPU time. panel-0517.test.mjs enforces that budget alongside first-frame animation and no-redraw checks. panel-0208.test.mjs retains the one-second deadline; the other named tests retain their behavioural assertions."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The selected regression tests pass. No executable code changed since round 2; this round records the timing decision. The whole-suite regression check remains the ship gate."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/panel-0517.test.mjs",
+        "issue": "The recorded product decision explicitly accepts the 50 ms CPU budget with first-frame and no-redraw checks. The existing test implements that decision.",
+        "suggested_fix": "No further change requested.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "test/panel-0208.test.mjs",
+        "issue": "The variable baseline was removed; fresh-worktree attempts use the original one-second deadline.",
+        "suggested_fix": "No further change requested.",
+        "state": "resolved"
+      },
+      {
+        "id": "F3",
+        "severity": "blocking",
+        "file": "test/steady-0734.test.mjs",
+        "issue": "Source-pattern assertions were removed. The remaining test directly exercises findChrome.",
+        "suggested_fix": "No further change requested.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Approved. The selected tests pass, and all review findings are resolved. The recorded decision accepts a 50 ms CPU-work budget for slides; this does not guarantee a visible frame within 50 ms on an overloaded machine. The full suite will run before shipping."
   }
 }
 ```
