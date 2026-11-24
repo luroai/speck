@@ -41,6 +41,7 @@ A delegated Codex session carried on by a later build counts at its newest total
 
 ## Notes
 - `recordDelegatedSpend` (`scripts/spend.mjs`, called from `scripts/run.mjs` when a build ends) skips any thread already in `run.delegated-spend.jsonl`, and `delegatedOf` keeps the first entry per thread.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
