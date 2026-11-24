@@ -171,7 +171,10 @@ function closeSettings() {
   settingRefused = new Map();
   settingClear = new Set();
   settingDone = new Map();
-  settingsQueue = Promise.resolve(); // a save still on its way from this view doesn't hold up the next one's
+  // 0731: a save still on its way from this view carries on, but doesn't hold up the next view's
+  settingsQueue = Promise.resolve();
+  settingPending = new Map();
+  settingsSession++;
   agentsBox = agentsSaid = null;
   levelsBox = levelsSaid = levelForm = null; // 0661
   levelsBusy = false;
@@ -1387,13 +1390,15 @@ const keepSettingTip = key => { settingTip = key; }; // shown again once the vie
 const settingRows = () => settingsView !== null && Array.isArray(settingsView.groups)
   ? settingsView.groups.flatMap(g => Array.isArray(g.settings) ? g.settings : []) : [];
 // 0274: each setting whose value differs from the one the view read, as { key, value, machine }: what a save sends (0731: one setting's at a time).
+// 0731: or from the one its latest save asked for, while that save is on its way.
 function settingChanges() {
   const out = [];
   for (const x of settingRows()) {
     if (x.editable !== true) continue;
-    if (settingClear.has(x.key)) { out.push({ key: x.key, value: '', machine: true, clear: true }); continue; }
+    const pending = settingPending.has(x.key) ? settingPending.get(x.key) : null;
+    if (settingClear.has(x.key)) { if (!pending || !pending.clear) out.push({ key: x.key, value: '', machine: true, clear: true }); continue; }
     if (!settingTyped.has(x.key)) continue;
-    const value = settingTyped.get(x.key), now = settingNow(x);
+    const value = settingTyped.get(x.key), now = pending === null ? settingNow(x) : pending.clear ? settingNow({ value: x.repo_value }) : pending.value;
     const same = x.key === 'auto_ship_risk' ? value.split(',').filter(Boolean).sort().join() === now.split(',').filter(Boolean).sort().join() : value === now;
     if (same) continue;
     out.push({ key: x.key, value, machine: x.for_machine === true }); // 0387: your own settings, for this machine
@@ -1424,11 +1429,43 @@ function allowsSameModel(changes) {
   if (!x || !c || x.value === true) return false;
   return c.clear ? x.repo_value === true : c.value === 'true';
 }
-// 0731: saves the setting `keys` name (a role's agent and model together, 0400) as it's now picked or typed, by itself,
-// once every save asked for before it has finished, so saves land in the order made. Nothing is sent when it's as saved.
+// 0731: saves the setting `keys` name (a role's agent and model together, 0400) as it's now picked or typed, by itself.
+// What it sends, and any question it asks first, are settled now, as the change is made; it's sent once every save asked
+// for before it has been answered, so saves land in the order made, and it's sent even if the view closes first.
+// Nothing is sent when it's as saved, or as the save on its way will leave it.
 let settingsQueue = Promise.resolve();
+let settingPending = new Map(); // key → { value } or { clear: true }, the latest save asked for it and not yet answered
+let settingsSession = 0; // the view as opened: one more each time it closes
 function saveSetting(keys) {
-  const done = settingsQueue.then(() => sendSettings(keys));
+  if (settingsView === null || settingsView.state !== 'ok') return Promise.resolve();
+  const changes = settingChanges().filter(c => keys.includes(c.key));
+  if (!changes.length) return Promise.resolve();
+  const back = (why = null) => {
+    for (const k of keys) {
+      settingTyped.delete(k); settingClear.delete(k); settingDone.delete(k);
+      if (why === null) settingRefused.delete(k); else settingRefused.set(k, why);
+    }
+    renderKeeping();
+    return Promise.resolve();
+  };
+  // Checked here first, so nothing is sent: auto_ship_risk with nothing ticked (0259).
+  if (changes.some(c => c.key === 'auto_ship_risk' && c.value === '' && !c.clear))
+    return back('Tick at least one risk. To stop tickets shipping by themselves, turn auto_ship off instead.');
+  const more = shipsMore(changes);
+  if (more !== null) {
+    const ask = `Let more tickets ship by themselves? With this change, speck run's ship queue will merge ${more.words} and push them to the base branch without waiting for you.`;
+    if (typeof confirm !== 'function' || !confirm(ask)) return back(); // cancelled: nothing is saved
+  }
+  if (allowsSameModel(changes)) { // 0511
+    const ask = 'Let the reviewer run the same model as the builder? With this on, a review is no longer by a different model, so it may catch less of what the builder missed.';
+    if (typeof confirm !== 'function' || !confirm(ask)) return back();
+  }
+  const replacing = replacesCommand(changes);
+  if (replacing !== null && (typeof confirm !== 'function' || !confirm(replacing.ask))) return back(); // 0293: the builder goes back as it was
+  const job = { keys, changes, more, replacing, session: settingsSession, marks: new Map() };
+  for (const c of changes) { const m = c.clear ? { clear: true } : { value: c.value }; settingPending.set(c.key, m); job.marks.set(c.key, m); }
+  for (const k of keys) { settingRefused.delete(k); settingDone.delete(k); }
+  const done = settingsQueue.then(() => sendSettings(job));
   settingsQueue = done.catch(() => {});
   return done;
 }
@@ -1449,36 +1486,11 @@ function savedAs(x, c) {
   if (typeof x.value === 'number' && c.value.trim() !== '' && Number.isFinite(Number(c.value))) return Number(c.value);
   return c.value;
 }
-// 0274: the server checks every change it's sent and saves all of them or none. 0731: a change it refuses, or one
-// checked here first, or one whose question is cancelled, goes back to the saved value, with why under its row.
-async function sendSettings(keys) {
-  if (settingsView === null || settingsView.state !== 'ok') return;
-  const changes = settingChanges().filter(c => keys.includes(c.key)), mine = settingsSeq;
-  if (!changes.length) return;
-  const back = (why = null) => {
-    for (const k of keys) {
-      settingTyped.delete(k); settingClear.delete(k); settingDone.delete(k);
-      if (why === null) settingRefused.delete(k); else settingRefused.set(k, why);
-    }
-    renderKeeping();
-  };
-  // Checked here first, so nothing is sent: auto_ship_risk with nothing ticked (0259).
-  if (changes.some(c => c.key === 'auto_ship_risk' && c.value === '' && !c.clear)) {
-    back('Tick at least one risk. To stop tickets shipping by themselves, turn auto_ship off instead.');
-    return;
-  }
-  const more = shipsMore(changes);
-  if (more !== null) {
-    const ask = `Let more tickets ship by themselves? With this change, speck run's ship queue will merge ${more.words} and push them to the base branch without waiting for you.`;
-    if (typeof confirm !== 'function' || !confirm(ask)) { back(); return; } // cancelled: nothing is saved
-  }
-  if (allowsSameModel(changes)) { // 0511
-    const ask = 'Let the reviewer run the same model as the builder? With this on, a review is no longer by a different model, so it may catch less of what the builder missed.';
-    if (typeof confirm !== 'function' || !confirm(ask)) { back(); return; }
-  }
-  const replacing = replacesCommand(changes);
-  if (replacing !== null && (typeof confirm !== 'function' || !confirm(replacing.ask))) { back(); return; } // 0293: the builder goes back as it was
-  for (const k of keys) { settingRefused.delete(k); settingDone.delete(k); }
+// 0274: the server checks every change it's sent and saves all of them or none. 0731: `job`, one setting's save as
+// saveSetting settled it. A change the server refuses goes back to the saved value, with why under its row, unless a
+// later change to it is waiting to be saved or being typed.
+async function sendSettings(job) {
+  const { keys, changes, more, replacing } = job;
   let refused = null, why = null, reread = false, said = null;
   // 0387: machine:<key>= clears this machine's value, so a blank one for this machine is sent as blank:<key>=.
   const query = [...changes.map(c => `${!c.machine ? 'repo' : c.value === '' && !c.clear ? 'blank' : 'machine'}%3A${encodeURIComponent(c.key)}=${encodeURIComponent(c.value)}`),
@@ -1497,12 +1509,16 @@ async function sendSettings(keys) {
       if (typeof cleared === 'string' && cleared) said = `builder_model was cleared, because ${cleared}.`; // 0311
     }
   } catch { why = "Couldn't reach the panel server, so nothing was saved."; }
-  if (mine !== settingsSeq || settingsView === null) return; // closed, or opened again, since
+  for (const [k, m] of job.marks) if (settingPending.get(k) === m) settingPending.delete(k);
+  if (job.session !== settingsSession || settingsView === null) return; // closed since: saved or not, there's no view to show it in
   if (why !== null) {
     // Each setting's own reason, or the server's one reason for them all.
     for (const k of keys) {
       const own = refused !== null && Object.hasOwn(refused, k) && typeof refused[k] === 'string' ? refused[k] : null;
-      settingTyped.delete(k); settingClear.delete(k);
+      const c = changes.find(c => c.key === k), later = settingPending.has(k);
+      const typedSince = c !== undefined && !c.clear && settingTyped.has(k) && settingTyped.get(k) !== c.value;
+      if (later) continue; // the later change is saved next, and says how that went
+      if (!typedSince) { settingTyped.delete(k); settingClear.delete(k); }
       settingRefused.set(k, own ?? why);
     }
     if (reread) loadSettings(); else renderKeeping();

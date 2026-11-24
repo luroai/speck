@@ -62,6 +62,36 @@ test('0593 AC1: each setting keeps its label and control, its name is the button
 
 // ---------- AC2: the Save bar (0731: gone, as each setting saves as it changes) ----------
 
+// ---------- AC3: speck's face beside its name (0652: as its card's character, beside the name the card has) ----------
+
+const headOf = p => p.all(pane(p)).find(n => /\bmhead\b/.test(n.className || ''));
+test('0593 AC3: the name setting shows speck\'s face, watching, beside its control', async () => {
+  const p = await opened();
+  const head = headOf(p);
+  const [face] = facesIn(p, head);
+  assert.ok(face, 'a face at the head of its card');
+  assert.equal(face.attrs['data-mood'], 'watching');
+  assert.match(face.attrs['aria-label'], /Virgil/, 'named as you named it');
+  assert.equal(head.children[0], face, 'before the name');
+  assert.equal(facesIn(p, pane(p)).length, 1, 'and nowhere else in the view');
+});
+
+test('0593 AC3: the face is there after its row is drawn again', async () => {
+  const p = await opened();
+  changeTo(p, 'speck_name', 'Dante');
+  await p.settle();
+  assert.equal(facesIn(p, headOf(p)).length, 1);
+  assert.equal(facesIn(p, pane(p)).length, 1);
+});
+
+test('0593 AC3: a blank name is labelled speck', async () => {
+  const p = settingsPage([{ groups: [{ title: 'Your engineering manager', settings: [row('speck_name')] }] }]);
+  await openSettings(p);
+  assert.match(facesIn(p, headOf(p))[0].attrs['aria-label'], /^speck\b/);
+});
+
+// ---------- AC4: at 320 px wide, in both looks, in a real browser ----------
+
 const skip = findChrome() ? false : 'needs Chrome or Chromium';
 test('0593 AC1, AC4: at 320 px, in both looks, the groups are drawn with no box, nothing runs past the view and the face stays on its name\'s line (0652: its card\'s)', { skip, timeout: 60000 }, async () => {
   const panel = await startPanel(panelRepo().dir, ['--port', String(await freePort())]);

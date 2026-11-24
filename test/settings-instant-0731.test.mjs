@@ -107,6 +107,66 @@ test('0731 AC1: a change made while an earlier save is under way waits for it, s
   assert.deepEqual(posted(p).map(asked), [{ 'repo:reviewer_effort': 'high' }, { 'repo:limits.max_review_rounds': '4' }]);
 });
 
+test('0731 AC1: several changes to one setting while its first save waits are each sent, in the order made (review F1)', async () => {
+  const first = deferred();
+  const p = await opened(page([view(), view({ reviewer_effort: 'low' }), view({ reviewer_effort: 'medium' }), view({ reviewer_effort: 'high' })], [first, OK, OK]));
+  for (const v of ['low', 'medium', 'high']) { changeTo(p, 'reviewer_effort', v); await p.settle(); }
+  assert.equal(posted(p).length, 1, 'the rest wait');
+  first.resolve(OK);
+  for (let i = 0; i < 4; i++) await p.settle();
+  assert.deepEqual(posted(p).map(asked), [{ 'repo:reviewer_effort': 'low' }, { 'repo:reviewer_effort': 'medium' }, { 'repo:reviewer_effort': 'high' }]);
+  assert.equal(controlOf(p, 'reviewer_effort').value, 'high');
+
+  // Put back to the saved value while a save to another is on its way: that's a change too, and is sent.
+  const later = deferred();
+  const q = await opened(page([view(), view({ reviewer_effort: 'low' }), view()], [later, OK]));
+  changeTo(q, 'reviewer_effort', 'low');
+  await q.settle();
+  changeTo(q, 'reviewer_effort', '');
+  later.resolve(OK);
+  for (let i = 0; i < 4; i++) await q.settle();
+  assert.deepEqual(posted(q).map(asked), [{ 'repo:reviewer_effort': 'low' }, { 'repo:reviewer_effort': '' }]);
+});
+
+test('0731 AC2: a refused save doesn\'t undo a correction made while it waited, which is saved next (review F1)', async () => {
+  const why = 'limits.max_review_rounds must be a whole number of 1 or more (got "0").';
+  const first = deferred();
+  const p = await opened(page([view(), view({ rounds: 5 })], [first, OK]));
+  typeIn(p, 'limits.max_review_rounds', '0');
+  leaveBox(p, 'limits.max_review_rounds');
+  await p.settle();
+  typeIn(p, 'limits.max_review_rounds', '5');
+  leaveBox(p, 'limits.max_review_rounds');
+  await p.settle();
+  first.resolve({ status: 422, body: { error: why, refused: { 'limits.max_review_rounds': why } } });
+  for (let i = 0; i < 4; i++) await p.settle();
+  assert.deepEqual(posted(p).map(asked), [{ 'repo:limits.max_review_rounds': '0' }, { 'repo:limits.max_review_rounds': '5' }]);
+  assert.equal(controlOf(p, 'limits.max_review_rounds').value, '5');
+  assert.equal(refusedLine(p, 'limits.max_review_rounds'), undefined, 'the correction saved');
+});
+
+test('0731 AC1, AC4: a box left changed and then Settings closed at once still saves, as the browser sends change before the click (review F2)', async () => {
+  const p = await opened(page([view()], [OK]));
+  typeIn(p, 'limits.max_review_rounds', '6');
+  leaveBox(p, 'limits.max_review_rounds');
+  p.press(p.all(p.byId('settings')).find(n => n.tagName === 'button' && /\bclose\b/.test(n.className || '')));
+  assert.equal(p.byId('settings').hidden, true, 'closed at once');
+  await p.settle();
+  assert.deepEqual(posted(p).map(asked), [{ 'repo:limits.max_review_rounds': '6' }]);
+
+  // Also when it waits behind an earlier save.
+  const first = deferred();
+  const q = await opened(page([view()], [first, OK]));
+  changeTo(q, 'reviewer_effort', 'high');
+  typeIn(q, 'limits.max_review_rounds', '7');
+  leaveBox(q, 'limits.max_review_rounds');
+  q.key('Escape');
+  assert.equal(q.byId('settings').hidden, true);
+  first.resolve(OK);
+  for (let i = 0; i < 4; i++) await q.settle();
+  assert.deepEqual(posted(q).map(asked), [{ 'repo:reviewer_effort': 'high' }, { 'repo:limits.max_review_rounds': '7' }]);
+});
+
 test('0731 AC1: each project setting saved is its own commit of only speck/config.yml', () => {
   const r = panelRepo();
   fs.writeFileSync(path.join(r.dir, 'other.txt'), 'not mine\n');
