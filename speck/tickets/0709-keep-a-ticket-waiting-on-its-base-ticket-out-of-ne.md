@@ -1,7 +1,7 @@
 ---
 id: "0709"
 title: "Keep a ticket waiting on its base ticket out of Needs you"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -22,7 +22,7 @@ started: "2026-11-24T11:55:03.915Z"
 ---
 # 0709 · Keep a ticket waiting on its base ticket out of Needs you
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 An approved ticket built on another ticket that hasn't shipped has auto-ship turned off until that ticket ships, so the panel puts it under Needs you as Ready to ship. You're asked to act when shipping it now would only have to wait.
@@ -47,7 +47,11 @@ Such a ticket stays under Building, saying it ships after its base ticket, and a
 - speck (2026-11-24 12:25 UTC) told you: The build is slow because the machine is overloaded, not because of the ticket or a broken base branch. Its real-browser tests keep timing out at startup, and the failures move between reruns. The build is now waiting for the load to drop before it re-runs them. Why: The load average reached about 150 on 16 cores while other builds ran, and every failure was a 'panel didn't start' timeout, with different tests failing on each run, including tests that had passed before.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When a ticket was built on top of another ticket that hasn't shipped yet, the panel used to list it under Needs you as Ready to ship, even though shipping it then would only have to wait. Now it stays under Building, with a line saying it's approved and ships after the ticket it was built on, naming it. It isn't counted in Needs you, on the bridge, or as waiting for you in speck status, which says the same thing on a line under it.
+
+To see it: approve a ticket that was started on another approved ticket. While that first one is unshipped, the second sits under Building. Once the first ships, the second ships by itself if auto-ship covers it, or moves to Needs you as Ready to ship as before.
+
+Worth a look: while the other builds were running, the browser tests timed out a lot from the machine being busy. They passed when re-run, but a full suite run on a busy machine may show the same.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -57,3 +61,81 @@ Such a ticket stays under Building, saying it ships after its base ticket, and a
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none for the inbox. The related run's 50 failures were real-browser and real-panel tests timing out at a load average over 150 from other builds; all passed on re-runs apart from 0517's 50 ms frame timing, which passed alone.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "759742e1afe09143c00fe9bc824067d812380e8c",
+    "session": "fresh",
+    "thread_id": "01a20d96-7eb2-7a13-a73e-69458fd3851c",
+    "builder_response": "- Tests run: `speck test --related test/panel-0709.test.mjs` once (519 files). Its 50 failures were all real-browser or real-panel tests timing out (\"panel didn't start\", \"timed out waiting\") while the machine's load average was over 150 on 16 cores from other builds; none is about approved tickets or ships_after.\n- Re-ran the failed files plus test/panel-0709.test.mjs (speck's suggested --files line): 302 pass, 2 fail (0481, 0517: browser timing). Re-ran those with 0161, 0427, 0543 and tmp-cleanup: 160 pass, 1 fail (0517's 50 ms frame timing on the Shipped lane). Re-ran test/panel-0709.test.mjs test/panel-0517.test.mjs: all 159 pass (the attached output).\n- Pictures: Build lane with the new state in light and dark looks, from a fixture repo (0002 approved under Needs you, 0001 built on it under Building, \"Approved · ships after 0002, which it was built on\").\n",
+    "seconds": 38,
+    "usage": {
+      "input_tokens": 280378,
+      "cached_input_tokens": 226816,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 941,
+      "reasoning_output_tokens": 70
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 53562,
+      "cached": 226816,
+      "write": 0,
+      "output": 941
+    },
+    "cost_usd": 0.1392156,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-24T12:45:33.655Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel-model.js suppresses to_ship and the exit warning for ships_after, and doingNow names the base ticket. Passing 0709 AC1 tests exercise rendered Building rows with and without a finished build, including high risk."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Passing 0709 tests verify absence of Needs you grouping, zero bridge needs_you via projectSummary, and ticket-specific ships-after output from speck status. scripts/speck.mjs excludes waiting tickets from its waiting-for-you total."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "0709 AC3 tests cover the manual-shipping display after the dependency ships. Existing test/run-after-0675.test.mjs exercises the ship queue launching and shipping the dependent ticket on its first check after the base ships; that path is unchanged."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing 0709 AC3 AC4 test checks normal Ready to ship grouping and bridge counts with no dependency or a shipped dependency, plus automatic-shipping display. The new model and summary conditions apply only when ships_after is present."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0709-tests.txt: 159 passed, zero failed, three skipped. The committed change is limited to the ticket's presentation, status guidance and tests; no remaining regression is evident."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Approved tickets waiting for their base ticket now stay under Building, name that ticket and stop asking you to ship prematurely. Normal shipping behaviour returns once the base ships. The tests cover the changed behaviour, and I found no blocking issues."
+  }
+}
+```
+
+</details>
