@@ -1,7 +1,7 @@
 ---
 id: "0728"
 title: "Light a hovered ticket's chain with a soft fill"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0701"]                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T15:21:58.663Z"
+approved: "2026-11-24T16:11:38.552Z"
 
 ---
 # 0728 · Light a hovered ticket's chain with a soft fill
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Hovering a ticket lights it and every ticket chained to it with a ring and border in the text colour, which reads as a stack of heavy black boxes. It looks out of place in Cursor's browser pane, whose own lists show hover with a soft fill.
@@ -55,9 +56,14 @@ Hovering a ticket no longer draws a heavy dark ring round it and every ticket li
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 157,657
+- Elapsed since build started: 50 min
+- Changed lines: 37 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none
 
