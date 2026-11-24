@@ -18,7 +18,7 @@ source: "speck/ideas/done/2026-11-15-keep-speck-run-s-checks-from-re-reading-bui
 after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T14:39:13.738Z"
-approved: "2026-11-24T15:14:44.452Z"
+approved: "2026-11-24T16:36:06.350Z"
 
 ---
 # 0721 · Keep speck run's checks from re-reading done tickets' logs
@@ -57,12 +57,13 @@ An idle speck run no longer re-reads every finished ticket's build log or asks g
 ## Review log
 Round 1 (codex): changes requested: F1 closedDeps tracks only the ticket and five run files, but caches the entire board entry.; F2 recent_spend is frozen inside each cached closed entry.
 Round 2 (codex): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 410,618
-- Elapsed since build started: 36 min
+- Reviewer tokens: 591,330
+- Elapsed since build started: 117 min
 - Changed lines: 173 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none to the inbox. Known limit: the tip of the base branch is re-read once per board check; shipped-criteria answers grow with distinct tip+criteria pairs until the process ends.
@@ -238,6 +239,94 @@ Round 2 (codex): approve.
     ],
     "escalation_question": "",
     "summary": "The revised change avoids repeated closed-ticket log reads and git checks while keeping board information current. Both previous blocking issues are resolved, and the relevant tests pass. It is ready for the owner's merge decision."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "db69c26830edf68644028bd8c341d3ba0348c2a8",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a20e1a-9c87-7df2-8b5b-3331ea21c81a",
+    "builder_response": "- Tests run: test/run-reads-0721.test.mjs test/split-0078.test.mjs\n- Merge conflict: scripts/speck.mjs (class: logic). Kept this ticket's move of buildExit/buildPaused/buildRunning into build-records (no pidAlive or logTail imports here) and beginBoardCheck from closed-board.mjs, and main's appChecking / readAgentState imports and withAppCheck wiring for 0713. All six 0721 tests and 0078 AC2 pass; tmp-cleanup still fails on this machine as on main (reporter format), unrelated to the merge.\n",
+    "seconds": 22,
+    "usage": {
+      "input_tokens": 588669,
+      "cached_input_tokens": 496768,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2661,
+      "reasoning_output_tokens": 169
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 13533,
+      "cached": 166528,
+      "write": 0,
+      "output": 651
+    },
+    "cost_usd": 0.0502288,
+    "saved_at": "2026-11-24T16:35:59.634Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "cachedBuildExit and cachedShipped remain intact after the merge. The passing 0721 AC1 test verifies no closed-ticket log opens or ticket-specific git calls on an unchanged second check."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "spend.mjs retains stat-based jsonLines caching. The passing 0721 AC2 test verifies one read per shared spend file across multiple tickets."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "cachedBuildExit still keys results on log and run record stats. The passing 0721 AC3 test verifies renewed reads after changes."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "statusData rebuilds board entries each check. All three AC4 tests pass, covering unchanged output, refreshed settings and spend, and recent-spend filtering. The merge preserves main's appChecking, readAgentState and withAppCheck wiring."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "All six 0721 tests and supplied split compatibility checks pass after the merge. The unchanged tmp-cleanup reporter-format failure remains unrelated to this change."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/closed-board.mjs",
+        "issue": "Resolved: whole-entry caching remains removed, so settings, spend and ticket dependencies refresh each check.",
+        "suggested_fix": "",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "Resolved: recent_spend continues to use the current seven-day cutoff on every check.",
+        "suggested_fix": "",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The merge preserves both the caching improvement and main's app-check behaviour. The relevant tests pass, both earlier findings remain resolved, and no new blocking issues were found."
   }
 }
 ```
