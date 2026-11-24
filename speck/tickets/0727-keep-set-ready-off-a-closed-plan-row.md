@@ -1,7 +1,7 @@
 ---
 id: "0727"
 title: "Keep Set ready off a closed Plan row"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,14 +18,14 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T15:15:49.304Z"
-approved: "2026-11-24T17:25:35.044Z"
+approved: "2026-11-24T17:37:52.477Z"
 blocked_at: ""
 waited_seconds: 10
 
 ---
 # 0727 · Keep Set ready off a closed Plan row
 
-**Status:** 🔨 building
+**Status:** 👍 approved
 
 ## Problem
 Every closed draft in Plan has a Set ready button on its row, so a ticket can be set ready without ever being opened, and the button takes space the title needs. Gate 1 should come after at least a scan of the ticket.
@@ -66,12 +66,13 @@ Clear winner: yes
 Round 1 (codex): approve.
 Round 2 (codex, merge round): approve.
 Round 3 (codex, merge round): approve.
+Round 4 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 3, 2 of them merge rounds
+- Review rounds: 4, 3 of them merge rounds
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 678,570
-- Elapsed since build started: 130 min
+- Reviewer tokens: 975,990
+- Elapsed since build started: 142 min
 - Changed lines: 10 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
@@ -286,6 +287,77 @@ Follow-ups:
     "findings": [],
     "escalation_question": "",
     "summary": "The latest merge preserves both the intended Plan behaviour and main's updated Settings documentation. All relevant checks pass; the only reported failure predates this change. No new concerns."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 4 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 4,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "e0f1c3f98242207282e74a04a8ed1732fcbec570",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a20e47-477c-7963-bbd3-b1126e78d938",
+    "builder_response": "- Tests run: test/panel-0727.test.mjs test/panel-0586.test.mjs test/panel-0419.test.mjs test/panel-0463.test.mjs test/panel.test.mjs\n- Failing before this build (unchanged): test/tmp-cleanup.test.mjs AC1 AC2\n- After handed-back block: went with hold other brief panel-description ships, then try again.\n- Merge conflict resolution:\n  - docs/brief.md (class: logic): kept this ticket's Plan wording (Set ready on an open draft and in its full view, priority on the row) and main's newer `machine_parallel_builds` description.\n",
+    "seconds": 12,
+    "usage": {
+      "input_tokens": 973187,
+      "cached_input_tokens": 823936,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2803,
+      "reasoning_output_tokens": 112
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 49778,
+      "cached": 247040,
+      "write": 0,
+      "output": 602
+    },
+    "cost_usd": 0.13028,
+    "saved_at": "2026-11-24T17:37:50.344Z"
+  },
+  "verdict": {
+    "round": 4,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.js ticketHead still omits Set ready for closed drafts. Layout rules and tests are unchanged since approval; panel-0727 AC1 and panel-0586 AC4 browser checks pass."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "ticketHead retains setReadyButton for open drafts. Its disabled state, explanatory tooltip and pending label remain intact. panel-0727 AC2 and existing request/refusal tests pass."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "templates/panel-popups.js readyBar still includes setReadyButton. panel-0727 AC3 passes, checking the draft's full-view bar."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The docs/brief.md diff against merged main contains only the intended Plan description change: priority stays on the row, with Set ready on an open draft and in its full view. Main's machine_parallel_builds description is preserved. panel-0727 AC4 passes."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The supplied run reports 224 passes, three skips and only the recorded pre-existing tmp-cleanup failure. No implementation or behaviour-test changes were introduced since the previous approval."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The merge preserves the approved Plan behaviour and main's new build-limit documentation. Relevant tests pass; the sole reported failure predates this change. No new concerns."
   }
 }
 ```
