@@ -1,7 +1,7 @@
 ---
 id: "0706"
 title: "Tidy the gaps where the Pipeline log hides paths"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -21,7 +21,7 @@ created: 2026-11-24
 ---
 # 0706 · Tidy the gaps where the Pipeline log hides paths
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 When the Pipeline log takes a file path or command out of a line, the sentence around it can read oddly, such as "Conflicting files:" with nothing after it, or "Resume its session, or run 0457, to carry on." Someone reading on a phone can't tell what was meant.
