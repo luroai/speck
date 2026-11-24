@@ -48,6 +48,7 @@ Settings reads like a page of Cursor's settings: plain names, a muted line each,
 - The view is `templates/panel-settings.js` and `templates/panel-settings.css`; explanations come from `explainFully` in `scripts/settings.mjs`. The short muted line can be each explanation's first sentence, or a new short line per setting.
 - Keep to the panel's own colour tokens in both looks, so the dark look matches Cursor's dark theme the same way.
 - Failing before this build: none
+- speck (2026-11-24 12:28 UTC) told you: Nothing is stuck. About 19 minutes went on reading the large Settings code and its many older layout tests before writing any code, and about 9 more on proving the new tests fail on the old code, where each failing run sat for 85 to 90 seconds waiting for parts of the page that don't exist yet. On the new code the same tests pass in seconds, and the build is now checking what its browser test measures. Why: The build log's timestamps show where the time went, the slow runs were only the expected failures on the old code, and the machine's load of 85 to 154 slowed everything further.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
