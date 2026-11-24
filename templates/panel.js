@@ -33,6 +33,12 @@ function chainIcon(t) {
   if (icon) icon.title = t.chain ? `Starts a chain: unlocks ${t.unlocks.join(', ')}` : `Waiting on ${t.waiting_on.join(', ')}`;
   return icon;
 }
+// 0704: what a ticket says about the cancelled tickets its after: names, which it will never get, or null for none.
+function goneSay(t) {
+  const gone = list(t.after_cancelled).map(String);
+  return gone.length ? `${gone.join(', ')} ${gone.length > 1 ? 'were' : 'was'} cancelled: take ${gone.length > 1 ? 'them' : 'it'} out of after:` : null;
+}
+const goneNote = t => (goneSay(t) ? el('div', 'after-cancelled warn', goneSay(t)) : null);
 // 0419: a Plan or Build ticket's first line: its id, then its title, then its chain icon when it has one (`icon`).
 // 0483: only an open one has the icon, as a closed one's chip says the same. 0614: at the line's end, where a closed
 // one's chip is, so the title doesn't move sideways when the ticket opens.
@@ -209,7 +215,7 @@ function ticketItem(t) {
 // waits on or unlocks are in its chip). 0463: only while it's closed; open, its steps and facts are in a track and a
 // table, as an open one in flight's are, and its criteria and lint result in its readiness. Set ready is on the row.
 function ticketHead(t) {
-  const head = el('div', 'head', null, titleLine(t, true, !open.has(t.id)), ...open.has(t.id) ? [trackOf({ steps: NOT_STARTED }), waitingFacts(t, 'Draft', 'After', true)] : [wholeTip(detailsLine('checks', tagsOf(t, true)))], setReadyButton(t, lintErrorsOf(t)));
+  const head = el('div', 'head', null, titleLine(t, true, !open.has(t.id)), goneNote(t), ...open.has(t.id) ? [trackOf({ steps: NOT_STARTED }), waitingFacts(t, 'Draft', 'After', true)] : [wholeTip(detailsLine('checks', tagsOf(t, true)))], setReadyButton(t, lintErrorsOf(t)));
   // Only the top row opens and closes it, so clicking or selecting text in the details leaves it open.
   head.addEventListener('click', () => flip(open, t.id));
   return head;
@@ -439,9 +445,10 @@ function readiness(t, criteria, onRow) {
   for (const w of warnings) line('warn', false, w);
   if (!errors.length && !warnings.length) line('ok', true, 'Ready check passes');
   const after = list(t.after), waiting = list(t.waiting_on);
+  const gone = list(t.after_cancelled).map(String);
   for (const id of after) {
-    const done = !waiting.includes(id);
-    line(done ? 'ok' : 'warn', done, `after: ${id} ${done ? 'done' : 'not done'}`);
+    const done = !waiting.includes(id), cancelled = gone.includes(String(id)); // 0704
+    line(done && !cancelled ? 'ok' : 'warn', done && !cancelled, `after: ${id} ${cancelled ? 'cancelled' : done ? 'done' : 'not done'}`);
   }
   if (!after.length) line('ok', true, 'no after: tickets');
   if (onRow) ready.appendChild(fullButton(t, 'shaping'));
@@ -753,12 +760,13 @@ const noteOf = i => el('div', 'note md', null, ...mdBlocks(markdown(typeof i.bod
 function whereLine(t) {
   const id = String(t.id), d = rowDoing(t), asked = !!foremanAskOf(id);
   const said = asked ? `${speckCalled()} has a question` : !t.inFlight ? 'Ready' : d.round !== null && d.round !== undefined ? `Reviewing · round ${d.round}` : d.word;
-  const waits = !t.inFlight ? list(t.waiting_on).map(String) : [], on = startsOn(t), after = shipsAfter(t);
+  const waits = !t.inFlight ? list(t.waiting_on).map(String) : [], on = startsOn(t), after = shipsAfter(t), gone = goneSay(t);
   // 0698: one that can start on another's approved work says so in place of what it waits on, and an approved one built
   // on another says it ships after that one.
   const line = detailsLine(`where ${rowDot(buildGroup(t, d, asked), d)}`, [el('span', 'said', said),
     on ? el('span', 'after', `can start on ${on}'s approved work`) : waits.length ? el('span', 'after', `after ${waits.join(', ')}`) : null,
     after ? el('span', 'after', `ships after ${after}, which it was built on`) : null,
+    gone ? el('span', 'after cancelled warn', gone) : null, // 0704
     t.counter !== null ? el('span', 'sub', rowTime((t.held_at ?? Date.now()) - t.since)) : null]);
   return wholeTip(line, d && d.sentence !== said ? d.sentence : null);
 }
@@ -851,7 +859,7 @@ function lintCell(t) {
 // ticket waiting on two or more shows them as facts (waitsFacts). A Chain box: a header counting the tickets before and
 // after it, then five even slots, each a circle over an id. A link or a circle for a ticket on the page goes to it, as
 // an id in a note does (goTo). In the side pane, which covers the page, it shows that ticket in the pane instead.
-const DEP_WORDS = { shipped: 'shipped', building: 'building', queued: 'queued', self: 'this ticket' };
+const DEP_WORDS = { shipped: 'shipped', building: 'building', queued: 'queued', cancelled: 'cancelled', self: 'this ticket' }; // 0704: cancelled
 const depsIds = t => (!t.deps ? [] : t.deps.kind === 'waits' ? t.deps.items.map(i => i.id) : t.deps.slots.filter(s => s && s.id && s.state !== 'self').map(s => s.id));
 const depsLinks = t => depsIds(t).filter(id => onPage.has(String(id))); // the ones that go to their ticket
 // A link or a slot: a button that goes to the ticket when it's on the page, otherwise the same, not a button.

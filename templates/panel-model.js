@@ -206,18 +206,20 @@ function chains(tickets) {
 // it. Before it: the one it waits on, then the one that one waits on when it waits on only one. After it: the lowest
 // id waiting on it, then the lowest waiting on that. When more lie beyond an end, its last slot is { more: n } in their
 // place, n counting the ones not shown. A slot with nothing in it is null.
+// 0704: one in its after_cancelled was cancelled: its state is 'cancelled', and `gone` gives its title.
 const byNumber = (a, b) => a.localeCompare(b, 'en', { numeric: true });
-function depsOf(t, byId, unlocks) {
+function depsOf(t, byId, unlocks, gone = new Map()) {
   const id = String(t.id), waiting = new Set((Array.isArray(t.waiting_on) ? t.waiting_on : []).map(String));
+  const cancelled = new Set((Array.isArray(t.after_cancelled) ? t.after_cancelled : []).map(String));
   const afterOf = x => [...new Set((x && Array.isArray(x.after) ? x.after : []).map(String))].filter(a => a !== String(x.id));
   // Shipped is done, building is in flight, queued the rest. One not on the board is shipped when it's in the ticket's
   // after: and its waiting_on leaves it out, as speck counts it done.
   const after = afterOf(t);
-  const stateOf = d => { const o = byId.get(d); return o ? o.status === 'done' ? 'shipped' : IN_FLIGHT.includes(o.status) ? 'building' : 'queued' : after.includes(d) && !waiting.has(d) ? 'shipped' : 'queued'; };
+  const stateOf = d => { if (cancelled.has(d)) return 'cancelled'; const o = byId.get(d); return o ? o.status === 'done' ? 'shipped' : IN_FLIGHT.includes(o.status) ? 'building' : 'queued' : after.includes(d) && !waiting.has(d) ? 'shipped' : 'queued'; };
   if (after.length >= 2) {
     // Shipped or not as its facts table counts them, from waiting_on.
     // 0613: and its title, or '' for one not on the board.
-    const items = after.sort(byNumber).map(d => ({ id: d, title: String(byId.get(d)?.title ?? ''), state: !waiting.has(d) ? 'shipped' : stateOf(d) === 'building' ? 'building' : 'queued' }));
+    const items = after.sort(byNumber).map(d => ({ id: d, title: String((byId.get(d) ?? gone.get(d))?.title ?? ''), state: cancelled.has(d) ? 'cancelled' : !waiting.has(d) ? 'shipped' : stateOf(d) === 'building' ? 'building' : 'queued' }));
     const count = s => items.filter(i => i.state === s).length;
     return { kind: 'waits', items, shipped: count('shipped'), building: count('building'), queued: count('queued') };
   }
@@ -290,12 +292,16 @@ function leftStopped(t, on, foreman) {
   return !((f.fixing === 'fix' || f.fixing === 'decide') && has(a.waiting));
 }
 function panelModel(state) {
-  const tickets = (state && Array.isArray(state.tickets) ? state.tickets : []).filter(t => t && t.status !== 'cancelled');
+  const every = (state && Array.isArray(state.tickets) ? state.tickets : []).filter(t => t);
+  const tickets = every.filter(t => t.status !== 'cancelled');
   const links = chains(tickets), byId = new Map(tickets.map(t => [String(t.id), t]));
+  const gone = new Map(every.filter(t => t.status === 'cancelled').map(t => [String(t.id), t])); // 0704: for their titles
   // A ticket starts a chain when it waits on nothing and an unfinished ticket waits on it. 0467: deps, its dependency box.
+  // 0704: waiting_on leaves out the cancelled tickets in its after_cancelled, which nothing waits for.
   const chain = t => {
-    const waiting_on = Array.isArray(t.waiting_on) ? t.waiting_on : [], unlocks = links.unlocks(t.id);
-    return { ...t, waiting_on, unlocks, chain: !waiting_on.length && unlocks.length > 0, linked: links.linked(t.id), deps: depsOf({ ...t, waiting_on }, byId, links.unlocks) };
+    const after_cancelled = (Array.isArray(t.after_cancelled) ? t.after_cancelled : []).map(String), unlocks = links.unlocks(t.id);
+    const waiting_on = (Array.isArray(t.waiting_on) ? t.waiting_on : []).filter(d => !after_cancelled.includes(String(d)));
+    return { ...t, waiting_on, after_cancelled, unlocks, chain: !waiting_on.length && unlocks.length > 0, linked: links.linked(t.id), deps: depsOf({ ...t, waiting_on, after_cancelled }, byId, links.unlocks, gone) };
   };
   const ideas = (state && Array.isArray(state.ideas) ? state.ideas : []).filter(i => i);
   const statusOf = i => String(i.status || '').trim();
