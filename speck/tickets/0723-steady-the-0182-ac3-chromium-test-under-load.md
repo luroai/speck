@@ -1,7 +1,7 @@
 ---
 id: "0723"
 title: "Steady the 0182 AC3 Chromium test under load"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: "speck/ideas/done/2026-11-12-fix-0182-ac3-failing-in-the-full-suite.md" 
 after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T11:55:06.030Z"
+approved: "2026-11-24T12:53:47.793Z"
 
 ---
 # 0723 · Steady the 0182 AC3 Chromium test under load
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The 0182 AC3 test ("Chromium has closed within 10 s of a test file finishing that ran out of time") fails now and then in the full suite on a busy machine, then passes on retry. Each failure turns main red, so speck run raises fix tickets and builds can't trust the baseline.
@@ -59,9 +60,14 @@ One of speck's own tests, which checks that a test's browser is shut down when t
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 140,125
+- Elapsed since build started: 59 min
+- Changed lines: 0 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up (inbox): `speck/ideas/2026-11-24-steady-the-0182-ac3-per-test-time-limit-test.md`: the sibling 0182 AC3 test with a per-test 1.5 s time limit also counts Chromium's start-up in it.
 - Known limit: test files that import tmp.mjs still end everything they started synchronously on SIGTERM (its reaper), without waiting for it to have exited. Not seen causing a failure.
