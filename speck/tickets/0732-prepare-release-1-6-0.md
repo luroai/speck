@@ -1,7 +1,7 @@
 ---
 id: "0732"
 title: "Prepare release 1.6.0"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: ["0701","0702","0703","0704","0705","0706","0707","0708","0709","0710","0
 created: 2026-11-24
 built_on: "0731"
 started: "2026-11-24T21:43:19.190Z"
+approved: "2026-11-24T21:57:00.732Z"
 
 ---
 # 0732 · Prepare release 1.6.0
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Since 1.5.0, speck's Claude models are named properly (0700), and 0701 to 0731 make the panel look and work like part of Cursor (Settings laid out like Cursor's and saving each change straight away, a soft highlight for chained tickets, Set ready only on an open ticket), add Try it from a review pack, a build limit across projects and a usage warning on the bridge, and fix stalls around tickets built on others. Anyone following the setup prompt, or updating speck in a project, still gets 1.5.0.
@@ -63,9 +64,15 @@ speck is ready to go out as version 1.6.0. Once it lands, anyone who follows the
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The new test “0732 AC2: the 1.5.0 section is still there beside the 1.6.0 one” asserts heading order using indexOf.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 713,870
+- Elapsed since build started: 14 min
+- Changed lines: 1430 (limit 5000)
 - Follow-ups: none.
 
 ## Review rounds
