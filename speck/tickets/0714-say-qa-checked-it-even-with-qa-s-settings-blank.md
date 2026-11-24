@@ -1,7 +1,7 @@
 ---
 id: "0714"
 title: "Say QA checked it even with QA's settings blank"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-11-11-say-qa-checked-it-even-with-qa-s-settings-blank.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-24
+started: "2026-11-24T13:51:24.136Z"
 
 ---
 # 0714 · Say QA checked it even with QA's settings blank
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 A check in the running app is described as QA's only once one of QA's settings is set; with all four blank it still reads as the engineering manager's. Now that Settings shows QA as a member of its own, that hides who checked what.
