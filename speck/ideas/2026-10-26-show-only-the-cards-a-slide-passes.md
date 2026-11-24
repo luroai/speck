@@ -1,6 +1,6 @@
 # Show only the cards a slide passes
 
-Captured: 2026-10-26 · Status: inbox
+Captured: 2026-10-26 · Status: dropped
 Triaged: 1
 From ticket: 0517
 
