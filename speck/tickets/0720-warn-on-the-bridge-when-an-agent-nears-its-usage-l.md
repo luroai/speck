@@ -1,7 +1,7 @@
 ---
 id: "0720"
 title: "Warn on the bridge when an agent nears its usage limit"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-11-10-show-each-agent-s-usage-in-the-panel.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-24
+started: "2026-11-24T14:33:58.528Z"
 
 ---
 # 0720 · Warn on the bridge when an agent nears its usage limit
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Settings shows each subscription's usage since 1.2 (0646), but you only see it if you open Settings. Usage limits decide whether work moves, so a limit coming should be visible where you look first.
