@@ -44,6 +44,7 @@ Set ready shows only once a draft is open, on its open row or in its full view, 
 ## Notes
 - Raised by the user on 2026-11-24 from a screenshot of the panel in Cursor's browser pane: the button crowds each row, and opening a ticket first should be the habit.
 - `ticketHead` in `templates/panel.js` adds `setReadyButton` to every draft's top row; the closed row's grid gives it column 2 (`.item.row .head .set-ready` in `templates/panel-cards.css`). The brief's Plan description is in the `speck panel` row of `docs/brief.md` ("with Set ready and priority on the row").
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
