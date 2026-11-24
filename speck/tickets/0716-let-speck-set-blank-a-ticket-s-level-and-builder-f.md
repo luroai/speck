@@ -1,7 +1,7 @@
 ---
 id: "0716"
 title: "Let speck set blank a ticket's build settings"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -21,7 +21,7 @@ created: 2026-11-24
 ---
 # 0716 · Let speck set blank a ticket's build settings
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Someone working from the terminal, or an agent, can give a ticket a level or its own builder and model but can't take them off again without editing the file by hand, while the panel can. `speck set` lets only `priority` take an empty value.
