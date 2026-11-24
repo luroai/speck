@@ -1,7 +1,7 @@
 ---
 id: "0753"
 title: "Prepare release 1.6.1"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -21,7 +21,7 @@ created: 2026-11-24
 ---
 # 0753 · Prepare release 1.6.1
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Since 1.6.0, 0741 to 0752 fix a test that failed every build on current Node, steady two timing tests, let a waiting test run hand back before the builder's shell limit, name only tests that still fail after a full-suite retry, show the machine-wide build limit in Settings, name Settings controls for screen readers, swap the builder's and reviewer's agents in one step, say under Needs you when the main checkout is bare, and file fewer duplicate follow-ups. Anyone updating speck still gets 1.6.0.
