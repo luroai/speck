@@ -1,7 +1,7 @@
 ---
 id: "0738"
 title: "Fix the full suite failing on main at d076997"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T17:20:01.222Z"
+approved: "2026-11-24T17:54:04.690Z"
 
 ---
 # 0738 · Fix the full suite failing on main at d076997
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The full suite fails on main at commit d076997 (d0769975d1b676fbe16dd34f129c4d283d9cf059). Failing tests:
@@ -54,9 +55,14 @@ Nothing you use changes: only tests were touched. The full test suite on main wa
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 127,831
+- Elapsed since build started: 34 min
+- Changed lines: 0 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (known limits, not inbox ideas):
 - 0476 AC3's two touch tests and AC2's first slow drag still end some gestures by hand without the touchend check; they weren't failing here, so they're unchanged. Wrap them with delivered() if they start failing the same way.
