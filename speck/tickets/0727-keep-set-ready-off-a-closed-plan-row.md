@@ -18,7 +18,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T15:15:49.304Z"
-approved: "2026-11-24T15:59:07.321Z"
+approved: "2026-11-24T16:52:42.765Z"
 
 ---
 # 0727 · Keep Set ready off a closed Plan row
@@ -56,12 +56,13 @@ Closed drafts in Plan no longer show Set ready on the row, so each title has the
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 207,949
-- Elapsed since build started: 43 min
+- Reviewer tokens: 456,535
+- Elapsed since build started: 97 min
 - Changed lines: 10 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
@@ -134,6 +135,77 @@ Follow-ups:
     "findings": [],
     "escalation_question": "",
     "summary": "Closed Plan drafts now give their titles more room and require opening before Set ready appears. Open drafts and full views retain the existing readiness checks and request behaviour. Relevant tests pass; the sole reported failure predates this change."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "0a28ba42bace540e0eb4bfda52535b5b42dffeb5",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a20e47-477c-7963-bbd3-b1126e78d938",
+    "builder_response": "- Tests run: test/panel-0727.test.mjs test/panel-0586.test.mjs test/panel-0419.test.mjs test/panel-0463.test.mjs test/panel.test.mjs\n- Failing before this build (unchanged): test/tmp-cleanup.test.mjs AC1 AC2\n- Merge conflict resolution:\n  - docs/brief.md (class: logic): kept this ticket's Plan wording (Set ready on an open draft and in its full view, priority on the row) and main's newer session-counting text (each session at its newest total when a later build or sub-agent grows).\n  - templates/panel.js: clean auto-merge; Set ready still only on open drafts.\n",
+    "seconds": 23,
+    "usage": {
+      "input_tokens": 454939,
+      "cached_input_tokens": 382976,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1596,
+      "reasoning_output_tokens": 112
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 27925,
+      "cached": 219904,
+      "write": 0,
+      "output": 757
+    },
+    "cost_usd": 0.0854104,
+    "saved_at": "2026-11-24T16:52:39.028Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.js ticketHead still omits Set ready for closed drafts. Unchanged panel-0727 AC1 tests and the panel-0586 AC4 browser layout test pass after merging."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "ticketHead retains setReadyButton on open drafts; that function preserves readiness disabling, explanatory tooltip and pending text. panel-0727 AC2 and existing request/refusal tests pass."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The full-view Set ready bar remains covered by passing panel-0727 AC3."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/brief.md retains Set ready on an open draft and in its full view, with priority on the row. Its diff against merged main contains only that intended Plan change, preserving main's newer session-counting description. panel-0727 AC4 passes."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The supplied post-merge run reports 224 passes, three skips and only the recorded pre-existing tmp-cleanup failure. The previously approved tests and layout rules remain unchanged."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The merge preserves the approved behaviour and main's newer documentation. Closed drafts hide Set ready; opening a draft restores it with the existing checks. Relevant tests pass, with only the previously recorded unrelated failure."
   }
 }
 ```
