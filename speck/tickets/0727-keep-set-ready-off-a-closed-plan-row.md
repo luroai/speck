@@ -1,7 +1,7 @@
 ---
 id: "0727"
 title: "Keep Set ready off a closed Plan row"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T15:15:49.304Z"
+approved: "2026-11-24T15:59:07.321Z"
 
 ---
 # 0727 · Keep Set ready off a closed Plan row
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Every closed draft in Plan has a Set ready button on its row, so a ticket can be set ready without ever being opened, and the button takes space the title needs. Gate 1 should come after at least a scan of the ticket.
@@ -54,13 +55,17 @@ Closed drafts in Plan no longer show Set ready on the row, so each title has the
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 207,949
+- Elapsed since build started: 43 min
+- Changed lines: 10 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Accept Node 24's fail line in tmp-cleanup → speck/ideas/2026-11-24-accept-node-24-s-fail-line-in-tmp-cleanup.md
-
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
