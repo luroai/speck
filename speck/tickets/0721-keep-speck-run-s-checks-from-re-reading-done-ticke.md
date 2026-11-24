@@ -1,7 +1,7 @@
 ---
 id: "0721"
 title: "Keep speck run's checks from re-reading done tickets' logs"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -21,7 +21,7 @@ created: 2026-11-24
 ---
 # 0721 · Keep speck run's checks from re-reading done tickets' logs
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 An idle speck run still spends about 1.7 s of processor time per check on this repo, mostly reading every ticket's build log and run records and running git, done tickets included. The cost grows with the project's history, on a machine where tests already fail under load.
