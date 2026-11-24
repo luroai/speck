@@ -456,7 +456,7 @@ function paneTone(t) {
   if (paneFrom === 'shipped' || !t.inFlight) return '';
   const d = doing(t, t.shipping || shippingId === String(t.id), speckCalled());
   if (d.moving) return 'working';
-  return d.tone === 'to-ship' || (d.tone === 'bad' && t.foreman_will !== true) ? 'waits' : '';
+  return d.tone === 'to-ship' || (d.tone === 'bad' && t.foreman_will !== true && t.app_checking !== true) ? 'waits' : ''; // 0713
 }
 // 0583: its four bars, each 'done', 'now' (filled, where it is), 'waits' (filled in orange: it waits for you there) or empty.
 const PANE_STEPS = ['Ready', 'Built', 'Reviewed', 'Ship'];

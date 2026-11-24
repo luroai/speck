@@ -39,7 +39,7 @@ const SHORT = {
 // 0576: `name` is what you call speck, which a ticket's sentence and short words say when it will answer.
 function doing(t, shipping, name = 'speck') {
   const d = doingNow(t, shipping, name);
-  const short = d.sentence === willTake(name) ? `${name} will answer` : d.after ? 'Approved' : Object.prototype.hasOwnProperty.call(SHORT, d.sentence) ? SHORT[d.sentence] : null;
+  const short = d.sentence === willTake(name) ? `${name} will answer` : d.sentence === checkingInApp(name) ? `${name} is checking` : d.after ? 'Approved' : Object.prototype.hasOwnProperty.call(SHORT, d.sentence) ? SHORT[d.sentence] : null;
   return { ...d, short, word: wordOf(t, d, short) };
 }
 // 0462: what it's doing in a word or two, for an open card's Now cell: reviewing, fixing, checking or writing while an
@@ -60,6 +60,9 @@ function workerOf(t, d) {
   return { label: 'Builder', value: name ? `${name[0].toUpperCase()}${name.slice(1)}${model ? ` · ${model}` : ''}` : '–' };
 }
 const willTake = name => `Blocked · ${name} will take its recommendation`;
+// 0713: one whose question speck's watch agent is checking, or will check, in the running app (app_checking) waits for speck.
+const checkingInApp = name => `Blocked · ${name} is checking it in the app`;
+const waitsForSpeck = t => t.foreman_will === true || t.app_checking === true;
 // 0709: the ticket an approved one was built on and waits to ship after (speck status --json's ships_after), or null.
 const waitsToShipAfter = t => (t.status === 'approved' && typeof t.ships_after === 'string' && t.ships_after ? t.ships_after : null);
 function doingNow(t, shipping, called) {
@@ -69,7 +72,7 @@ function doingNow(t, shipping, called) {
   const autoShips = t.status === 'approved' && t.auto_ship === true && !t.red && !t.to_ship;
   const tone = t.red ? 'bad' : t.to_ship || (approved && !autoShips) ? 'to-ship' : '';
   const at = sentence => ({ sentence, tone, moving: false });
-  if (t.status === 'blocked') return at(t.foreman_will === true ? willTake(called) : 'Blocked · it has a question for you'); // 0317
+  if (t.status === 'blocked') return at(t.app_checking === true ? checkingInApp(called) : t.foreman_will === true ? willTake(called) : 'Blocked · it has a question for you'); // 0317. 0713
   if (t.red && (t.status === 'building' || t.status === 'reviewing')) return at('The build stopped');
   if (t.paused) return at('Paused');
   if (t.run_waiting) return at('Approved · turn on Auto-build to ship it');
@@ -111,7 +114,7 @@ function buildGroup(t, d, asked) {
   if (!d) return 'queued';
   if (d.sentence === 'Shipping') return 'building';
   if (t.left_stopped === true) return 'needs'; // 0616
-  return (t.status === 'blocked' && t.foreman_will !== true) || (t.status === 'approved' && (t.to_ship || t.red)) ? 'needs' : 'building';
+  return (t.status === 'blocked' && !waitsForSpeck(t)) || (t.status === 'approved' && (t.to_ship || t.red)) ? 'needs' : 'building';
 }
 // A row's dot: orange for needs you, blue while it's worked on, grey while it waits.
 const rowDot = (group, d) => (group === 'needs' ? 'needs' : d && d.moving ? 'run' : 'wait');
