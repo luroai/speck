@@ -1,7 +1,7 @@
 ---
 id: "0743"
 title: "Steady the 0182 AC3 per-test time limit test"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-11-24-steady-the-0182-ac3-per-test-time-limit-test.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-24
+started: "2026-11-24T23:12:02.998Z"
 
 ---
 # 0743 · Steady the 0182 AC3 per-test time limit test
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 The 0182 AC3 test "Chromium has closed within 10 s of a test file finishing whose test timed out waiting on its page" gives its inner test 1.5 s, which also covers starting Chromium. On a busy machine Chromium can take longer to open, so the test can fail with no real fault and turn main red.
