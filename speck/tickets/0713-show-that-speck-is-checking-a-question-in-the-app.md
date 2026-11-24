@@ -1,7 +1,7 @@
 ---
 id: "0713"
 title: "Show that speck is checking a question in the app"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-11-11-show-that-speck-is-checking-a-question-in-the-app.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0709"]                # ticket ids that must be done first
 created: 2026-11-24
+started: "2026-11-24T13:48:38.552Z"
 
 ---
 # 0713 · Show that speck is checking a question in the app
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 While speck's watch agent is about to check a blocked question in the running app, the ticket says "Waiting for you" and counts under Needs you, though speck may carry on by itself. You may check it by hand for nothing.
