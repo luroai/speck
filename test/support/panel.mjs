@@ -145,7 +145,9 @@ export function cliCopy() {
 // The page's pure model function, run outside the browser.
 export const page = () => fs.readFileSync(PAGE, 'utf8');
 // 0430: the page's styles, from their own file. 0472: from each area's file, in the order the page loads them.
-export const styles = () => STYLES.map(f => fs.readFileSync(f, 'utf8')).join('\n');
+// 0708: without the more-contrast setting's block, which test/contrast-0708.test.mjs checks from the file itself.
+export const rawStyles = () => STYLES.map(f => fs.readFileSync(f, 'utf8')).join('\n');
+export const styles = () => rawStyles().replace(/@media \(prefers-contrast: more\) \{(?:[^{}]|\{[^{}]*\})*\}/g, '');
 // 0431: the page's model, from its own file.
 export const model = () => fs.readFileSync(MODEL, 'utf8');
 // 0432: the Settings view's script, from its own file.

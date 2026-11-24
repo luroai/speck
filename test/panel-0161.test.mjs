@@ -27,7 +27,7 @@ const tokens = v => [...String(v || '').matchAll(/var\((--[\w-]+)\)/g)].map(m =>
 
 // Each look's colour tokens: the plain :root blocks, and the dark look's block over them.
 function looks(rs = rules()) {
-  const vars = sel => Object.assign({}, ...rs.filter(r => r.sel === sel).map(r => Object.fromEntries(r.decls.filter(([k]) => k.startsWith('--')))));
+  const vars = sel => Object.assign({}, ...rs.filter(r => r.sel === sel && !r.at.some(a => a.includes('prefers-contrast'))).map(r => Object.fromEntries(r.decls.filter(([k]) => k.startsWith('--')))));
   const light = vars(':root');
   return { light, dark: { ...light, ...vars(':root[data-theme="dark"]') } };
 }
