@@ -219,7 +219,7 @@ test('0275 AC5: while the settings are loading, or couldn\'t be read, closing do
 test('0275: with an explanation open, Escape still only hides it, even with a change not saved (0268)', async () => {
   const p = await opened([view()]);
   changeTo(p, 'limits.max_review_rounds', '4');
-  p.press(buttonsOf(rowOf(p, 'reviewer_effort')).find(b => b.attrs?.['aria-label'] === 'About reviewer_effort'));
+  p.press(buttonsOf(rowOf(p, 'reviewer_effort')).find(b => /\bname\b/.test(b.className || ''))); // 0729: its name shows its explanation
   p.key('Escape');
   assert.equal(asking(p), false, 'no question yet');
   assert.ok(viewOpen(p));

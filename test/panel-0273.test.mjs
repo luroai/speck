@@ -60,14 +60,14 @@ test('0273 AC4, AC5: at the narrowest width each row fits, and in both looks the
         const parts = [...row.querySelectorAll('*')].map(n => n.getBoundingClientRect()).filter(x => x.width > 0);
         const label = row.querySelector('.label').getBoundingClientRect(), control = row.querySelector('.control').getBoundingClientRect();
         return { name: row.querySelector('.name').textContent, inside: parts.every(x => x.left >= box.left - 0.5 && x.right <= box.right + 0.5),
-          sideBySide: label.right <= control.left + 0.5 };
+          sideBySide: label.right <= control.left + 0.5 || control.top >= label.bottom - 0.5 }; // 0729: or its control under them
       }) };
     })()`);
     assert.equal(fit.scrolls, false, 'the view doesn\'t scroll sideways');
     assert.ok(fit.rows.length >= 10, 'every setting has its row');
     for (const o of fit.rows) {
       assert.ok(o.inside, `${o.name}: its name and control are inside the view`);
-      assert.ok(o.sideBySide, `${o.name}: its name is on the left and its control on the right`);
+      assert.ok(o.sideBySide, `${o.name}: its name is on the left and its control on the right, or under it (0729)`);
     }
 
     for (const look of ['light', 'dark']) {
@@ -104,16 +104,16 @@ test('0273 AC4, AC5: at the narrowest width each row fits, and in both looks the
   } finally { await b.close(); await stop(panel); }
 });
 
-test('0273 AC4 self-check: a name breaks only after a dot or an underscore, and still reads whole', async () => {
+// 0729: a setting's name is words now, not its key, so it wraps between words as any text does
+test('0273 AC4 self-check: a name is words, with no key to break, and still reads whole', async () => {
   const keys = ['limits.max_acceptance_criteria', 'auto_ship', 'builder', '_odd..key_'];
   const p = settingsPage([{ groups: [{ title: 'Some', settings: keys.map(k => S(k)) }] }]);
   await p.settle();
   await openSettings(p);
   for (const key of keys) {
     const name = p.all(rowOf(p, key)).find(n => cls(n, 'name'));
-    const parts = name.children.filter(n => n.tagName === 'span').map(n => n.textContent);
-    assert.equal(parts.join(''), key);
-    for (const part of parts.slice(0, -1)) assert.match(part, /[._]$/, `${key}: "${part}" ends at a dot or underscore`);
-    assert.equal(name.children.filter(n => n.tagName === 'wbr').length, parts.length - 1);
+    assert.ok(name.textContent.length > 0, `${key}: named`);
+    assert.doesNotMatch(name.textContent, /[._]/, `${key}: "${name.textContent}" is words, not the key`);
+    assert.equal(name.children.filter(n => n.tagName === 'wbr').length, 0, `${key}: no breaks of a key's`);
   }
 });

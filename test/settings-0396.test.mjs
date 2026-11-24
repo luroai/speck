@@ -38,14 +38,16 @@ const runSwitch = p => p.all(pane(p)).find(n => n.id === 'run-switch');
 const rowOfSwitch = (p, sw) => { let n = sw; while (n && !/\bswitch-row\b/.test(n.className || '')) n = n.parentNode; return n; };
 const nameOf = (p, row) => p.all(row).find(n => /\bname\b/.test(n.className || ''))?.textContent;
 
-test('0396 AC1: Settings opens with Appearance, then Auto-build, above every other group, each a row of its name and a switch with no description', async () => {
+// 0729: each row has its short muted line under its name now, as every setting's has, and the group a small label
+test('0396 AC1: Settings opens with Appearance, then Auto-build, above every other group, each a row of its name, its short line and a switch, with nothing else under them', async () => {
   const { p } = await opened();
   // 0652: under Your team and Your subscriptions, above the rest
   const at = groupsOf(p).findIndex(g => /\bswitches\b/.test(g.className || '')), first = groupsOf(p)[at];
   assert.deepEqual(groupsOf(p).slice(0, at).map(g => g.className), ['sgroup team', 'sgroup subs']);
-  const rows = first.children.filter(n => /\bswitch-row\b/.test(n.className || ''));
+  const rows = p.all(first).filter(n => /\bswitch-row\b/.test(n.className || ''));
   assert.deepEqual(rows.map(r => nameOf(p, r)), ['Appearance', 'Auto-build'], 'Appearance first, then Auto-build');
-  assert.ok(!p.all(first).some(n => n.tagName === 'h4'), 'no heading over them');
+  assert.deepEqual(p.all(first).filter(n => n.tagName === 'h4').map(n => n.textContent), ['General'], 'a small label over them, as over every group (0729)');
+  assert.ok(rows.every(r => p.all(r).some(n => /\bdesc\b/.test(n.className || '') && n.textContent)), 'each with its short line (0729)');
   assert.ok(pane(p).children.indexOf(first) < pane(p).children.indexOf(groupsOf(p)[at + 1]), 'above the other groups');
   for (const g of groupsOf(p).filter(g => g !== first)) assert.ok(!p.all(g).some(n => n.id === 'look' || n.id === 'run-switch'), 'not in another group');
   assert.ok(p.all(groupsOf(p)[0]).some(n => n.attrs?.['data-member'] === 'manager'), 'the Foreman\'s card is still there');
@@ -136,12 +138,12 @@ test('0396 AC3: Auto-build\'s switch turns speck run on and off, shows whether i
   assert.equal(sw.attrs['aria-checked'], 'false');
 });
 
-test('0396 AC3: what on and off do is in Auto-build\'s info button', async () => {
+test('0396 AC3: what on and off do is in Auto-build\'s explanation, which its name shows (0729: not an info button)', async () => {
   const { p } = await opened();
   const row = rowOfSwitch(p, runSwitch(p));
-  const info = p.all(row).find(n => n.tagName === 'button' && n.className === 'info');
-  assert.ok(info, 'an info button');
-  assert.equal(info.attrs['aria-label'], 'About Auto-build');
+  const info = p.all(row).find(n => n.tagName === 'button' && n.className === 'name');
+  assert.ok(info, 'its name is a button');
+  assert.equal(info.textContent, 'Auto-build');
   const tip = p.all(row).find(n => n.className === 'explain' && n.id === info.attrs['aria-describedby']);
   assert.ok(tip, 'its explanation, read with it');
   assert.match(tip.textContent, /On:.*builds each ready ticket.*ships each approved one auto_ship covers/);
@@ -179,7 +181,7 @@ test('0396 AC4: Auto-build is a button a key presses, with the switch role and a
 
 const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
 
-test('0396 AC4: at 320 px each switch is on one row with its name, and Space switches the focused one', skip, async () => {
+test('0396 AC4: at 320 px each switch is beside its name and short line, or under them, and Space switches the focused one', skip, async () => {
   const panel = await sharedPanel();
   const b = await browserPage('about:blank');
   try {
@@ -190,16 +192,18 @@ test('0396 AC4: at 320 px each switch is on one row with its name, and Space swi
     await b.until(`!!document.getElementById('look') && !/Loading the settings/.test(document.getElementById('settings').textContent)`, 'the Settings view');
     await b.js('document.fonts.ready.then(() => true)');
     const rows = await b.js(`(() => ['look', 'run-switch'].map(id => {
-      const sw = document.getElementById(id), row = sw.closest('.switch-row'), name = row.querySelector('.name');
-      const s = sw.getBoundingClientRect(), n = name.getBoundingClientRect(), r = row.getBoundingClientRect(), pane = document.getElementById('settings').getBoundingClientRect();
-      return { id, swMid: s.top + s.height / 2, nameMid: n.top + n.height / 2, swH: s.height, nameH: n.height, rowRight: r.right, swRight: s.right, paneRight: pane.right, rowH: r.height };
+      const sw = document.getElementById(id), row = sw.closest('.switch-row'), label = row.querySelector('.label'), name = label.querySelector('.name');
+      const s = sw.getBoundingClientRect(), l = label.getBoundingClientRect(), n = name.getBoundingClientRect(), r = row.getBoundingClientRect(), pane = document.getElementById('settings').getBoundingClientRect();
+      const words = [...sw.querySelectorAll('span')].filter(x => x.textContent.trim()).map(x => x.getBoundingClientRect().height);
+      return { id, swMid: s.top + s.height / 2, labelMid: l.top + l.height / 2, labelRight: l.right, labelBottom: l.bottom, swLeft: s.left, swTop: s.top, swH: s.height, words, nameH: n.height, rowRight: r.right, swRight: s.right, paneRight: pane.right };
     }))()`);
     for (const r of rows) {
-      assert.ok(Math.abs(r.swMid - r.nameMid) < 4, `${r.id}: the switch beside its name, ${r.swMid} and ${r.nameMid}`);
+      // 0729: beside its name and short line, in the middle of them, as Cursor's settings have it, or under them
+      const beside = r.swLeft >= r.labelRight - 0.5;
+      assert.ok(beside ? Math.abs(r.swMid - r.labelMid) < 4 : r.swTop >= r.labelBottom - 0.5, `${r.id}: the switch beside its name and line, or under them: ${JSON.stringify(r)}`);
       assert.ok(r.nameH < 24, `${r.id}: its name on one line, ${r.nameH} px`);
-      assert.ok(r.swH < 40, `${r.id}: the switch on one line, ${r.swH} px`);
+      assert.ok(r.swH <= 44.5 && r.words.every(h => h < 24), `${r.id}: the switch on one line, its 44 px target no taller, ${r.swH} px`);
       assert.ok(r.swRight <= r.rowRight + 0.5 && r.rowRight <= r.paneRight + 0.5, `${r.id}: inside the row: ${JSON.stringify(r)}`);
-      assert.ok(r.rowH < 64, `${r.id}: one row, ${r.rowH} px`);
     }
     await b.js(`document.getElementById('look-dark').focus(); true`); // 0412: Appearance's Dark
     await b.send('Input.dispatchKeyEvent', { type: 'keyDown', key: ' ', code: 'Space', windowsVirtualKeyCode: 32, text: ' ' });

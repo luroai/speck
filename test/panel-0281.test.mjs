@@ -6,7 +6,7 @@ import { panelRepo, freePort, startPanel, stop, findChrome, browserPage, styles 
 
 // ---------- 0281: every Settings control's border on all four sides. Only a real browser lays the view out. ----------
 
-// Each info button, list, text box and number box in the view: its left and right edges, and its borders' widths as
+// Each of Appearance's buttons (0729: the info buttons are gone), list, text box and number box in the view: its left and right edges, and its borders' widths as
 // the stylesheet sets them at this pixel ratio. Chromium draws any border under 1px as 1px, so its computed widths
 // can't show what a browser that draws half a pixel, as Safari does, is given. The last matching declaration wins, which
 // holds here as the Settings rules all share one specificity.
@@ -25,7 +25,7 @@ const MEASURE = `(() => {
     for (const r of rules) if (n.matches(r.selectorText) && set(r.style, side)) w = set(r.style, side);
     return w;
   };
-  return [...document.querySelectorAll('#settings .setting .info, #settings .setting select.edit, #settings .setting input.edit[type="text"], #settings .setting input.edit[type="number"]')]
+  return [...document.querySelectorAll('#settings .switch-row .looks [role="radio"], #settings .setting select.edit, #settings .setting input.edit[type="text"], #settings .setting input.edit[type="number"]')]
     .filter(n => n.getClientRects().length).map(n => {
       const r = n.getBoundingClientRect();
       return { what: n.getAttribute('aria-label') || n.tagName, tag: n.tagName, left: r.left, right: r.right,

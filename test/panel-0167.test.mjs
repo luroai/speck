@@ -98,13 +98,18 @@ test('0167 AC2: speck status --json says whether auto-ship covers each ticket', 
   assert.deepEqual(covers(), { '0002': false, '0003': false });
 });
 
-test('0167 AC2: a linked ticket lights up with a ring, leaving a state\'s tint as it is', () => {
+test('0167 AC2: a linked ticket lights up with the raised fill, leaving a state\'s tint as it is (0728)', () => {
   const rs = rules();
   const flash = rs.filter(r => r.at.some(a => a.startsWith('@keyframes flash')) || selectors(r).some(s => /\.flash$/.test(s) && !r.decls.some(([k]) => k === 'animation')));
   assert.ok(flash.length >= 2, 'the fading light and the still one');
   for (const r of flash) {
-    assert.deepEqual(r.decls.map(([k]) => k), ['box-shadow'], `${r.sel}: only a ring`);
-    assert.deepEqual(tokens(get(r, 'box-shadow')), ['--text']);
+    assert.ok(!r.decls.some(([k]) => k === 'border-color'), `${r.sel}: no border colour`);
+    const bg = get(r, 'background'), sh = get(r, 'box-shadow');
+    if (bg && bg !== 'transparent') assert.deepEqual(tokens(bg), ['--raise'], `${r.sel}: raised fill`);
+    if (sh && sh !== 'none') {
+      assert.ok(!tokens(sh).includes('--text'), `${r.sel}: no text-colour ring`);
+      assert.deepEqual([...new Set(tokens(sh))], ['--raise'], `${r.sel}: side fill in --raise`);
+    }
   }
 });
 

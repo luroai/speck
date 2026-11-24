@@ -27,7 +27,6 @@ const rowOf = (p, id) => queueRows(p).find(r => p.all(r).some(n => n.className =
 const subOf = (p, id) => p.all(rowOf(p, id)).find(n => n.className === 'sub');
 const tick = async (p, c, ms) => { c.now += ms; for (const { fn } of p.intervals.values()) fn(); await p.settle(); };
 const fmOf = file => parseTicket(fs.readFileSync(file, 'utf8')).fm;
-const near = (actual, expected, msg) => assert.ok(Math.abs(actual - expected) <= 5, `${msg}: ${actual} isn't about ${expected}`);
 const deadPid = () => spawnSync(process.execPath, ['-e', 'process.pid'], { stdio: 'ignore' }).pid;
 const ticketOf = (dir, id = '0001') => statusData(dir).tickets.find(t => t.id === id);
 
@@ -73,12 +72,14 @@ test('0217 AC1: a reviewing ticket\'s stopped build holds its timer too', () => 
 
 test('0217 AC2: a killed build\'s stop is recorded when speck first notices it, and stays the same after', () => {
   const r = stoppedRepo();
+  const noticing = Date.now();
   const first = ticketOf(r.dir);
   assert.equal(first.build_stopped, true);
-  assert.ok(Math.abs(Date.parse(first.build_stopped_at) - Date.now()) < 10000, `noticed now: ${first.build_stopped_at}`);
-  backdateMark(r.dir, 300);
+  assertWrittenSince(first.build_stopped_at, noticing, `noticed now: ${first.build_stopped_at}`);
+  const marked = realAgo(300);
+  fs.writeFileSync(runsPath(r.dir, '0001.waiting'), JSON.stringify({ ...JSON.parse(fs.readFileSync(runsPath(r.dir, '0001.waiting'), 'utf8')), since: marked }));
   const again = ticketOf(r.dir).build_stopped_at;
-  near((Date.now() - Date.parse(again)) / 1000, 300, 'the time first noticed, not now');
+  assert.equal(again, marked, 'the time first noticed, not now');
   // A panel restart reads it afresh, in a new process.
   assert.equal(json(r.dir).tickets.find(t => t.id === '0001').build_stopped_at, again);
 });
@@ -86,7 +87,8 @@ test('0217 AC2: a killed build\'s stop is recorded when speck first notices it, 
 test('0217 AC2: a mark left by an earlier build of the ticket is not its stop', () => {
   const r = stoppedRepo();
   fs.writeFileSync(runsPath(r.dir, '0001.waiting'), JSON.stringify({ session: r.rec.session, pid: r.rec.pid + 1, since: realAgo(900) }));
-  assert.ok(Math.abs(Date.parse(ticketOf(r.dir).build_stopped_at) - Date.now()) < 10000, 'noticed now');
+  const noticing = Date.now();
+  assertWrittenSince(ticketOf(r.dir).build_stopped_at, noticing, 'noticed now');
 });
 
 test('0217 AC2: a ticket shown as "Build stopped unexpectedly" has its timer stop at when speck noticed and not count up', async () => {

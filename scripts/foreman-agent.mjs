@@ -380,7 +380,7 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, set
     try { saveRecord(file, next); } catch (e) { return speak(`${t.id}: I asked for its build to be resumed, but its run record couldn't be saved (${e.message}).`); }
     const cwd = typeof rec.cwd === 'string' && fs.existsSync(rec.cwd) ? rec.cwd : repo;
     speak(`${t.id}: I asked speck run to resume its build (session ${rec.session}).`);
-    if (!startBuild(t.id, argv, cwd, rec.session, 'a', pid => `${JSON.stringify({ ...next, pid: pid ?? rec.pid }, null, 2)}\n`, rec.env_session ?? rec.session)) { // 0726
+    if (startBuild(t.id, argv, cwd, rec.session, 'a', pid => `${JSON.stringify({ ...next, pid: pid ?? rec.pid }, null, 2)}\n`, rec.env_session ?? rec.session) === false) { // 0726
       s.resumes = [...s.resumes, r]; try { saveRecord(file, { ...kept, exited: rec.exited, exit_code: rec.exit_code }); } catch { /* next check */ }
     }
   };

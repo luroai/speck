@@ -4,6 +4,7 @@ import { chosenBySpeck, choseCount, goWithResumable } from './go-with.mjs';
 import { speckTakes, fixingOf, MAX_DECIDED } from './foreman.mjs';
 import { contentLines } from './core.mjs';
 import { questionFacts } from './question-facts.mjs';
+import { appChecking } from './app-check.mjs';
 
 // Each "Went with the recommendation" line in a ticket's Notes, oldest first: { option, by, at }, `by` being 'foreman'
 // when the Foreman chose it and 'user' when you pressed the panel's button, and `at` its time as an ISO string.
@@ -45,11 +46,13 @@ export const tookAt = at => (typeof at === 'string' && Number.isFinite(Date.pars
 export const whoWent = (w, name = 'speck') => (w && w.by === 'foreman' ? `${name} went with the recommendation` : 'You went with the recommendation');
 
 // The board `speck status` gives the Foreman, from its parsed tickets: each with the facts above, as the panel has them.
-export function foremanBoard(tickets, cfg, runs) {
+// 0713: and app_checking (appChecking), from `agent`: { state, asks }, the watch agent's record and its questions to you.
+export function foremanBoard(tickets, cfg, runs, agent = null) {
   return tickets.map(t => {
     const facts = questionFacts(contentLines(t.sections['blocked question']));
     const entry = { id: t.fm.id, status: t.fm.status, title: t.fm.title, risk: t.fm.risk, blocked_question: null, blocked_recommendation: facts.recommendation, blocked_noticeable: facts.noticeable, blocked_clear: facts.clear, blocked_size_guard: facts.sizeGuard, blocked_check_in_app: facts.checkInApp ?? null, blocked_review_limit: facts.reviewLimit === true };
-    return { ...entry, ...foremanFacts(t, entry, fixingOf(cfg), t.fm.status === 'blocked' && goWithResumable(runs, t.fm.id, cfg)) };
+    const app_checking = !!agent && appChecking(cfg, { ...entry, blocked_question: facts.question || null }, agent.state, agent.asks);
+    return { ...entry, ...foremanFacts(t, entry, fixingOf(cfg), t.fm.status === 'blocked' && goWithResumable(runs, t.fm.id, cfg)), app_checking };
   });
 }
 // 0568: the recommendations speck took in the 7 days before `now`, newest first, from statusData's board entries, for
@@ -76,11 +79,13 @@ export function withCalls(decided, callsOf) {
   });
 }
 // The lines `speck status` puts under a ticket from its board entry `b`: a blocked one's question `q` and whether it
-// waits for the Foreman or for you, and who went with the recommendation its build is carrying on with.
+// waits for the Foreman or for you, and who went with the recommendation its build is carrying on with. 0713: or that
+// speck is checking it in the app (app_checking).
 export function foremanTicketLines(b, q, name = 'speck') {
   const lines = [];
   if (b?.status === 'blocked' && q) lines.push(`        ? ${q}`);
-  if (b?.status === 'blocked') lines.push(b.foreman_will ? `        → ${name} will take its recommendation: ${b.blocked_recommendation}` : '        → Waiting for you');
+  if (b?.status === 'blocked') lines.push(b.app_checking === true ? `        → ${name} is checking it in the app: ${b.blocked_check_in_app}`
+    : b.foreman_will ? `        → ${name} will take its recommendation: ${b.blocked_recommendation}` : '        → Waiting for you');
   if (b?.went_with) lines.push(`        ✓ ${whoWent(b.went_with, name)}: ${b.went_with.option} (${tookAt(b.went_with.at)})`);
   return lines;
 }

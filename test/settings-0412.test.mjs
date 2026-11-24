@@ -215,20 +215,22 @@ test('0412 AC2: in a real browser, System follows the computer turning dark and 
   assert.equal(await b.js(checked), 'System');
 }));
 
-test('0412 AC5: at 320 px the Appearance row is one line, and the keyboard reaches and moves the choice', skip, () => withBrowser(320, async (b, scheme) => {
+// 0729: the row is a name over its short line now, with the choices on the right of them or under them
+test('0412 AC5: at 320 px the Appearance choices are on one line in their row, and the keyboard reaches and moves the choice', skip, () => withBrowser(320, async (b, scheme) => {
   const r = await b.js(`(() => {
-    const g = document.getElementById('look'), row = g.closest('.switch-row'), name = row.querySelector('.name');
+    const g = document.getElementById('look'), row = g.closest('.switch-row'), label = row.querySelector('.label'), name = label.querySelector('.name');
     const box = n => n.getBoundingClientRect(), pane = box(document.getElementById('settings'));
-    const bs = [...g.children].map(box), n = box(name), rw = box(row);
-    return { mids: [...bs, n].map(x => x.top + x.height / 2), heights: bs.map(x => x.height), nameH: n.height, right: Math.max(...bs.map(x => x.right)), rowRight: rw.right, paneRight: pane.right, rowH: rw.height, page: document.documentElement.scrollWidth, width: innerWidth, colRight: box(g.parentNode).right };
+    const bs = [...g.children].map(box), l = box(label), rw = box(row);
+    return { mids: bs.map(x => x.top + x.height / 2), heights: bs.map(x => x.height), nameH: box(name).height, left: Math.min(...bs.map(x => x.left)), right: Math.max(...bs.map(x => x.right)),
+      top: Math.min(...bs.map(x => x.top)), labelRight: l.right, labelBottom: l.bottom, rowRight: rw.right, paneRight: pane.right, page: document.documentElement.scrollWidth, width: innerWidth };
   })()`);
-  assert.ok(Math.max(...r.mids) - Math.min(...r.mids) < 4, `the three choices beside the name, on one line: ${r.mids}`);
+  assert.ok(Math.max(...r.mids) - Math.min(...r.mids) < 1, `the three choices on one line: ${r.mids}`);
   assert.ok(r.nameH < 24 && r.heights.every(h => h < 40), `nothing wraps: ${JSON.stringify(r)}`);
-  assert.ok(r.right <= r.colRight + 0.5 && r.colRight <= r.rowRight + 0.5 && r.rowRight <= r.paneRight + 0.5, `inside its half of the row: ${JSON.stringify(r)}`);
-  assert.ok(r.rowH < 64, `one row, ${r.rowH} px`);
+  assert.ok(r.left >= r.labelRight - 0.5 || r.top >= r.labelBottom - 0.5, `beside the name and its line, or under them: ${JSON.stringify(r)}`);
+  assert.ok(r.right <= r.rowRight + 0.5 && r.rowRight <= r.paneRight + 0.5, `inside its row: ${JSON.stringify(r)}`);
   assert.ok(r.page <= r.width, 'no sideways scroll');
-  // Tab from the info button lands on the chosen one, then the arrow keys choose and move the focus.
-  await b.js(`document.getElementById('look').closest('.switch-row').querySelector('.info').focus(); true`);
+  // Tab from the name, which shows its explanation, lands on the chosen one, then the arrow keys choose and move the focus.
+  await b.js(`document.getElementById('look').closest('.switch-row').querySelector('.label button.name').focus(); true`);
   await press(b, 'Tab', 'Tab', 9);
   assert.equal(await b.js(`document.activeElement.id`), 'look-system');
   await press(b, 'ArrowRight', 'ArrowRight', 39);

@@ -58,14 +58,15 @@ test('0185 AC2: a hovered ticket and each one linked to it are marked', async ()
   assert.deepEqual(lit, ['0001', '0002', '0003', '0004']);
 });
 
-test('0185 AC2: the mark differs from the normal look and from the hover fill, and keeps the text\'s colours', () => {
+test('0185 AC2: the mark is the raised fill a hovered row has, and keeps the text\'s colours (0728)', () => {
   for (const sel of ['.item.hl', '.q.hl']) {
     const hl = decls(sel);
-    assert.match(hl, /box-shadow:\s*inset 0 0 0 1px var\(--text\)/, `${sel} has a ring in the text colour inside its border`);
-    assert.doesNotMatch(hl, /(^|;)\s*(background|color)\s*:/, `${sel} leaves the fill and the text colour as they are`);
+    assert.match(hl, /background:\s*var\(--raise\)/, `${sel} has the raised fill`);
+    assert.doesNotMatch(hl, /inset 0 0 0 \d+px var\(--text\)/, `${sel} has no ring in the text colour`);
+    assert.doesNotMatch(hl, /(^|;)\s*color\s*:/, `${sel} leaves the text colour as it is`);
   }
   for (const sel of ['.item', '.q', '.item:hover', '.item.open', '.q.open', '.q.blocked', '.q.to-ship', '.q.at-build', '.q.at-check', '.q.at-review', '.q.at-ship', '.q.wait'])
-    assert.doesNotMatch(decls(sel), /box-shadow/, `${sel} has no ring of its own, so the mark shows on it`);
+    assert.doesNotMatch(decls(sel), /box-shadow/, `${sel} has no side fill of its own`);
 });
 
 test('0185 AC2: the ring and the text on a ticket keep 7:1 against its fill, in the light and dark looks', () => {

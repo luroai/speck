@@ -1,12 +1,15 @@
-// The panel's writes that start or stop speck itself: the Ship and Ask for changes buttons and the speck run switch.
+// The panel's writes that start or stop speck itself: the Ship and Ask for changes buttons, Try it / Stop for a
+// ticket's app (0725), and the speck run switch.
 
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { SpeckError, findTicket, padId, runsOf } from './speck.mjs';
+import { ticketKind } from './core.mjs';
 import { runState, runsDir, pidAlive, refusalFile, takeRefusal } from './run.mjs';
 import { isSpeckRun, runProcesses } from './run-lock.mjs';
+import { startApp, stopApp } from './app.mjs';
 export { runLogPart, runLogAnswer } from './run-log.mjs'; // 0415: speck run's output, for the Pipeline pop-up
 
 // 0133: the Ship button in an approved ticket's review pack. It's the user shipping (Gate 2), so it runs `speck ship <id>`
@@ -46,6 +49,46 @@ export async function panelChanges(repo, id, body) {
       ? { status: 200, body: { ok: true, message: out.trim() } }
       : { status: 409, body: { error: err.trim() || `speck changes stopped with exit code ${code}.` } }));
   });
+}
+
+// 0725: the Try it button in an approved code ticket's review pack. Starts the ticket's app as `speck app <id>` does,
+// and answers with its address. Resolves with { status, body }: 200 and { ok, url }, or 409 and speck app's message.
+export async function panelAppStart(repo, id) {
+  let t;
+  try { t = findTicket(repo, id); } catch (e) { if (e instanceof SpeckError) return { status: 404, body: { error: e.message } }; throw e; }
+  const pad = padId(id);
+  if (ticketKind(t) === 'task') return { status: 409, body: { error: `Ticket ${pad} is a task, so it has no app to try. Nothing was started.` } };
+  if (t.fm.status !== 'approved') return { status: 409, body: { error: `Ticket ${pad} is "${t.fm.status}", not "approved". Only an approved ticket's app can be started from the panel.` } };
+  try {
+    const url = await startApp(repo, id);
+    return { status: 200, body: { ok: true, url } };
+  } catch (e) {
+    if (e instanceof SpeckError) return { status: 409, body: { error: e.message } };
+    return { status: 500, body: { error: `Couldn't start the app: ${e?.message || e}` } };
+  }
+}
+
+// 0725: Stop in the review pack while the ticket's app is running. Stops it as `speck app <id> --stop` does.
+export async function panelAppStop(repo, id) {
+  try { findTicket(repo, id); } catch (e) { if (e instanceof SpeckError) return { status: 404, body: { error: e.message } }; throw e; }
+  try {
+    await stopApp(repo, id, () => {});
+    return { status: 200, body: { ok: true } };
+  } catch (e) {
+    if (e instanceof SpeckError) return { status: 409, body: { error: e.message } };
+    return { status: 500, body: { error: `Couldn't stop the app: ${e?.message || e}` } };
+  }
+}
+
+// 0725: POST /api/tickets/<id>/app or /app/stop. True when it handled the path; `ok` is false when the panel must refuse.
+export function panelAppPost(repo, where, ok, wrote, res) {
+  const app = where.match(/^\/api\/tickets\/(\d{1,4})\/app(\/stop)?$/);
+  if (!app) return false;
+  if (!ok) { wrote(res, { status: 403, body: { error: 'Forbidden: only the panel page this server sent can do that. Reload it.' } }); return true; }
+  (app[2] ? panelAppStop : panelAppStart)(repo, app[1])
+    .catch(e => ({ status: 500, body: { error: e instanceof SpeckError ? e.message : String(e?.message || e) } }))
+    .then(out => wrote(res, out));
+  return true;
 }
 
 // A request's body as text, or null once it's over 64 KB.

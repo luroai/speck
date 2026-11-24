@@ -176,7 +176,7 @@ export function usageLimitQueue({ repo, runs, settings, running, startBuild, res
       if (!start) continue;
       s.builds = s.builds.filter(x => x !== id);
       if (!save(agent, s)) return;
-      if (!start()) { s.builds = [...s.builds, id]; save(agent, s); return; } // 0726: machine slot gone; put it back
+      if (start() === false) { s.builds = [...s.builds, id]; save(agent, s); return; } // 0726: only false means no machine slot (undefined is a successful start)
     }
   };
 

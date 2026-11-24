@@ -23,7 +23,6 @@ const subOf = (p, id) => p.all(rowOf(p, id)).find(n => n.className === 'sub');
 const fmOf = file => parseTicket(fs.readFileSync(file, 'utf8')).fm;
 // Moves a frontmatter field's time back, as if that much time had gone by since it was written.
 const backdate = (file, key, seconds) => fs.writeFileSync(file, fs.readFileSync(file, 'utf8').replace(new RegExp(`^${key}: .*$`, 'm'), `${key}: "${realAgo(seconds)}"`));
-const near = (actual, expected, msg) => assert.ok(Math.abs(actual - expected) <= 5, `${msg}: ${actual} isn't about ${expected}`);
 const tick = async (p, c, ms) => { c.now += ms; for (const { fn } of p.intervals.values()) fn(); await p.settle(); };
 
 // ---------- AC1: blocked time ----------
@@ -34,10 +33,11 @@ test('0166 AC1: blocking records the time, and leaving blocked adds the stretch 
   assert.equal(fmOf(r.file).waited_seconds, undefined, 'nothing waited yet');
   assert.equal(r.run('set', '1', 'status', 'blocked').status, 0);
   assert.match(String(fmOf(r.file).blocked_at), /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/);
+  const since = Date.now();
   backdate(r.file, 'blocked_at', 600);
   assert.equal(r.run('set', '1', 'status', 'reviewing').status, 0);
   const fm = fmOf(r.file);
-  near(fm.waited_seconds, 600, 'the blocked stretch');
+  assertCounted(fm.waited_seconds, 600, since, 'the blocked stretch');
   assert.ok(!fm.blocked_at, 'no longer blocked');
 });
 
@@ -45,6 +45,7 @@ test('0166 AC1: a ticket that blocks more than once adds each stretch, and setti
   const r = panelRepo();
   assert.equal(r.run('set', '1', 'status', 'building').status, 0);
   assert.equal(r.run('set', '1', 'status', 'blocked').status, 0);
+  const since = Date.now();
   backdate(r.file, 'blocked_at', 300);
   assert.equal(r.run('set', '1', 'status', 'building').status, 0);
   assert.equal(r.run('set', '1', 'status', 'blocked').status, 0);
@@ -53,7 +54,7 @@ test('0166 AC1: a ticket that blocks more than once adds each stretch, and setti
   assert.equal(r.run('set', '1', 'status', 'blocked').status, 0);
   assert.equal(fmOf(r.file).blocked_at, at, 'still blocked since the same time');
   assert.equal(r.run('set', '1', 'status', 'approved').status, 0);
-  near(fmOf(r.file).waited_seconds, 500, 'both stretches');
+  assertCounted(fmOf(r.file).waited_seconds, 500, since, 'both stretches');
   assert.equal(fs.readFileSync(r.file, 'utf8').match(/^waited_seconds:/gm).length, 1, 'one waited_seconds line');
 });
 
@@ -230,6 +231,7 @@ test('0166 AC1: cancelling a blocked ticket adds its blocked stretch and clears 
   const r = panelRepo();
   assert.equal(r.run('set', '1', 'status', 'building').status, 0);
   assert.equal(r.run('set', '1', 'status', 'blocked').status, 0);
+  const since = Date.now();
   backdate(r.file, 'blocked_at', 300);
   const c = r.run('cancel', '1', 'Not needed');
   assert.equal(c.status, 0, c.stderr);
@@ -237,6 +239,6 @@ test('0166 AC1: cancelling a blocked ticket adds its blocked stretch and clears 
   const fm = fmOf(file);
   assert.equal(fm.status, 'cancelled');
   assert.equal(fm.cancel_reason, 'Not needed');
-  near(fm.waited_seconds, 300, 'the blocked stretch');
+  assertCounted(fm.waited_seconds, 300, since, 'the blocked stretch');
   assert.ok(!fm.blocked_at, 'no longer blocked');
 });

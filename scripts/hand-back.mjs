@@ -119,7 +119,7 @@ export function handBackQueue({ repo, cfg, words, max, settings = () => ({ cfg, 
     const cwd = typeof rec.cwd === 'string' && fs.existsSync(rec.cwd) ? rec.cwd : repo;
     console.log(`${id}'s ship needs work on the ticket, so speck run is handing it back to its build (session ${rec.session}).`);
     // 0726: if the machine slot was taken between hasBuildRoom and startBuild, put the hand-back back for the next check.
-    if (!startBuild(id, argv, cwd, rec.session, 'a', pid => `${JSON.stringify({ ...next, pid: pid ?? rec.pid }, null, 2)}\n`, rec.env_session ?? rec.session)) {
+    if (startBuild(id, argv, cwd, rec.session, 'a', pid => `${JSON.stringify({ ...next, pid: pid ?? rec.pid }, null, 2)}\n`, rec.env_session ?? rec.session) === false) {
       try { saveRecord(file, { ...kept, hand_back: h, exited: rec.exited, exit_code: rec.exit_code }); } catch { /* next check retries */ }
     }
   };

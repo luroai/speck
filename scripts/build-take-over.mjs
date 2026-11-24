@@ -136,7 +136,7 @@ export function buildTakeOver({ repo, runs, startBuild, heldAgent, readyAgents, 
       const own = plan.agent === 'codex' ? { agent: 'codex', env_session: tag } : { agent: plan.agent };
       const kept = newBuildKeeps(runs(), id), took_over = { from: agent, at: new Date(t0).toISOString() };
       speak(`${id}: ${from}'s usage limit is reached ${s?.resets ? `until ${utc(Date.parse(s.resets))}` : 'with no reset time known'}, so ${nameOf(to, known)}, the first agent on builder_bench that's ready and free, carries on its build.`);
-      startBuild(id, argv, done.at, session, 'w', pid => `${JSON.stringify({ id, session, ...own, cwd: done.at, started: new Date(t0).toISOString(), pid, command: argv, took_over, ...handBackKeeps(rec), ...kept }, null, 2)}\n`, tag); // 0711: its hand-backs
+      return startBuild(id, argv, done.at, session, 'w', pid => `${JSON.stringify({ id, session, ...own, cwd: done.at, started: new Date(t0).toISOString(), pid, command: argv, took_over, ...handBackKeeps(rec), ...kept }, null, 2)}\n`, tag); // 0711: its hand-backs. 0726: false when no machine slot
     };
   };
 }

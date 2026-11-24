@@ -115,10 +115,11 @@ export function foremanView({ run, record, since = null, tickets, fixing = 'tell
   const on = !!(run && run.on), called = text(name) || 'speck';
   const rec = on && record && record.lock === run.pid ? record : null;
   const all = list(tickets).filter(t => t && typeof t === 'object');
-  const blocked = all.filter(t => t.status === 'blocked').map(t => ({ id: String(t.id), title: text(t.title), question: text(t.blocked_question), foreman: t.foreman_will === true }));
+  // 0713: `checking`, speck is checking its question in the app (app_checking), keeps it out of Needs you as `foreman` does.
+  const blocked = all.filter(t => t.status === 'blocked').map(t => ({ id: String(t.id), title: text(t.title), question: text(t.blocked_question), foreman: t.foreman_will === true, checking: t.app_checking === true }));
   const took = all.flatMap(t => list(t.foreman_took).filter(w => w && typeof w.option === 'string' && Number.isFinite(Date.parse(w.at)) && now - Date.parse(w.at) <= 864e5)
     .map(w => ({ id: String(t.id), title: text(t.title), option: w.option, at: w.at }))).sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
-  const yours = blocked.filter(b => !b.foreman).length;
+  const yours = blocked.filter(b => !b.foreman && !b.checking).length;
   const building = rec ? list(rec.building).map(String) : [];
   const said = new Map(rec ? list(rec.ready).filter(r => r && typeof r.id === 'string').map(r => [r.id, r]) : []);
   const ready = all.filter(t => t.status === 'ready' && !building.includes(String(t.id))).map(t => {

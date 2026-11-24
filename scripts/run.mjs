@@ -341,7 +341,7 @@ function runOn(worker) {
     const resumed = { ...resumedRecord(rec), resumed: new Date().toISOString(), resume_command: argv };
     try { saveRecord(recordFile, resumed); } catch (e) { slots.drop(id); return reportStopped(id, rec, `speck run couldn't save its run record (${e.message}), so it wasn't resumed`); }
     console.log(`${id} build (session ${rec.session}) stopped unexpectedly, so speck run is resuming it once.`);
-    if (!startBuild(id, argv, cwd, rec.session, 'a', pid => `${JSON.stringify({ ...resumed, pid: pid ?? rec.pid }, null, 2)}\n`, rec.env_session ?? rec.session)) slots.drop(id);
+    if (startBuild(id, argv, cwd, rec.session, 'a', pid => `${JSON.stringify({ ...resumed, pid: pid ?? rec.pid }, null, 2)}\n`, rec.env_session ?? rec.session) === false) slots.drop(id);
   };
 
   // A killed build speck run won't resume, said once per speck run, with the command that resumes it by hand.
