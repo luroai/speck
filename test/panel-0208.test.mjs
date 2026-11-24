@@ -132,30 +132,56 @@ test('0208 AC1: a worktree\'s tickets folder that appears while the panel is sta
   } finally { files.close(); fs.rmSync(wt, { recursive: true, force: true }); }
 });
 
+// 0734: with no keep-alive look for a minute, so a worktree the panel didn't watch takes that minute, not 5 to 15 s. On a
+// busy machine (a load of 90 on 16 cores) the panel can take most of a second just to read the board and tell the pages,
+// so, as 0517 AC3 does (0670), the change is tried up to three times, each in a new worktree of its own, and the second
+// holds when one of them reaches every page within it. A change that reaches no page within a second fails every time.
 test('0208 AC1: in the panel, a ticket changed as soon as its new worktree is checked out reaches every open page within 1 second', async () => {
   const r = panelRepo({ worktrees: 'true' });
-  const p = await startPanel(r.dir, ['--port', String(await freePort())]);
+  const p = await startPanel(r.dir, ['--port', String(await freePort())], undefined, { SPECK_PANEL_PING_MS: '60000' });
   const streams = [openStream(p.port), openStream(p.port)];
-  const wt = `${r.dir}-wt-0001`, file = ticketIn(r, wt);
+  // Resolves once every page has been told of a board with ticket 0001 at `status`, failing `ms` after `t0`.
+  const reaches = (from, t0, ms, status) => Promise.all(streams.map(async (s, i) => {
+    for (let at = from[i]; ;) {
+      const e = await s.until(e => e.event === 'message', Math.max(ms - (Date.now() - t0), 1), at, 'the status in the new worktree');
+      at = s.events.indexOf(e) + 1;
+      const board = (await stateFor(p.port, e.data)).body;
+      if (board.tickets.find(t => t.id === '0001').status === status) return;
+    }
+  }));
+  const made = [], tries = [];
+  let within = false;
   try {
-    await Promise.all(streams.map(s => s.until(e => e.event === 'message', 5000)));
-    const from = streams.map(s => s.events.length);
-    const git = spawn('git', ['worktree', 'add', '-q', '-b', 'speck/0001-export-bookings', wt], { cwd: r.dir, env, stdio: 'ignore' });
-    const done = new Promise(resolve => git.on('exit', resolve));
-    for (const t0 = Date.now(); !fs.existsSync(file); await wait(2)) if (Date.now() - t0 > 5000) assert.fail('the worktree was never checked out');
-    await wait(5); // the ticket is there, as `speck start` finds it, and is written straight away
-    setStatus(file, 'building');
-    const t0 = Date.now();
-    await Promise.all(streams.map(async (s, i) => {
-      for (let at = from[i]; ;) {
-        const e = await s.until(e => e.event === 'message', Math.max(1000 - (Date.now() - t0), 1), at, 'the status in the new worktree');
-        at = s.events.indexOf(e) + 1;
-        const board = (await stateFor(p.port, e.data)).body;
-        if (board.tickets.find(t => t.id === '0001').status === 'building') return;
+    await Promise.all(streams.map(s => s.until(e => e.event === 'message', 20000)));
+    for (const status of ['building', 'reviewing', 'blocked']) {
+      const wt = `${r.dir}-wt-0001-${status}`, file = ticketIn(r, wt), branch = `speck/0001-export-bookings-${status}`;
+      if (made.length) { // the last try's worktree goes, so this one is the only one with ticket 0001's build
+        const last = made.at(-1);
+        r.g('worktree', 'remove', '--force', last.wt);
+        r.g('branch', '-D', last.branch);
       }
-    }));
-    assert.equal(await done, 0);
-  } finally { for (const s of streams) s.close(); await stop(p); fs.rmSync(wt, { recursive: true, force: true }); }
+      made.push({ wt, branch });
+      const from = streams.map(s => s.events.length);
+      const git = spawn('git', ['worktree', 'add', '-q', '-b', branch, wt], { cwd: r.dir, env, stdio: 'ignore' });
+      const done = new Promise(resolve => git.on('exit', resolve));
+      for (const t0 = Date.now(); !fs.existsSync(file); await wait(2)) if (Date.now() - t0 > 30000) assert.fail('the worktree was never checked out');
+      await wait(5); // the ticket is there, as `speck start` finds it, and is written straight away
+      setStatus(file, status);
+      const t0 = Date.now();
+      try {
+        await reaches(from, t0, 1000, status);
+        tries.push(`${Date.now() - t0} ms`);
+        within = true;
+        assert.equal(await done, 0);
+        break;
+      } catch {
+        try { await reaches(from, t0, 10000, status); tries.push(`${Date.now() - t0} ms`); } catch { tries.push('not within 10 s'); }
+        assert.equal(await done, 0);
+      }
+    }
+    assert.ok(within,
+      `the status in a new worktree reached every page within 1 s in one of 3 tries: ${tries.join(', ')}`);
+  } finally { for (const s of streams) s.close(); await stop(p); for (const m of made) fs.rmSync(m.wt, { recursive: true, force: true }); }
 });
 
 // ---------- AC2: new watches are followed by one reading of the board ----------

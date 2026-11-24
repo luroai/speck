@@ -63,7 +63,7 @@ test('0636 AC2: a decide on a check goes with the recommendation, sets the ticke
   a.check();
   assert.match(a.act('decide', '0001', OPTION, `--saw=${SAW}`, '--why=It shows as asked'), /resumes its build/);
   const line = r.ticket().split('\n').find(l => l.startsWith('- Went with the recommendation:'));
-  assert.equal(line, `- Went with the recommendation: ${OPTION} (chosen by speck, as watch is decide, 2026-11-11 14:00 UTC). Checked in the app: ${CHECK}. Saw: ${SAW}.`);
+  assert.equal(line, `- Went with the recommendation: ${OPTION} (chosen by speck, as watch is decide, 2026-11-11 14:00 UTC). QA checked in the app: ${CHECK}. Saw: ${SAW}.`);
   assert.match(r.ticket(), /^status: building$/m);
   const t = statusData(r.dir).tickets.find(x => x.id === '0001');
   assert.deepEqual(t.foreman_took.map(w => w.option), [OPTION], 'still read as a call speck made');
@@ -78,7 +78,7 @@ test('0636 AC2: otherwise it asks, saying what it saw, and a check refuses other
   assert.throws(() => a.act('resume', '0001', 'carry on', `--saw=${SAW}`, '--why=x'), /Use decide or ask/);
   assert.equal(r.head(), head, 'nothing committed');
   a.act('ask', '0001', 'The button is cut off on a phone: keep it?', '--saw=The Save button is cut off at 375 px', '--why=It doesn\'t fully pass');
-  assert.ok(r.ticket().includes(`asked you: The button is cut off on a phone: keep it?. Checked in the app: ${CHECK}. Saw: The Save button is cut off at 375 px. Why: It doesn't fully pass`), r.ticket());
+  assert.ok(r.ticket().includes(`asked you: The button is cut off on a phone: keep it?. QA checked in the app: ${CHECK}. Saw: The Save button is cut off at 375 px. Why: It doesn't fully pass`), r.ticket());
   assert.deepEqual(readActions(r.runs).map(x => x.action), ['ask']);
 });
 
@@ -111,7 +111,7 @@ test('0636 AC3: with watch: fix the agent is started, may go with the recommenda
   assert.equal(a.starts.length, 1);
   assert.match(a.starts[0].brief, /only when the check clearly passes/);
   a.act('decide', '0001', OPTION, `--saw=${SAW}`, '--why=It clearly passes');
-  assert.ok(r.ticket().includes(`(chosen by speck, as watch is fix, 2026-11-11 14:00 UTC). Checked in the app: ${CHECK}.`), r.ticket());
+  assert.ok(r.ticket().includes(`(chosen by speck, as watch is fix, 2026-11-11 14:00 UTC). QA checked in the app: ${CHECK}.`), r.ticket());
   a.end(); a.check(blocked({ status: 'building' }));
   assert.equal(a.resumed.length, 1, 'its build is resumed');
   assert.ok(a.resumed[0].argv.some(w => w.includes('speck (watch: fix)') && w.includes(OPTION)), a.resumed[0].argv.join(' '));
@@ -124,7 +124,7 @@ test('0636 AC4: once the agent has ended, speck run stops the app, whatever it d
   assert.equal(readAgentState(r.runs).running, null);
   await new Promise(resolve => setImmediate(resolve));
   assert.deepEqual(a.stopped, ['0001']);
-  assert.ok(a.said.some(l => /stopped the app I started/.test(l)), a.said.join('\n'));
+  assert.ok(a.said.some(l => /QA stopped the app it started/.test(l)), a.said.join('\n'));
 });
 
 test('0636 AC4: the review pack lists the screenshots it kept, with their captions', () => {

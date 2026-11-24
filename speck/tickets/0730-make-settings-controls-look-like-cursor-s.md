@@ -8,7 +8,7 @@ risk: low                # low | high (auth, payments, data deletion, migrations
 kind: code               # code | task (what the build does: changes the project's code, or does a task and leaves its result in outputs/)
 type: ""                 # blank | bug (a ticket that fixes a defect) | fix (fixes a broken base branch, at priority 0)
 level: ""                # blank: no level, so the settings decide. Otherwise one of the levels in speck/config.yml, such as quick, balanced or deep
-builder: ""              # blank: the builder your settings give when the build starts
+builder: cursor              # blank: the builder your settings give when the build starts
 builder_model: ""        # blank: your settings' builder_model, given only to the builder they name
 builder_effort: ""       # blank: your settings' builder_effort. Otherwise low | medium | high | xhigh | max
 reviewer: ""             # blank: the reviewer your settings give when each review round starts
@@ -44,6 +44,7 @@ Settings' switches, menus, boxes and buttons look like Cursor's settings control
 - Raised by the user on 2026-11-24 with a screenshot of Cursor's General settings.
 - Switches are `[role="switch"]` in `templates/panel-settings.css`; lists are `select` elements built in `templates/panel-settings.js`. Keeping them as native `select` elements, styled, keeps phones' own pickers.
 - Green: pick one that meets 3:1 against the track's surroundings in both looks, kept apart from the panel's status green if they would be confused.
+- speck (2026-11-24 16:02 UTC) made draft fix ticket 0737: Wait to start dependent builds when approved work conflicts with main. Why: 0730 was launched because 0729 is approved, but its approved branch conflicts with main, so the scheduler needs to wait for that conflict to clear rather than launch a build that cannot start.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

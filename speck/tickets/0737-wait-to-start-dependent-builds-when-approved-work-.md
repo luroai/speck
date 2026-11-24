@@ -1,7 +1,7 @@
 ---
-id: "0735"
-title: "Fix the full suite failing on main at 38407ee"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+id: "0737"
+title: "Wait to start dependent builds when approved work conflicts with main"                # one outcome, no "and"
+status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,24 +19,22 @@ after: []                # ticket ids that must be done first
 created: 2026-11-24
 
 ---
-# 0735 · Fix the full suite failing on main at 38407ee
+# 0737 · Wait to start dependent builds when approved work conflicts with main
 
-**Status:** 📋 ready
+**Status:** 📝 draft
 
 ## Problem
-The full suite fails on main at commit 38407ee (38407eea5126d9502f5230cf95f96f320efed8c7). Failing tests:
-- 0469 AC1, AC2: at 390 px, the header, tabs and every card and row, closed and open, are laid out the same with a mouse as on a touch screen, in the same font sizes
-- 0469 AC1, AC2: at 600 px, the header, tabs and every card and row, closed and open, are laid out the same with a mouse as on a touch screen, in the same font sizes
+0730 was launched because 0729 is approved, but its approved branch conflicts with main, so the scheduler needs to wait for that conflict to clear rather than launch a build that cannot start.
 
 ## Outcome
-The full suite passes on main again.
+<!-- What is true when this ships. One outcome. -->
 
 ## Acceptance criteria
-1. Each of these tests passes on main again: 0469 AC1, AC2: at 390 px, the header, tabs and every card and row, closed and open, are laid out the same with a mouse as on a touch screen, in the same font sizes, 0469 AC1, AC2: at 600 px, the header, tabs and every card and row, closed and open, are laid out the same with a mouse as on a touch screen, in the same font sizes.
-2. No test that passed before this change fails.
+<!-- 1–5 testable statements. Each one becomes a test before any code is written. `speck check <id>` runs the ready check on the ticket. -->
+1.
 
 ## Out of scope
-- Changes the failing tests don't need.
+-
 
 ## Notes
 <!-- Constraints, links and decisions. Optional. -->

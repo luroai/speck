@@ -97,6 +97,17 @@ export function readLoginInput() {
   return [ask.stdout, r.stdout];
 }
 
+// 0717: why a saved password may refuse commits: it's short, or it's already in a file git tracks. '' when it's neither.
+// The password goes to git on its input, never its command line. Searching is by fixed string, in any case, as private words are matched.
+export function weakPasswordReason(repo, password) {
+  const short = password.length < 8;
+  const r = spawnSync('git', ['grep', '-q', '-i', '-F', '-f', '-'], { cwd: repo, input: `${password}\n`, stdio: ['pipe', 'ignore', 'ignore'] });
+  const tracked = r.status === 0;
+  if (short && tracked) return 'is short and appears in files git tracks';
+  if (short) return 'is shorter than 8 characters';
+  return tracked ? 'appears in files git tracks' : '';
+}
+
 const USAGE = 'Usage: speck logins, to list the test logins on this machine, speck logins set <name>, which reads the username and password from its input, speck logins show <name> or speck logins remove <name>.';
 
 export function cmdLogins(args, { readLogin = readLoginInput } = {}) {
@@ -115,6 +126,8 @@ export function cmdLogins(args, { readLogin = readLoginInput } = {}) {
     const [username, password] = readLogin();
     saveLogin(repo, name, username, password);
     console.log(`Saved the test login ${name} for this machine only, where git ignores it. Remove it with \`speck logins remove ${name}\`.`);
+    const why = weakPasswordReason(repo, password);
+    if (why) console.log(`Warning: this password ${why}. Speck refuses any commit that holds a saved password anywhere, in any case, so ordinary text could be refused. If that's a problem, remove the login with \`speck logins remove ${name}\` and save one with a longer, unusual password.`);
     return;
   }
   if (sub === 'show' || sub === 'remove') {

@@ -120,9 +120,11 @@ export function shipQueue(repo, cfg, { say = console.log, launch = launchShip, h
 
   const check = tickets => {
     for (const t of list(tickets)) {
-      if (t.status !== 'approved' || !t.ships_after || after.has(t.id)) continue;
+      // 0710: one built on a ticket that was cancelled never ships after it: said once, with the ways on.
+      const gone = typeof t.built_on_cancelled === 'string' && t.built_on_cancelled;
+      if (t.status !== 'approved' || !(t.ships_after || gone) || after.has(t.id)) continue;
       after.add(t.id);
-      say(`${t.id} is approved and waits to ship after ${t.ships_after}, which it was built on and which hasn't shipped yet.`);
+      say(gone ? `${t.id} is approved but can't ship: ${t.auto_ship_why || `it was built on ${gone}, which was cancelled`}.` : `${t.id} is approved and waits to ship after ${t.ships_after}, which it was built on and which hasn't shipped yet.`);
     }
     if (current) return;
     if (hold !== null && headOf(repo, base) !== hold) {

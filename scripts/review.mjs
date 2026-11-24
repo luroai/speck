@@ -3,7 +3,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { TEMPLATES, SpeckError, sh, git, findRepoRoot, loadConfig, parseTicket, setField, reviewerSettings, ticketAgents, settingsMeta, syncHeader, findTicket, ROUNDS_HEADING, splitRounds, ticketRounds, posix, isAncestor } from './core.mjs';
+import { TEMPLATES, SpeckError, sh, git, findRepoRoot, loadConfig, parseTicket, setField, reviewerSettings, ticketAgents, settingsMeta, syncHeader, findTicket, ROUNDS_HEADING, splitRounds, ticketRounds, posix, isAncestor, padId } from './core.mjs';
 import { providerReady } from './provider-review.mjs';
 import { knownProviders } from './custom-providers.mjs';
 import { fullPrompt, historyPrompt, reviewerChanged, roundOneFile, runCommandReview, runLimited, reviewTimeoutMs, tookTooLong, reviewerOptions } from './reviewers.mjs';
@@ -19,7 +19,7 @@ import { REVIEWER_LIMITED, stopOnLimit, holdOnLimit, clearLimit, clearHeld, held
 import { standInFor, standInRound, standInMeta, standInWords, benchFor, readyAgents } from './review-stand-in.mjs';
 import { keepUsage } from './agent-usage.mjs';
 import { openBlocking, isMergeRound, mergeRun, ordinaryRounds, extraRound, nextAction, allowedRounds } from './review-limit.mjs';
-import { ownBase } from './built-on.mjs';
+import { ownBase, ticketAt, builtOnId } from './built-on.mjs';
 
 export { openBlocking, isMergeRound, mergeRun, ordinaryRounds, extraRoundDue, nextAction, ROUNDS_ALLOWED, allowedLine, allowedRounds } from './review-limit.mjs';
 
@@ -190,6 +190,10 @@ function diffSection(cfg, extra) {
       ...(extra.diff.trim() ? block : [`Nothing: the merge changed nothing beyond git's own clean merge, and nothing has been committed ${since}. Check the merge as the builder's response describes it, and run the command above if you need the whole change.`]),
     ];
   }
+  if (extra.kept) return [
+    `Ticket ${extra.kept}, which this ticket was built on, was cancelled, and its work is kept in this ticket. So the diff below is the branch's whole change against ${b}, all of it to be reviewed as this ticket's own, not only the changes since your last review.`,
+    `## The whole change against ${b} (${extra.sinceSha.slice(0, 8)}..HEAD)`, ...block,
+  ];
   return [
     ...(extra.merged ? [`This round follows a merge of ${b} into the ticket branch, made to resolve a conflict when shipping. So the diff below is the branch's whole change against ${b} as merged, which is what would ship, not only the changes since your last review. Check that each resolved file keeps the intent of both sides.`] : []),
     `## ${extra.merged ? `The whole change against ${b} as merged` : 'Changes since your last review'} (${extra.sinceSha.slice(0, 8)}..HEAD)`, ...block,
@@ -247,6 +251,10 @@ export function reviewSince(repo, cfg, prior, fm = null) {
   const meets = git(['merge-base', target, 'HEAD'], repo).trim(), base = own('HEAD') ?? meets;
   const last = prior[prior.length - 1]?.meta?.reviewed_sha;
   if (!last) return { base, sinceSha: base, merged: false };
+  // 0710: built on a ticket when it was last reviewed, and not now (speck built-on --keep): that ticket's work is now
+  // this ticket's own, so the reviewer sees the whole change against the base branch.
+  const kept = fm?.id && builtOnId(ticketAt(repo, last, fm.id)?.fm);
+  if (kept && !builtOnId(fm)) return { base, sinceSha: base, merged: false, kept: padId(kept) };
   const ownWas = own(last);
   const was = ownWas ? { status: 0, stdout: ownWas } : sh('git', ['merge-base', target, last], { cwd: repo });
   const merged = was.status === 0 && was.stdout.trim() !== base;
@@ -279,7 +287,7 @@ function reviewSetup(repo, id, opts) {
   const ticket = findTicket(repo, id);
   const prior = rounds(repo, id);
   const round = prior.length + 1;
-  const { base, sinceSha, merged, afterMerge } = reviewSince(repo, cfg, prior, ticket.fm);
+  const { base, sinceSha, merged, afterMerge, kept } = reviewSince(repo, cfg, prior, ticket.fm);
   const merge = isMergeRound(prior);
   // A merge round after an approval starts a new run, so only a run that hasn't approved yet can use up the limit.
   const used = prior.at(-1)?.verdict.verdict === 'approve' ? 0 : mergeRun(prior);
@@ -291,7 +299,7 @@ function reviewSetup(repo, id, opts) {
   const tests = testOutput(opts.tests, ticket.fm.id || id);
   const testsSeen = testsMeta(opts.tests);
   const response = readResponse(opts.response);
-  return { cfg, ticket, prior, round, head, base, sinceSha, merged, afterMerge, merge, extra, allowed, diff, tests, testsSeen, response };
+  return { cfg, ticket, prior, round, head, base, sinceSha, merged, afterMerge, kept, merge, extra, allowed, diff, tests, testsSeen, response };
 }
 
 // Runs a review round. Round 1 on a building ticket, or any round on an approved one, sets it to reviewing before the
@@ -322,7 +330,7 @@ export function codexFailure(status, stdout, stderr) {
 }
 
 function runCodexReview(repo, id, s) {
-  const { cfg, ticket, prior, round, head, sinceSha, merged, afterMerge, merge, extra, allowed, diff, tests, testsSeen, response } = s;
+  const { cfg, ticket, prior, round, head, sinceSha, merged, afterMerge, kept, merge, extra, allowed, diff, tests, testsSeen, response } = s;
   const out = path.join(cacheDir(repo, id), `round-${round}.out.json`);
   const schema = path.join(TEMPLATES, 'review-verdict.schema.json');
   const sandbox = cfg.reviewer_options?.codex?.sandbox || 'read-only';
@@ -333,7 +341,7 @@ function runCodexReview(repo, id, s) {
   const fresh = round > 1 ? (s.standIn ? `it stands in for ${s.standIn.for}` : reviewerChanged(prior, 'codex', settings)) : null;
   const lastThread = round > 1 && !fresh ? [...prior].reverse().find(r => r.meta?.thread_id)?.meta.thread_id : undefined;
   if (fresh && prior.some(r => r.meta?.thread_id)) console.log(`Started a fresh codex session with the full history, because ${fresh}.`);
-  const prompt = round > 1 && !lastThread ? historyPrompt(repo, s, id) : reviewerPrompt(repo, ticket, cfg, round, { diff, tests, response, sinceSha, merged, afterMerge, base: s.base });
+  const prompt = round > 1 && !lastThread ? historyPrompt(repo, s, id) : reviewerPrompt(repo, ticket, cfg, round, { diff, tests, response, sinceSha, merged, afterMerge, kept, base: s.base });
   // 0388: kept, with each round's response, so a later fresh session can be given the full history.
   if (round === 1) fs.writeFileSync(roundOneFile(repo, id), prompt);
 
@@ -557,5 +565,5 @@ export function cmdDiff(args) {
   const s = reviewSince(repo, cfg, rounds(repo, args[0]), findTicket(repo, args[0]).fm);
   const diff = reviewDiff(repo, s.sinceSha);
   // 0673: in a merge round after a merge, with what it holds and the command for the whole change, as speck review gives it.
-  process.stdout.write(s.afterMerge ? `${diffSection(cfg, { ...s, diff }).join('\n\n')}\n` : diff);
+  process.stdout.write(s.afterMerge || s.kept ? `${diffSection(cfg, { ...s, diff }).join('\n\n')}\n` : diff);
 }

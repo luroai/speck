@@ -84,12 +84,16 @@ export function commandArgs(cmd, values) {
 // file-writing tools taken away. It loads no user, project or local settings, so no allow rule there can pre-approve a
 // command that writes. 0314: --strict-mcp-config with no --mcp-config loads no MCP servers or claude.ai connectors.
 // A reviewer_options entry with a command of its own is used instead.
-const CLAUDE_READ_ONLY = '-p --permission-mode dontAsk --setting-sources= --strict-mcp-config --disallowedTools "Edit Write NotebookEdit" --output-format json --model {model}';
+// 0719: stream-json (which needs --verbose) rather than json, so the output has Claude's rate_limit_event lines for its
+// usage reading as well as the result line the verdict, cost and session id come from.
+const CLAUDE_READ_ONLY_BASE = '-p --permission-mode dontAsk --setting-sources= --strict-mcp-config --disallowedTools "Edit Write NotebookEdit"';
+const CLAUDE_READ_ONLY = `${CLAUDE_READ_ONLY_BASE} --output-format stream-json --verbose --model {model}`;
 const CLAUDE_ARGS = `${CLAUDE_READ_ONLY} --effort {effort}`;
 // 0390: a model provider's reviewer is the Claude reviewer with --bare, which takes its sign-in only from
 // ANTHROPIC_API_KEY, never OAuth or the keychain, and skips hooks, plugins and CLAUDE.md discovery. Its address, key and
 // environment come from provider-review.mjs. The provider's models take no effort, so reviewer_effort isn't passed.
-const PROVIDER_ARGS = `--bare ${CLAUDE_READ_ONLY}`;
+// Its usage isn't kept (0642), so it stays on a single JSON result.
+const PROVIDER_ARGS = `--bare ${CLAUDE_READ_ONLY_BASE} --output-format json --model {model}`;
 // 0332: Cursor's CLI (`agent`, or `cursor-agent` when only that is installed) runs without a person in ask mode, which
 // is read-only. --trust gets past the Workspace Trust prompt that would otherwise stop it in a folder Cursor hasn't been
 // told to trust. Not --sandbox enabled: it won't start where the OS doesn't support Cursor's sandbox.
@@ -119,9 +123,25 @@ function jsonIn(text) {
   return verdictInProse(text);
 }
 
+// 0719: whether `text` is a stream of JSON lines (as `claude -p --output-format stream-json` prints) rather than one
+// JSON value, and if so its last line with `type: "result"`, or null. Not a stream: undefined.
+function streamOf(text) {
+  const s = String(text ?? '').trim();
+  if (!s.includes('\n')) return undefined;
+  try { JSON.parse(s); return undefined; } catch { /* not one value */ }
+  const lines = s.split('\n').map(l => { try { return JSON.parse(l); } catch { return null; } });
+  const first = lines.find(Boolean);
+  if (!first || typeof first !== 'object' || Array.isArray(first) || typeof first.type !== 'string') return undefined;
+  return lines.findLast(e => e && typeof e === 'object' && !Array.isArray(e) && e.type === 'result') ?? null;
+}
+const streamResult = text => streamOf(text) || null;
+
 // The verdict in a command reviewer's stdout: the whole output, a fenced block, an object with a `verdict` key among
 // prose, or an envelope whose `result` string holds any of them.
+// 0719: or the last `type: "result"` line of a stream-json run, whose `result` string holds the verdict.
 export function verdictFromOutput(stdout) {
+  const ended = streamResult(stdout);
+  if (ended) return { verdict: typeof ended.result === 'string' ? jsonIn(ended.result) : null, envelope: ended };
   const v = jsonIn(stdout);
   if (v && !('verdict' in v) && typeof v.result === 'string') return { verdict: jsonIn(v.result), envelope: v };
   return { verdict: v, envelope: null };
@@ -178,7 +198,7 @@ export function historyPrompt(repo, s, id) {
     if (r.meta.builder_response && r.meta.round > 1) parts.push(`## Builder response before round ${r.meta.round}`, r.meta.builder_response);
     parts.push(`## Your round ${r.meta.round} verdict`, '```json', JSON.stringify(r.verdict, null, 2), '```');
   }
-  parts.push(reviewerPrompt(repo, s.ticket, s.cfg, s.round, { diff: s.diff, tests: s.tests, response: s.response, sinceSha: s.sinceSha, merged: s.merged, afterMerge: s.afterMerge, base: s.base }));
+  parts.push(reviewerPrompt(repo, s.ticket, s.cfg, s.round, { diff: s.diff, tests: s.tests, response: s.response, sinceSha: s.sinceSha, merged: s.merged, afterMerge: s.afterMerge, kept: s.kept, base: s.base }));
   return parts.join('\n\n');
 }
 
@@ -202,8 +222,10 @@ function atPath(obj, dotted) {
 // 0623: what a command reviewer said as it failed, for its usage limit: an error in its JSON envelope, the end of its
 // error output, or plain output short enough not to be a review that only mentions a limit.
 function failureWords(r) {
-  let envelope = null;
-  try { envelope = JSON.parse(r.stdout); } catch { /* not JSON */ }
+  // 0719: a stream-json run says it in its result line, or says nothing when it has none.
+  const stream = streamOf(r.stdout);
+  let envelope = stream === undefined ? null : stream ?? {};
+  if (stream === undefined) try { envelope = JSON.parse(r.stdout); } catch { /* not JSON */ }
   const said = envelope && typeof envelope === 'object' ? (envelope.is_error === true && typeof envelope.result === 'string' ? envelope.result : '') : r.stdout.length <= 2000 ? r.stdout.trim() : '';
   return [said, r.stderr.trim().split('\n').slice(-5).join('\n')].filter(Boolean).join('\n');
 }
@@ -236,7 +258,7 @@ export function runCommandReview(repo, id, name, command, s, providers = knownPr
     if (!resume) why = 'no resume_command with {session} is set for it';
     else if (!lastThread) why = last.why;
     else {
-      const tried = runReviewer(repo, name, resume, { ...values, session: lastThread }, reviewerPrompt(repo, s.ticket, s.cfg, s.round, { diff: s.diff, tests: s.tests, response: s.response, sinceSha: s.sinceSha, merged: s.merged, afterMerge: s.afterMerge, base: s.base }), ms, env);
+      const tried = runReviewer(repo, name, resume, { ...values, session: lastThread }, reviewerPrompt(repo, s.ticket, s.cfg, s.round, { diff: s.diff, tests: s.tests, response: s.response, sinceSha: s.sinceSha, merged: s.merged, afterMerge: s.afterMerge, kept: s.kept, base: s.base }), ms, env);
       if (!options.provider) keepUsage(repo, name, tried.stdout); // 0642
       if (!tried.error && tried.status !== 0) stopOnLimit(repo, s.ticket.fm.id || id, name, failureWords(tried), { standIn: !!s.standIn });
       if (tried.error) why = `resuming session ${lastThread} failed: ${tried.error}`;

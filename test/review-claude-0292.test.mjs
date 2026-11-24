@@ -25,7 +25,7 @@ test('0292 AC1: reviewer claude runs Claude Code without a person, read-only, wi
   assert.equal(after(call.args, '--permission-mode'), 'dontAsk', 'anything not pre-approved is denied, not asked');
   assert.ok(call.args.includes('--setting-sources='), 'no allow rule from user, project or local settings applies');
   assert.deepEqual(after(call.args, '--disallowedTools').split(/[\s,]+/).sort(), ['Edit', 'NotebookEdit', 'Write'], 'no file-writing tools');
-  assert.equal(after(call.args, '--output-format'), 'json');
+  assert.equal(after(call.args, '--output-format'), 'stream-json'); // 0719: was json
   assert.ok(!call.args.some(a => /bypass|dangerously/i.test(a)), 'never skips permissions');
   assert.equal(call.stdin.trimEnd(), r.run('prompt', '1').stdout.trimEnd(), 'the same text speck prompt prints');
   const r1 = r.roundFile(1);
