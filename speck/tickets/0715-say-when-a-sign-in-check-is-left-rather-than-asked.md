@@ -42,6 +42,10 @@ The skill and the check's brief say plainly which sign-in troubles are left and 
 - Lines in `skills/speck-watch/SKILL.md` (ask on sign-in trouble; leave for an account you can't use) and the brief in `scripts/app-check.mjs`.
 - Decision: a saved login that fails is asked about, not left, because with a working password the agent could make the check, and the user can fix it with `speck logins set`.
 
+- Failing before this build: not checked
+- Self-check: no changes
+- Pictures: none, because nothing anyone sees changes
+
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
 
