@@ -1,7 +1,7 @@
 ---
 id: "0734"
 title: "Fix the full suite failing on main at 239b16e"                # one outcome, no "and"
-status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,12 +18,13 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T13:27:45.922Z"
-blocked_at: "2026-11-24T14:36:50.738Z"
+blocked_at: ""
+waited_seconds: 28
 
 ---
 # 0734 · Fix the full suite failing on main at 239b16e
 
-**Status:** ⛔ blocked
+**Status:** 🔨 building
 
 ## Problem
 The full suite fails on main at commit 239b16e (239b16e6fde6e470eed2ae32434e151fef98fed1). Failing tests:
@@ -56,6 +57,7 @@ Failing before this build: none (the recorded result for this code, the quick su
 - 0208 AC1 (panel): the keep-alive is at 60 s, so a missed worktree takes a minute, and the change is tried up to three times, each in a new worktree, holding to 1 s when one of them is within it (round 1 F2: no baseline added to the second). Checked by not watching git's list of worktrees for a moment: all three tries fail ("not within 10 s").
 - 0476 AC2: the waits for a lane's tab to open and for its slide to end are 10 s rather than 3 s; the slide's own 120 ms check is unchanged.
 Self-check: capped 0202's wait for its kept process at 30 s, so one that never starts ends in a stall rather than hanging the file.
+- Went with the recommendation: Hold the page to 50 ms of its own work (CPU time), with the first-frame and no-redraw checks (chosen by speck, as watch is decide, 2026-11-24 14:37 UTC).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
