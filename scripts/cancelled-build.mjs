@@ -46,7 +46,7 @@ export function cancelledQueue({ repo, readConfig, say = line => console.log(lin
       base = cfg.base_branch;
       const done = cancelOnBase(repo, cfg, id);
       pending.delete(id); said.delete(id);
-      if (done) say(`${id} was cancelled on its branch, so speck run cancelled it on ${base} too, filed in speck/tickets/done/.`);
+      if (done) say(`${id} was cancelled on its branch, so speck run cancelled it on ${base} too, filed in the done folder (speck/tickets/done/).`);
     } catch (e) {
       if (said.has(id)) return;
       said.add(id);

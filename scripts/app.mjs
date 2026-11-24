@@ -108,7 +108,7 @@ const lastLines = log => {
 // 0638: saves `start`, and `url` when given, as commands.start and app_url in the base branch's speck/config.yml and commits
 // only that file, unless it has uncommitted changes there or commands.start is set there. Never throws: the app runs on.
 export function saveStart(repo, cfg, start, url, say = console.log) {
-  const keep = `set it with \`speck config set commands.start ${JSON.stringify(start)}\``;
+  const keep = `set commands.start yourself (\`speck config set commands.start ${JSON.stringify(start)}\`)`;
   try {
     onBase(repo, cfg, main => {
       const rel = 'speck/config.yml', file = path.join(main, rel);
@@ -124,7 +124,7 @@ export function saveStart(repo, cfg, start, url, say = console.log) {
       fs.writeFileSync(file, next);
       const done = commitTicketOnly(main, file, text, SAVED);
       if (done.status !== 0) return say(`speck couldn't commit ${rel} on ${cfg.base_branch}, so it saved nothing (${(done.stderr || done.stdout || '').trim().split('\n').pop()}): ${keep}.`);
-      say(`Saved how to start your app as commands.start${url !== undefined ? ' and app_url' : ''} in ${rel}, committed on ${cfg.base_branch} as "${SAVED}".`);
+      say(`Saved how to start your app as commands.start${url !== undefined ? ' and app_url' : ''} in speck's config file (${rel}), committed on ${cfg.base_branch} as "${SAVED}".`);
     }, 'save how to start your app');
   } catch (e) {
     if (!(e instanceof SpeckError)) throw e;
