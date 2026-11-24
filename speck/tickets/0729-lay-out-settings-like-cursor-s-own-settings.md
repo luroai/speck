@@ -18,7 +18,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T11:55:19.985Z"
-approved: "2026-11-24T13:49:54.012Z"
+approved: "2026-11-24T16:17:27.122Z"
 
 ---
 # 0729 · Lay out Settings like Cursor's own settings
@@ -65,12 +65,13 @@ To see it, open Settings in the panel, in the light and the dark look. Worth kno
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 367,849
-- Elapsed since build started: 115 min
+- Reviewer tokens: 1,769,439
+- Elapsed since build started: 262 min
 - Changed lines: 291 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up ideas:
@@ -150,6 +151,81 @@ Round 1 (codex): approve.
     "findings": [],
     "escalation_question": "",
     "summary": "Settings now uses plain names, muted descriptions and rounded filled groups. Explanations and machine-specific clear options remain accessible. Browser tests confirm the layout fits a phone-width screen in both themes. No blocking issues found."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "3d0151f3113ce01d8971eb56e7d79e2951d85dec",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a20dd0-d8e8-7aa1-aa68-3ed8ab0fade9",
+    "builder_response": "- Tests run: test/settings-layout-0729.test.mjs test/panel-0257.test.mjs test/panel-0268.test.mjs test/panel-0273.test.mjs test/panel-0275.test.mjs test/panel-0277.test.mjs test/panel-0281.test.mjs test/panel-0371.test.mjs test/panel-0385.test.mjs test/panel-0395.test.mjs test/panel-0417.test.mjs test/panel-0427.test.mjs test/panel-0428.test.mjs test/panel-0472.test.mjs test/panel-0593.test.mjs test/panel-0612.test.mjs test/settings-0381.test.mjs test/settings-0396.test.mjs test/settings-0397.test.mjs test/settings-0412.test.mjs test/settings-info-0405.test.mjs test/panel-0379.test.mjs test/panel-0432.test.mjs test/settings-levels-0666.test.mjs (with `commands.checks`), on the merged code: 304 passed, none failed.\n\nMerge round: `speck ship` hit a conflict merging this branch into main, so I merged main into it (`git merge main`, commit \"speck(0729): merge main\").\n\n- docs/brief.md (class `logic`, one conflict, the `speck panel` row of the commands table). Both sides had changed that one long line. main added a clause on an approved ticket built on one that hasn't shipped waiting under Building, and replaced the sentence on counting each session once with two newer ones. This branch replaced the sentence on the Settings view's layout (\"the rest in plain sections, each with a heading and a divider…\") with the new layout's. I took main's line whole and put this ticket's Settings sentences in place of the old one, so the merged line keeps both sides' changes. Against main, the only difference in the file is that sentence.\n- templates/panel-cards.css and templates/panel.js were changed on both sides and merged cleanly: main's changes there are to the Shipped figures' grid, a Plan card's chain and a cancelled `after:` ticket, and touch no rule or code of Settings'. Nothing else was changed in the merge.\n- I also checked what main brought in that could affect this change: its new more-contrast block (0708) has no Settings rules, and none of the tests main added or changed relies on the old Settings layout (0161's, 0476's and 0292's changes are about the contrast block's tokens, tab timing and Claude's output format).\n",
+    "seconds": 84,
+    "usage": {
+      "input_tokens": 1767376,
+      "cached_input_tokens": 1637888,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2063,
+      "reasoning_output_tokens": 225
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 29575,
+      "cached": 1370752,
+      "write": 0,
+      "output": 1263
+    },
+    "cost_usd": 0.2088552,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-24T16:17:21.511Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "SETTING_GROUPS, TEAM_GROUP, settingRow and settingInfo retain the approved plain names, summaries and key tooltips. The AC1 tests in test/settings-layout-0729.test.mjs passed on the merged code."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "settingGroup, memberCard and panel-settings.css retain rounded --raise blocks, muted section labels and team headers without dividers. Structural and browser AC2 tests passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "settingInfo and ownLine retain press-to-open explanations and machine-value clear options. AC3 tests and the paired-explanation regression tests passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Settings wrapping and target-size rules survived the merge unchanged. The real-browser test passed at 375 px in both themes, checking overflow, control placement and 44 px targets."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified the latest /tmp/speck-0729-tests.txt: 304 passed, zero failed and three legacy skips. The documentation conflict resolution preserves both sides; changes against merged main remain within this ticket's scope."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The merge preserves the approved Settings layout and main’s newer changes. All targeted tests still pass, including phone-width checks in both themes. No new blocking issues found."
   }
 }
 ```
