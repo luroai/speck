@@ -1,7 +1,7 @@
 ---
 id: "0707"
 title: "Show the machine-wide test limit in Settings"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: "speck/ideas/done/2026-11-15-show-machine-parallel-tests-in-the-settings
 after: ["0729"]                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T18:49:47.995Z"
+approved: "2026-11-24T18:59:49.432Z"
 
 ---
 # 0707 · Show the machine-wide test limit in Settings
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 0678 added `machine_parallel_tests`, a limit on test runs across every project on the machine, but only `speck config set` and `speck config show` reach it. Someone who tunes speck from the panel won't know it exists, or that it's set.
@@ -55,9 +56,14 @@ Settings now has a "Test runs at once on this machine" row, just under "Test run
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 152,686
+- Elapsed since build started: 10 min
+- Changed lines: 97 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up (inbox): show machine_parallel_builds in Settings too: speck/ideas/2026-11-24-show-the-machine-wide-build-limit-in-settings.md
 
