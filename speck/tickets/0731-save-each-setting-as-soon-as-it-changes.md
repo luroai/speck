@@ -52,7 +52,9 @@ Each setting saves the moment it changes, and Settings has no Save button and no
 - Self-check: a box drawn again while typed in (after another setting's save) had no change event to send when left, so leaving it now saves too (blur), with a test; the save queue is reset when the view closes, so a save still on its way from a closed view doesn't hold up the next one's.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Settings no longer has a Save button. Each setting saves the moment you change it: a switch, a list or a tick saves straight away, and a box you type in saves when you press Enter or click away from it. The row says "Saved." for a moment. If speck can't accept a change, for example a bad value, or a project setting while your checkout isn't on the main branch, the setting goes back to what it was and says why underneath. Turning auto-ship on, or adding a risk to it, still asks first. Closing Settings never asks about unsaved changes.
+
+To see it, open Settings, change something like Builds at once, and click away: it saves and says so. Worth keeping an eye on: every project setting you change is now its own small commit. Swapping the builder and reviewer between Claude Code and Codex has to go through a third choice now, as each half of the swap is refused on its own.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -61,7 +63,11 @@ Each setting saves the moment it changes, and Settings has no Save button and no
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - Idea: let Settings swap the builder's and reviewer's families, as each half of the swap is refused on its own now that each setting saves by itself (speck/ideas/2026-11-24-let-settings-swap-the-builder-and-reviewer-families.md).
+  - Skipped as a duplicate: run-settings-0549 AC1 failed once under load in the related run and passed alone twice. It matches speck/ideas/done/2026-11-10-steady-the-0622-and-0549-ac1-run-tests-under-load.md.
+  - Known limit: a box typed in but not left when Settings closes by Escape isn't saved, as nothing tells the page the typing is done. A box left first (change or blur) is saved, even as Settings closes.
+  - Known limit: the "Save key" and "Save provider and add" buttons under Your agents stay, as they send a secret once, on purpose. They aren't settings.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -266,6 +272,113 @@ Each setting saves the moment it changes, and Settings has no Save button and no
     ],
     "escalation_question": "",
     "summary": "The three earlier findings are fixed. One remaining timing bug affects shipping settings: adding a risk while auto-ship is still saving skips the required confirmation and causes the change to be refused. Fix that before merge."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "5ee7ea0ba7935ac3a8d86cf21f8702f75cc743be",
+    "session": "continued",
+    "thread_id": "01a20f18-65f1-7691-a562-be91a886500e",
+    "builder_response": "- Tests run: test/settings-instant-0731.test.mjs test/build-model-0279.test.mjs test/builder-model-0311.test.mjs test/builder-switch-0293.test.mjs test/panel-0258.test.mjs test/panel-0259.test.mjs test/panel-0261.test.mjs test/panel-0274.test.mjs test/panel-0275.test.mjs test/panel-0368.test.mjs test/panel-0372.test.mjs test/panel-0426.test.mjs test/panel-0427.test.mjs test/panel-0428.test.mjs test/panel-0432.test.mjs test/panel-0453.test.mjs test/panel-0472.test.mjs test/panel-0593.test.mjs test/panel-0603.test.mjs test/panel-0612.test.mjs test/settings-0276.test.mjs test/settings-0278.test.mjs test/settings-0370.test.mjs test/settings-0381.test.mjs test/settings-0387.test.mjs test/settings-0397.test.mjs test/settings-0407.test.mjs test/settings-0409.test.mjs test/settings-0412.test.mjs test/settings-0700.test.mjs test/settings-builder-effort-0402.test.mjs test/settings-controls-0730.test.mjs test/settings-home-0707.test.mjs test/settings-info-0405.test.mjs test/settings-layout-0729.test.mjs test/settings-models-0369.test.mjs test/settings-roles-0400.test.mjs test/settings-roles-0403.test.mjs test/settings-same-model-0511.test.mjs test/settings-team-0652.test.mjs test/run-settings-0549.test.mjs\n- F4: fixed. The new valueAhead(key) gives a setting's value as the save on its way will leave it (settingPending, converted as savedAs converts it), or as the view read it. shippingNow, which shipsMore asks with, and allowsSameModel now read through it. So ticking high while turning auto_ship on is still saving asks again (\"approved low-risk and high-risk tickets\") and sends confirm=low,high. If the earlier save is refused, the server ignores a confirm it doesn't need. New test: \"0731 AC3: adding a risk while turning auto_ship on is still saving asks about it too, and sends its confirmation (review F4)\", which checks both questions and both requests.\n",
+    "seconds": 23,
+    "usage": {
+      "input_tokens": 1135514,
+      "cached_input_tokens": 1018368,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 3959,
+      "reasoning_output_tokens": 341
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 6420,
+      "cached": 224768,
+      "write": 0,
+      "output": 842
+    },
+    "cost_usd": 0.0437368,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-24T19:51:46.740Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "saveSetting captures each change in a queued job. Passing 0731 AC1 tests cover immediate controls, Enter/leave saves, ordered repeated edits, saved indicators, machine storage and commits of only speck/config.yml."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "sendSettings reverts refused changes without erasing later corrections. Passing refusal tests and existing settings tests cover invalid values, same-model review, branch restrictions and uncommitted configuration."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "shippingNow now uses valueAhead to account for pending saves. The passing F4 regression checks both confirmations and request parameters when enabling auto_ship then adding a risk. Existing AC3 tests cover cancellation and refusing removal of the last risk."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Save-bar and unsaved-dialog rendering are removed. Passing 0731 AC4 and panel-0275 tests cover closing without questions, including saves queued before closing."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The targeted run reports 492 passed, zero failed and three skipped. Previously removed unrelated face tests remain restored."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-settings.js",
+        "issue": "Queued changes and later corrections are now preserved by captured jobs and pending-value tracking.",
+        "suggested_fix": "None.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "templates/panel-settings.js",
+        "issue": "Requested saves now retain their values and continue after Settings closes.",
+        "suggested_fix": "None.",
+        "state": "resolved"
+      },
+      {
+        "id": "F3",
+        "severity": "blocking",
+        "file": "test/panel-0593.test.mjs",
+        "issue": "The three unrelated face tests have been restored unchanged.",
+        "suggested_fix": "None.",
+        "state": "resolved"
+      },
+      {
+        "id": "F4",
+        "severity": "blocking",
+        "file": "templates/panel-settings.js:shippingNow",
+        "issue": "Shipping confirmations now account for pending changes through valueAhead; the regression test verifies the additional risk receives its own confirmation.",
+        "suggested_fix": "None.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Settings now save individually, show confirmation briefly and restore refused values with an explanation. Rapid edits and closing preserve requested saves, and shipping changes retain their confirmation safeguards. All earlier findings are resolved; the change is ready for the owner's merge decision."
   }
 }
 ```
