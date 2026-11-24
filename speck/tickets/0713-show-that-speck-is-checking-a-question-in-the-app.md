@@ -50,7 +50,9 @@ Such a ticket says speck is checking it in the app, and counts under Needs you o
 - Went with the recommendation: Keep today's behaviour with watch off (chosen by speck, as watch is decide, 2026-11-24 14:21 UTC).
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When a build stops on a question it wants checked in the running app, and speck is going to check it for you, the ticket now says "speck is checking it in the app" instead of "Waiting for you". Its card sits under Building rather than Needs you, and the header, the bridge and `speck status` don't count it as waiting for you. Once speck has asked you something, or checked and left it to you, or won't check it at all (watch off or tell, or a high-risk ticket), it reads "Waiting for you" again as before.
+
+To see it, set watch to fix or decide and look at a low-risk ticket blocked on a question with a Check in the app line. Worth knowing: while speck run is off, such a ticket still says speck is checking it, as tickets speck will decide for do; nothing happens until speck run is on again.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -66,6 +68,9 @@ Clear winner: yes
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - While speck run is off, a ticket speck would check in the app still says speck is checking it. Skipped as a duplicate of speck/ideas/2026-10-18-foreman-will-take-it-while-speck-run-is-off.md (dropped), which covers the same for recommendations speck will take.
+  - test/panel-0469.test.mjs fails on the base branch (Plan card's chain facts under mouse vs touch). Skipped as covered by fix ticket 0735.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -142,6 +147,84 @@ Clear winner: yes
     ],
     "escalation_question": "With watch set to off, should blocked app-check questions count under Needs you, or should the existing exclusion remain?",
     "summary": "Tickets now show when speck is checking their question and stop counting as needing your attention until the check finishes or asks you. The tests cover these transitions. One product decision remains: the ticket asks for watch-off questions to count under Needs you, contrary to the existing setting's behaviour."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "109fd3bb3935faeb4237f520c8df06c95520e433",
+    "session": "continued",
+    "thread_id": "01a20dee-0128-7db1-95bf-2dc454834cea",
+    "builder_response": "- Tests run: test/app-check-0713.test.mjs test/panel-0469.test.mjs\n- F1: fixed. The question was answered: keep today's behaviour with watch off (recorded in the ticket's Notes, \"Went with the recommendation: Keep today's behaviour with watch off\"). So with watch off, AC3's \"counts under Needs you, as today\" means what it does today: the card reads Waiting for you under Needs you in the Build lane, and the header's count and the bridge leave it out as they do every blocked question while watch is off. No code change was needed. I added the test '0713 AC3: with watch off …' in test/app-check-0713.test.mjs, which checks app_checking is false, the Build lane's Needs you group, the full view's Waiting for you line, the header word, the bridge's needs_you, that it's counted the same as any other blocked question, and `speck status`'s line.\n- test/panel-0469.test.mjs still fails both its tests, as it does on the base commit without this change (round 1's response); it's unchanged.\n",
+    "seconds": 18,
+    "usage": {
+      "input_tokens": 395818,
+      "cached_input_tokens": 333184,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1710,
+      "reasoning_output_tokens": 144
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 8398,
+      "cached": 113536,
+      "write": 0,
+      "output": 534
+    },
+    "cost_usd": 0.0334896,
+    "tests": {
+      "failing": 2,
+      "second_try": []
+    },
+    "saved_at": "2026-11-24T14:23:49.641Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "appChecking feeds the card, full view and CLI through statusData and foremanBoard. Passing 0713 AC1 tests verify the wording and actual agent queue transitions."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "buildGroup, foremanView and projectSummary exclude checking tickets. Passing 0713 AC2 tests exercise the Build lane, header and bridge counts."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing 0713 tests cover agent questions, completed checks, tell and high risk. The recorded decision preserves existing watch-off behaviour; the new passing test verifies Waiting for you in the Build lane and CLI, with exclusion from header and bridge counts."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "All eight 0713 tests pass. The two unchanged 0469 layout failures were reported as reproduced on the base commit; no regression attributable to this change was identified."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/foreman.mjs; scripts/panel-summary.mjs; test/app-check-0713.test.mjs",
+        "issue": "The ambiguity about watch-off counting is settled by the recorded decision to preserve existing behaviour. The added test exercises that behaviour across the relevant displays and counts.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Tickets now show when speck is checking their question and stay out of Needs you until user input is required. Tests cover the transitions and preserve the agreed watch-off behaviour. No blocking concerns remain; the two existing layout test failures are unrelated."
   }
 }
 ```
