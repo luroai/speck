@@ -1,7 +1,7 @@
 ---
 id: "0715"
 title: "Say when a sign-in check is left rather than asked"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-11-15-say-when-a-sign-in-check-is-left-rather-than-asked.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-24
+started: "2026-11-24T13:52:52.125Z"
 
 ---
 # 0715 · Say when a sign-in check is left rather than asked
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 The speck-watch skill says to ask the user when the agent can't sign in, while its leave action covers a check needing an account the agent can't use. The two overlap, so the agent may stop a build with a question where 0679 meant it to carry on, or the reverse.
