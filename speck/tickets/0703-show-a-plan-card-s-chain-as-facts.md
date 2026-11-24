@@ -1,7 +1,7 @@
 ---
 id: "0703"
 title: "Show a Plan card's chain as facts"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -21,7 +21,7 @@ created: 2026-11-24
 ---
 # 0703 · Show a Plan card's chain as facts
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 An open Plan card still shows a ticket's chain in the old Chain box, a bordered box of circles over ids, while the full view shows it as facts since 0603. Since 0613 a Plan card shows Waits on as plain facts, so cards with a chain still look different.
