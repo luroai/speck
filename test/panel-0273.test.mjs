@@ -75,7 +75,8 @@ test('0273 AC4, AC5: at the narrowest width each row fits, and in both looks the
         document.documentElement.setAttribute('data-theme', '${look}');
         const probe = document.createElement('i');
         document.body.appendChild(probe);
-        const tokens = new Set(['--bg', '--panel', '--raise', '--line', '--line-soft', '--text', '--muted', '--faint', '--bad', '--warn', '--ok', '--accent'].map(t => {
+        // 0730: --switch and --switch-off for Settings' on/off tracks; --input for boxes and menus
+        const tokens = new Set(['--bg', '--panel', '--raise', '--input', '--line', '--line-soft', '--text', '--muted', '--faint', '--bad', '--warn', '--ok', '--accent', '--switch', '--switch-off', '--switch-knob'].map(t => {
           probe.style.color = 'var(' + t + ')';
           return getComputedStyle(probe).color;
         }));
@@ -94,7 +95,9 @@ test('0273 AC4, AC5: at the narrowest width each row fits, and in both looks the
           }
           if (s.backgroundColor !== 'rgba(0, 0, 0, 0)' && !tokens.has(s.backgroundColor)) bad.push(what + ': background ' + s.backgroundColor);
           for (const side of ['Top', 'Right', 'Bottom', 'Left']) {
-            if (parseFloat(s['border' + side + 'Width']) > 0 && s['border' + side + 'Style'] !== 'none' && !tokens.has(s['border' + side + 'Color'])) bad.push(what + ': border ' + s['border' + side + 'Color']);
+            // 0730: a resting menu keeps a transparent border (no box until hover), as a transparent background is already allowed
+            const bc = s['border' + side + 'Color'];
+            if (parseFloat(s['border' + side + 'Width']) > 0 && s['border' + side + 'Style'] !== 'none' && bc !== 'rgba(0, 0, 0, 0)' && !tokens.has(bc)) bad.push(what + ': border ' + bc);
           }
         }
         return bad;

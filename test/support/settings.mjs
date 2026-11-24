@@ -22,12 +22,19 @@ export const openSettings = async p => { p.press(p.byId('settings-open')); await
 // 0729: a setting's row by its key, which the row keeps in its data-key as its name is words now.
 export const rowOf = (p, key) => p.all(p.byId('settings')).filter(n => /\bsetting\b/.test(n.className || ''))
   .find(r => r.attrs?.['data-key'] === key);
-export const controlOf = (p, key) => p.all(rowOf(p, key)).find(n => n.tagName === 'select' || n.tagName === 'input');
+// 0730: an on/off setting is a switch button; others stay a list or a box.
+export const controlOf = (p, key) => p.all(rowOf(p, key)).find(n => n.tagName === 'select' || n.tagName === 'input'
+  || (n.tagName === 'button' && n.attrs?.role === 'switch'));
 // 0274: the view's one Save button.
 export const saveButton = p => p.all(p.byId('settings')).find(n => n.tagName === 'button' && /\bsave-all\b/.test(n.className || ''));
-// A value typed or picked in a setting's control, as the browser tells the page.
+// A value typed or picked in a setting's control, as the browser tells the page. 0730: a switch is pressed to the value.
 export function changeTo(p, key, value) {
   const c = controlOf(p, key);
+  if (c.tagName === 'button' && c.attrs?.role === 'switch') {
+    const want = String(value) === 'true';
+    if ((c.attrs['aria-checked'] === 'true') !== want) p.press(c);
+    return;
+  }
   c.value = String(value);
   for (const type of ['input', 'change']) if (c.listeners[type]) c.listeners[type]({ target: c });
 }

@@ -72,8 +72,9 @@ test('0511 AC1: the view shows it as a switch of true or false, and Save sends i
   await p.settle();
   await openSettings(p);
   const c = controlOf(p, 'allow_same_model_review');
-  assert.equal(c.tagName, 'select');
-  assert.deepEqual(c.children.map(o => o.value), ['true', 'false']);
+  assert.equal(c.tagName, 'button'); // 0730: an on/off switch, not a list of true and false
+  assert.equal(c.attrs.role, 'switch');
+  assert.equal(c.attrs['aria-checked'], 'false');
   assert.equal(c.value, 'false');
   changeTo(p, 'allow_same_model_review', 'true');
   p.press(saveButton(p));

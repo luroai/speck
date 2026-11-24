@@ -503,6 +503,20 @@ function settingEditor(x) {
   }
   let input;
   const choices = settingChoices(x);
+  // 0730: an on/off setting (true/false only) is a green/grey switch, as Auto-build's is, not a list of true and false.
+  if (choices !== null && choices.length === 2 && choices.includes('true') && choices.includes('false')) {
+    const on = typed === 'true';
+    const sw = toggleSwitch(null, x.key); // keep class "switch": .edit's border and 8px corners are for boxes, and 0453 expects every bordered button's 10px
+    drawToggle(sw, on, on ? 'On' : 'Off');
+    sw.addEventListener('click', e => {
+      e.stopPropagation?.();
+      const next = sw.value !== 'true'; // value is kept by drawToggle (aria-checked too); the fake page has no getAttribute
+      drawToggle(sw, next, next ? 'On' : 'Off');
+      typing(next ? 'true' : 'false');
+    });
+    settingControls.set(x.key, sw);
+    return [sw];
+  }
   if (choices !== null) {
     input = el('select', 'edit');
     // A value the file has, or one picked before the list changed, that isn't a choice is shown, marked as not

@@ -98,8 +98,9 @@ test('0259 AC1: in the view, auto_ship is picked on or off, and auto_ship_risk t
   await p.settle();
   await openSettings(p);
   const ship = controlOf(p, 'auto_ship');
-  assert.equal(ship.tagName, 'select');
-  assert.deepEqual(p.all(ship).filter(n => n.tagName === 'option').map(n => n.value), ['true', 'false']);
+  assert.equal(ship.tagName, 'button'); // 0730: an on/off switch, not a list of true and false
+  assert.equal(ship.attrs.role, 'switch');
+  assert.equal(ship.attrs['aria-checked'], 'false');
   assert.equal(ship.value, 'false');
   assert.deepEqual(boxesOf(p, 'auto_ship_risk').map(b => b.value), ['low', 'high']);
   assert.deepEqual(ticked(p, 'auto_ship_risk'), ['low']);
