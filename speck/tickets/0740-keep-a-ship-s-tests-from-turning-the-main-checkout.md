@@ -44,6 +44,7 @@ Nothing a ship or its tests run can make the main checkout bare, and a ship refu
 - Evidence: `.git/config` was last written at 18:02:36, the second 0738's merge commit was made (`speck/.cache/runs/0738.ship.log`, whose quick tests ran 3,951 tests just before). The 0739 and 0738 ships then updated `main` without touching the index or files on disk.
 - Places that run `git init --bare`: `test/support/ship.mjs`, `test/support/pr.mjs`, `test/support/doc-ship.mjs`, `test/tmp-cleanup.test.mjs`, and others found by `grep -rln -- --bare test/`. `git init` reinitialises the repository `GIT_DIR` names when that is set, so one leaked into a test's git command would make the main repository bare.
 - Fixed by hand on 2026-11-24: `git config core.bare false`, then the files changed by the 0739 and 0738 ships restored from `HEAD`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
