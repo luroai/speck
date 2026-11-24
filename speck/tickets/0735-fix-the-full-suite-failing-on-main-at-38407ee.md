@@ -1,7 +1,7 @@
 ---
 id: "0735"
 title: "Fix the full suite failing on main at 38407ee"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T14:04:35.663Z"
+approved: "2026-11-24T14:22:08.662Z"
 
 ---
 # 0735 · Fix the full suite failing on main at 38407ee
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The full suite fails on main at commit 38407ee (38407eea5126d9502f5230cf95f96f320efed8c7). Failing tests:
@@ -50,9 +51,14 @@ The full test suite passes on main again. The ticket numbers in a Plan card's ch
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 128,763
+- Elapsed since build started: 18 min
+- Changed lines: 1 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (Delivery log only): `speck test --related` on a change to a panel stylesheet picks nearly every test file through test/support/panel.mjs and can't finish within a 10-minute shell limit; house-rules-full-0657 AC3 timed out starting a panel under load in a 25-file run and passed alone.
 
