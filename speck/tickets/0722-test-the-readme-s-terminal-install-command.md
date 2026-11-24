@@ -1,7 +1,7 @@
 ---
 id: "0722"
 title: "Test the README's terminal install command"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -21,7 +21,7 @@ created: 2026-11-24
 ---
 # 0722 · Test the README's terminal install command
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 The README's command to run in a terminal (under Without an agent) isn't tested, since 0491 kept only four README facts under test. A wrong command there breaks installs for anyone who skips the setup prompt.
