@@ -45,6 +45,8 @@ The panel says an `after:` ticket was cancelled and should be taken out of `afte
 - 0686 added `after_cancelled` to `speck status --json`; nothing in `templates/` reads it yet. `chainIcon`, `whereLine`, `DEP_WORDS` (`templates/panel.js`) and `depsOf` (`templates/panel-model.js`, which counts a cancelled ticket as queued) are where it shows.
 - Waits for the Plan card chain ticket, which changes the same chain and Waits on facts.
 - Failing before this build: not checked
+- Failing at the start point, 0703's approved work this build started on, and unchanged by this build: 0469 AC1, AC2 at 390 px and at 600 px, and 0613 AC3 (touch-screen layout of a Plan card's chain facts). Checked by running them at commit cfb4a32f.
+- Self-check: gave the cancelled note the warning colour after seeing it in the real panel; dropped a `cancelled` count from the Waits on model so a ticket without a cancelled after: keeps its model as before (0467 AC1).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
