@@ -26,6 +26,11 @@ let packFromFull = false; // 0583: the review pack showing was opened from the f
 let liveBox = null, liveBuilt = null, liveSub = null; // 0584: the full view's live section, the signature of what it shows, and its counter
 let liveLogOf = null; // 0584: the id of the ticket whose log the full view is following, or null
 let logFromRow = false; // 0584: the build log's pop-up was opened by the full view's Build log row
+// 0725: Try it / Stop for an approved code ticket's app in its review pack.
+let appBusy = null; // id whose start or stop hasn't been answered yet
+let appBusyKind = null; // 'start' | 'stop'
+const appUrls = new Map(); // id → running app address
+const appRefused = new Map(); // id → why start/stop refused, until the next try or the pack is opened again
 // Shows the whole ticket in the side pane, leaving the ticket open in the list. `list` is the id of the list it's in.
 function fullButton(t, list) {
   const b = el('button', 'full-open', 'Full ticket');
@@ -61,7 +66,8 @@ function openPack(id) {
   loadPack(fullId);
 }
 // What speck ship or speck changes last said about it. 0357: the box comes back, holding any note that wasn't sent.
-function clearSaid(id) { shipRefused.delete(id); shipped.delete(id); changesSaid.delete(id); changesRefused.delete(id); }
+// 0725: app refusals clear; a running app's address stays until the pack says it has stopped.
+function clearSaid(id) { shipRefused.delete(id); shipped.delete(id); changesSaid.delete(id); changesRefused.delete(id); appRefused.delete(id); }
 // Fetches the pack once, when it's opened. An answer for a pack that's been closed, or replaced since, is dropped.
 let packSeq = 0;
 async function loadPack(id) {
@@ -71,13 +77,16 @@ async function loadPack(id) {
     const res = await fetch(`/api/tickets/${encodeURIComponent(id)}/pack`, { cache: 'no-store' });
     let body = null;
     try { body = await res.json(); } catch { /* no JSON: say what we know */ }
-    if (res.ok && body && body.pack === null) next = { state: 'none' };
-    else if (res.ok && body && typeof body.pack === 'string') next = { state: 'ok', text: body.pack, pictures: packPictures(body.pictures), documents: packDocuments(body.documents) };
-    else next = { state: 'error', text: body && typeof body.error === 'string' && body.error ? body.error : `The server couldn't make the review pack (${res.status}).` };
+    if (res.ok && body && body.pack === null) next = { state: 'none', app: null };
+    else if (res.ok && body && typeof body.pack === 'string') next = { state: 'ok', text: body.pack, pictures: packPictures(body.pictures), documents: packDocuments(body.documents),
+      app: body.app && typeof body.app.url === 'string' && /^https?:\/\//.test(body.app.url) ? body.app.url : null };
+    else next = { state: 'error', text: body && typeof body.error === 'string' && body.error ? body.error : `The server couldn't make the review pack (${res.status}).`, app: null };
   } catch {
-    next = { state: 'error', text: "Couldn't reach the panel server, so the review pack can't be shown." };
+    next = { state: 'error', text: "Couldn't reach the panel server, so the review pack can't be shown.", app: null };
   }
   if (mine !== packSeq || !packOf || packOf.id !== id) return;
+  if (next.app) appUrls.set(id, next.app);
+  else if (appBusy !== id) appUrls.delete(id); // 0725: keep the address while a start is in flight
   packOf = { id, ...next };
   render();
 }
@@ -217,7 +226,8 @@ function drawDoc() {
 // 0363: above the document, the review pack's Ship and Ask for changes, from shipPart as the pack draws them, so they
 // ship it or send it back exactly as the pack's do. Redrawn when what they show changes, with the focus kept in the pop-up.
 const docActsSig = t => signature([t.status, t.shipping === true, t.pull_request ?? null, shippingId, shipped.get(String(t.id)) ?? null,
-  shipRefused.get(String(t.id)) ?? null, changesSending, changesSaid.get(String(t.id)) ?? null, changesRefused.get(String(t.id)) ?? null]);
+  shipRefused.get(String(t.id)) ?? null, changesSending, changesSaid.get(String(t.id)) ?? null, changesRefused.get(String(t.id)) ?? null,
+  appBusy, appUrls.get(String(t.id)) ?? null, appRefused.get(String(t.id)) ?? null]); // 0725
 function drawDocActs() {
   const view = $('doc-view'), acts = docOpen && [...view.children].find(n => n.className === 'doc-actions');
 
@@ -279,7 +289,83 @@ function shipPart(t, inBar = false) { // 0583: inBar: for the full view's bar, w
   if (shipRefused.has(id)) out.push(el('div', 'ship-said bad', shipRefused.get(id)));
   if (changesSaid.has(id)) out.push(el('div', 'ship-said', changesSaid.get(id)));
   if (changesRefused.has(id)) out.push(el('div', 'ship-said bad', changesRefused.get(id)));
+  out.push(...tryAppPart(t, inBar)); // 0725
   return out;
+}
+// 0725: Try it starts the ticket's app as speck app does; while it runs, the address is a link and Stop stops it.
+// Only in the review pack (not the full-view bar or a document's pop-up), and only for an approved code ticket.
+function tryAppPart(t, inBar) {
+  if (inBar || docOpen || t.kind === 'task') return [];
+  const id = String(t.id), url = appUrls.get(id);
+  const starting = appBusy === id && appBusyKind === 'start', stopping = appBusy === id && appBusyKind === 'stop';
+  const out = [];
+  if (starting) {
+    const b = el('button', 'try-app', 'Starting…');
+    b.type = 'button';
+    b.disabled = true;
+    out.push(b);
+  } else if (url || stopping) {
+    if (url) {
+      const a = el('a', 'app-url', url);
+      a.href = url;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      out.push(a);
+    }
+    const b = el('button', 'try-app', stopping ? 'Stopping…' : 'Stop');
+    b.type = 'button';
+    b.disabled = stopping || appBusy !== null;
+    b.title = 'Stop this ticket\'s app, as speck app --stop does';
+    b.addEventListener('click', e => { e.stopPropagation(); if (!b.disabled) stopTicketApp(id); });
+    out.push(b);
+  } else if (t.status === 'approved' && packOf && packOf.state === 'ok') {
+    const b = el('button', 'try-app', 'Try it');
+    b.type = 'button';
+    b.disabled = appBusy !== null;
+    b.title = 'Start this ticket\'s app from its copy of the code, as speck app does';
+    b.addEventListener('click', e => { e.stopPropagation(); if (!b.disabled) startTicketApp(id); });
+    out.push(b);
+  }
+  if (appRefused.has(id)) out.push(el('div', 'ship-said bad', appRefused.get(id)));
+  return out;
+}
+async function startTicketApp(id) {
+  if (appBusy !== null) return;
+  appRefused.delete(id);
+  appBusy = id;
+  appBusyKind = 'start';
+  render();
+  try {
+    const res = await fetch(`/api/tickets/${encodeURIComponent(id)}/app`, { method: 'POST', headers: { 'X-Speck-Token': TOKEN } });
+    let body = null;
+    try { body = await res.json(); } catch { /* no JSON: say what we know */ }
+    if (res.ok && body && typeof body.url === 'string' && /^https?:\/\//.test(body.url)) appUrls.set(id, body.url);
+    else appRefused.set(id, body && typeof body.error === 'string' && body.error ? body.error : `The server refused (${res.status}).`);
+  } catch {
+    appRefused.set(id, "Couldn't reach the panel server, so the app wasn't started. Try again.");
+  }
+  appBusy = null;
+  appBusyKind = null;
+  render();
+}
+async function stopTicketApp(id) {
+  if (appBusy !== null) return;
+  appRefused.delete(id);
+  appBusy = id;
+  appBusyKind = 'stop';
+  render();
+  try {
+    const res = await fetch(`/api/tickets/${encodeURIComponent(id)}/app/stop`, { method: 'POST', headers: { 'X-Speck-Token': TOKEN } });
+    let body = null;
+    try { body = await res.json(); } catch { /* no JSON: say what we know */ }
+    if (res.ok) appUrls.delete(id);
+    else appRefused.set(id, body && typeof body.error === 'string' && body.error ? body.error : `The server refused (${res.status}).`);
+  } catch {
+    appRefused.set(id, "Couldn't reach the panel server, so the app may still be running. Try Stop again.");
+  }
+  appBusy = null;
+  appBusyKind = null;
+  render();
 }
 // 0357: the note's box, and a row of the Ship button `ship` and Ask for changes, which can't be pressed while the box is
 // empty or only spaces. Typing changes only the button, so the pane isn't redrawn under it.
@@ -641,7 +727,7 @@ function renderFull(m) {
   paneTicket = t;
   paneFrom = !t ? null : draft ? 'draft' : find(m.queue) ? 'queue' : 'shipped';
   drawDocActs(); // 0363
-  const sig = t ? signature([fullId, !!draft, packOf ? ['pack', packOf, t.status, t.shipping === true, shippingId, shipped.get(fullId) ?? null, shipRefused.get(fullId) ?? null, changesSending, changesSaid.get(fullId) ?? null, changesRefused.get(fullId) ?? null] : fullText(t)]) : null, readySig = draft && !packOf ? signature([fullId, readyData(draft)]) : null;
+  const sig = t ? signature([fullId, !!draft, packOf ? ['pack', packOf, t.status, t.shipping === true, shippingId, shipped.get(fullId) ?? null, shipRefused.get(fullId) ?? null, changesSending, changesSaid.get(fullId) ?? null, changesRefused.get(fullId) ?? null, appBusy, appUrls.get(fullId) ?? null, appRefused.get(fullId) ?? null] : fullText(t)]) : null, readySig = draft && !packOf ? signature([fullId, readyData(draft)]) : null;
   const tone = t && !packOf ? paneTone(t) : '', steps = t && !packOf ? paneSteps(t) : null, stepsSig = steps ? signature([fullId, t.status, tone, stepsShown(steps), t.criteria_changed === true, t.criteria_changes ?? null, speckCalled()]) : null;
   const barSig = t && !packOf && barShows(t) ? docActsSig(t) : null; // 0583
   const liveNew = liveSig(t); // 0584

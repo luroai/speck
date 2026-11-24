@@ -63,6 +63,11 @@ function records(repo, pad) {
     catch { return null; }
   }).filter(Boolean).sort((a, b) => String(b.started).localeCompare(String(a.started)));
 }
+// 0725: the ticket's running app's address, or null. The panel's review pack uses it so Try it / Stop survive a reopen.
+export function runningApp(repo, id) {
+  const pad = padId(id), was = records(repo, pad).find(r => appProcesses(r.run).length);
+  return was ? { url: was.url } : null;
+}
 const forget = (repo, pad, run) => { for (const ext of ['json', 'log']) { try { fs.unlinkSync(path.join(appsDir(repo, pad), `${run}.${ext}`)); } catch { /* already gone */ } } };
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
