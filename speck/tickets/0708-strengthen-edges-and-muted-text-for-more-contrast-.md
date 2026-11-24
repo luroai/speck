@@ -1,7 +1,7 @@
 ---
 id: "0708"
 title: "Meet 0161's contrast limits when more contrast is asked for"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: "speck/ideas/done/2026-11-09-check-the-redesign-for-low-vision-readers.m
 after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T12:49:08.363Z"
+approved: "2026-11-24T13:26:50.534Z"
 
 ---
 # 0708 · Meet 0161's contrast limits when more contrast is asked for
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 0161 made the panel readable for low vision, with edges at 3:1 and small muted text at 7:1. The redesign's chosen look relaxes both, to about 1.25:1 and 5.8:1, so someone who needs more contrast may find cards and controls harder to see.
@@ -54,9 +55,14 @@ When your device's more-contrast setting is on, the panel's borders and its smal
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 204,113
+- Elapsed since build started: 38 min
+- Changed lines: 7 (limit 5000)
 - Follow-ups: none. The checks' browser tests hung past 10 minutes here, so the related-test run was done directly on the affected colour tests.
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
