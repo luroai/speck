@@ -1,7 +1,7 @@
 ---
 id: "0702"
 title: "Keep Shipped's figure labels whole at middle widths"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -22,7 +22,7 @@ started: "2026-11-24T11:55:03.414Z"
 ---
 # 0702 · Keep Shipped's figure labels whole at middle widths
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Between about 480 and 760 px wide, Shipped's figures switch to four columns that are too narrow for the longer labels ("median review rounds", "median builder tokens"), so they end in an ellipsis. A side-panel column or a small tablet often sits in that range.
@@ -56,4 +56,82 @@ The figures at the top of Shipped now keep their full labels on narrower screens
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
+
+Follow-ups (tidy-ups, no note): the comment above `.stats` in panel-cards.css still says 480 px and one-line labels, and the panel-0157 test title still says one line.
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "1b59a1bb0a514cd5d4f1142d3eea99dd8279e89b",
+    "session": "fresh",
+    "thread_id": "01a20d87-a38c-7062-a0dc-5156eb6744d4",
+    "builder_response": "- Tests run: test/panel-0702.test.mjs test/panel-0606.test.mjs test/panel-0157.test.mjs (plus the related files; unrelated real-panel start-up timeouts came from machine load and passed alone)\n- Labels wrap (overflow-wrap) instead of ellipsis, and four columns start at 800 px, because two columns still cut labels at 375 px. The 0606 and 0157 tests pinning nowrap, 480 px and one-line labels are updated.\n",
+    "seconds": 24,
+    "usage": {
+      "input_tokens": 125647,
+      "cached_input_tokens": 89344,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 597,
+      "reasoning_output_tokens": 12
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 36303,
+      "cached": 89344,
+      "write": 0,
+      "output": 597
+    },
+    "cost_usd": 0.0875104,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-24T12:29:06.402Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel-cards.css .stat .label removes nowrap and ellipsis and permits wrapping. The passing real-browser test in test/panel-0702.test.mjs checks all eight labels for horizontal clipping at widths from 375 to 800 px, including the column transition."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The .stats clamp switches to quarter-width tracks at 800 px. Passing browser tests in panel-0702 and panel-0606 verify four columns at 800 px; panel-0702 and panel-0157 also cover wider windows."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0702-tests.txt reports 163 passed, zero failed and three skipped. Updated existing assertions reflect the requested wrapping and breakpoint changes. The branch's changes are confined to this ticket."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "minor",
+        "file": "templates/panel-cards.css:192",
+        "issue": "The explanatory comment still describes a 480 px breakpoint and single-line labels. The panel-0157 test title also still says labels occupy one line.",
+        "suggested_fix": "Update the comment and test title to describe the 800 px breakpoint and wrapping labels.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The figure labels now wrap instead of being cut off, and four columns begin at 800 px. Browser checks passed, with no failures in the reported test run. Only stale explanatory text needs tidying."
+  }
+}
+```
+
+</details>
