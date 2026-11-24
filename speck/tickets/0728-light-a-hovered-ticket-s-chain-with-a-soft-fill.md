@@ -46,6 +46,7 @@ A hovered ticket and the tickets chained to it are lit with the same soft raised
 - The ring is `.item.hl, .q.hl` and `.item.row.open.hl::after` in `templates/panel-cards.css`, set by `lightUp` in `templates/panel.js`; the tap flash is `.item.flash`, `.q.flash` and `@keyframes flash`, with reduced-motion rules near the end of the file.
 - Waits for 0701, which gives a hovered closed row its 12 px of fill.
 - Failing before this build: none
+- Self-check: put the lit-chain fill inside (hover: hover), so phones keep a closed card's background (0164)
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
