@@ -1,7 +1,7 @@
 ---
 id: "0716"
 title: "Let speck set blank a ticket's build settings"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -22,7 +22,7 @@ started: "2026-11-24T14:23:00.891Z"
 ---
 # 0716 · Let speck set blank a ticket's build settings
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Someone working from the terminal, or an agent, can give a ticket a level or its own builder and model but can't take them off again without editing the file by hand, while the panel can. `speck set` lets only `priority` take an empty value.
@@ -46,7 +46,7 @@ Someone working from the terminal, or an agent, can give a ticket a level or its
 - Self-check: no changes
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+From the terminal you can now take a level, builder or reviewer setting off a ticket with `speck set` and an empty value, as the panel's Default choice already does. It says the setting is now blank. Try it on a draft ticket. Fields such as the title and status still can't be emptied.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -56,3 +56,80 @@ Someone working from the terminal, or an agent, can give a ticket a level or its
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "ee2e203e77c2e40ababebb4fe7cc03a6e11bdf8e",
+    "session": "fresh",
+    "thread_id": "01a20df9-4c71-74a3-b711-9dd4281e53b7",
+    "builder_response": "Tests: test/set-0716.test.mjs and every test file naming scripts/speck.mjs (--related), all pass. Added BLANKABLE fields to cmdSet; blank prints \"is now blank\".\n",
+    "seconds": 23,
+    "usage": {
+      "input_tokens": 122749,
+      "cached_input_tokens": 85120,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 669,
+      "reasoning_output_tokens": 16
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 37629,
+      "cached": 85120,
+      "write": 0,
+      "output": 669
+    },
+    "cost_usd": 0.09046,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-24T14:33:13.975Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs cmdSet accepts an explicit empty level and reports it as blank. Passing test '0716 AC1' first sets quick, then verifies level: \"\" and the confirmation."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "cmdSet includes all six builder/reviewer fields in BLANKABLE. Passing test '0716 AC2' invokes the CLI for each and verifies the written empty value and confirmation; builder and reviewer initially have non-empty fixture values."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "cmdSet calls checkNotBeingBuilt before writing, regardless of field. Passing test '0716 AC3' starts a real worktree build, verifies blanking is refused and confirms the ticket remains unchanged."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "cmdSet retains the usage guard for fields outside the blankable list. Passing test '0716 AC4' checks explicit empty title and status values both produce the usage message."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0716-tests.txt reports 1,776 tests: 1,773 passed, three skipped and zero failed. The implementation is confined to empty-value handling and confirmation output; existing tests were not altered."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The terminal command now clears a ticket's level and builder/reviewer settings and confirms they are blank. Existing protection against changes during a build remains in place. The tests pass, and I found no blocking issues."
+  }
+}
+```
+
+</details>
