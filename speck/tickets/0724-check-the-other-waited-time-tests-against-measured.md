@@ -1,7 +1,7 @@
 ---
 id: "0724"
 title: "Check the other waited-time tests against measured bounds"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: "speck/ideas/done/2026-11-15-check-the-other-waited-time-tests-against-m
 after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T15:02:01.273Z"
+approved: "2026-11-24T15:20:49.465Z"
 
 ---
 # 0724 · Check the other waited-time tests against measured bounds
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The 0166 AC1 tests and the 0217 AC2 test check a waited time against a fixed ±5 s tolerance. Each runs a speck command in between that can take over 5 s on a very busy machine, so a build could see a failure that isn't real.
@@ -52,9 +53,16 @@ Some of speck's own tests of how long a ticket spent waiting used a fixed five-s
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The AC2 and AC3 checks test the timing helpers in isolation rather than each changed test's behaviour.
+Round 2 (codex): changes requested: F2 The two-stretch AC3 test records since only before backdating the second stretch, but checks the combined waited_seconds against 500.
+Round 3 (codex): approve.
 
 ## Delivery log
+- Review rounds: 3
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 434,411
+- Elapsed since build started: 19 min
+- Changed lines: 0 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up (inbox): `speck/ideas/2026-11-24-accept-node-s-fail-count-line-in-tmp-cleanup.md`: tmp-cleanup expects `# fail 2` but Node v24 prints `ℹ fail 2`.
 
