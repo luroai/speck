@@ -1,13 +1,13 @@
-// 0678: your own settings for every project on this machine, kept in your home folder's ~/.config/speck/config.yml and
-// never in a repo. machine_parallel_tests is the only one: how many test runs speck starts go at once across all your
-// projects, the turns for which are kept beside it, in ~/.config/speck/test-turns.
+// 0678 / 0726: your own settings for every project on this machine, kept in your home folder's
+// ~/.config/speck/config.yml and never in a repo. machine_parallel_tests caps test runs across all your projects
+// (turns in ~/.config/speck/test-turns); machine_parallel_builds caps builds (turns in ~/.config/speck/build-turns).
 
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { SpeckError, parseConfig, yamlValue } from './core.mjs';
 
-export const HOME_SETTINGS = Object.freeze(['machine_parallel_tests']);
+export const HOME_SETTINGS = Object.freeze(['machine_parallel_builds', 'machine_parallel_tests']);
 
 // The folder: ~/.config/speck, or SPECK_HOME_SETTINGS_DIR, which is for the tests, so they never read or write yours.
 // '' when there's no home folder.
@@ -34,17 +34,28 @@ export function homeSettings(env = process.env) {
   return out;
 }
 
-// machine_parallel_tests as speck uses it: a whole number of 1 or more, or null when it isn't set.
-export function machineParallelTests(env = process.env) {
-  const v = homeSettings(env).machine_parallel_tests;
+// A whole-number home setting of 1 or more, or null when it isn't set.
+function machineCount(key, env = process.env) {
+  const v = homeSettings(env)[key];
   if (v === undefined || v === null || v === '') return null;
   if (!Number.isSafeInteger(v) || v < 1)
-    throw new SpeckError(`machine_parallel_tests in ${homeSettingsShown(env)} must be a whole number of 1 or more (got ${JSON.stringify(v)}). Fix it with \`speck config set machine_parallel_tests 2\`, or remove it with \`speck config set machine_parallel_tests ""\`, then run this again.`);
+    throw new SpeckError(`${key} in ${homeSettingsShown(env)} must be a whole number of 1 or more (got ${JSON.stringify(v)}). Fix it with \`speck config set ${key} 2\`, or remove it with \`speck config set ${key} ""\`, then run this again.`);
   return v;
 }
 
-// `speck config set machine_parallel_tests <n>`, run in any project: saves it in the home folder's file, or removes
-// it when `raw` is blank. Changes nothing in the repo.
+// machine_parallel_tests as speck uses it: a whole number of 1 or more, or null when it isn't set.
+export function machineParallelTests(env = process.env) { return machineCount('machine_parallel_tests', env); }
+
+// 0726: machine_parallel_builds as speck run uses it: a whole number of 1 or more, or null when it isn't set.
+export function machineParallelBuilds(env = process.env) { return machineCount('machine_parallel_builds', env); }
+
+const unsetMeans = {
+  machine_parallel_tests: 'test runs have no limit across your projects on this machine',
+  machine_parallel_builds: 'builds have no limit across your projects on this machine',
+};
+
+// `speck config set machine_parallel_tests|machine_parallel_builds <n>`, run in any project: saves it in the home
+// folder's file, or removes it when `raw` is blank. Changes nothing in the repo.
 export function setHomeSetting(key, raw, flagged) {
   const shown = homeSettingsShown();
   if (flagged) throw new SpeckError(`${key} is saved in ${shown} for every project of yours on this machine, so it takes no --repo or --machine. Run \`speck config set ${key} <number>\`, or \`speck config set ${key} ""\` to remove it.`);
@@ -55,7 +66,7 @@ export function setHomeSetting(key, raw, flagged) {
   if (!dir) throw new SpeckError(`There's no home folder to save ${key} in, so nothing was changed.`);
   const values = homeSettings();
   const before = values[key];
-  if (value === undefined && before === undefined) { console.log(`${key} isn't set, so test runs have no limit across your projects on this machine.`); return; }
+  if (value === undefined && before === undefined) { console.log(`${key} isn't set, so ${unsetMeans[key] || 'nothing changes'}.`); return; }
   if (value === undefined) delete values[key]; else values[key] = value;
   const keys = HOME_SETTINGS.filter(k => Object.hasOwn(values, k)), file = fileIn(dir);
   try {
@@ -68,11 +79,16 @@ export function setHomeSetting(key, raw, flagged) {
   console.log(`${key} (every project on this machine, in ${shown}): ${show(before)} → ${show(value)}`);
 }
 
-// Adds `speck config show`'s row for machine_parallel_tests to `groups`, after max_parallel_tests.
+// Adds `speck config show`'s rows for the home-folder limits: machine_parallel_builds after max_parallel_builds,
+// machine_parallel_tests after max_parallel_tests.
 export function addHomeSettingRow(groups) {
   const building = groups.find(g => g.title === 'Building and reviewing')?.settings;
   if (!building) return;
+  const shown = homeSettingsShown();
+  const builds = machineParallelBuilds(), atBuilds = building.findIndex(s => s.key === 'max_parallel_builds');
+  building.splice(atBuilds < 0 ? building.length : atBuilds + 1, 0, { key: 'machine_parallel_builds', value: builds ?? '', is_default: builds === null, speck_default: '', every_project: true,
+    explain: `How many builds speck run starts go at once across every project of yours on this machine, while ready tickets wait. Blank leaves it to each project's max_parallel_builds. It's saved in ${shown} for every project, with \`speck config set machine_parallel_builds <n>\`, and \`speck config set machine_parallel_builds ""\` removes it.` });
   const across = machineParallelTests(), at = building.findIndex(s => s.key === 'max_parallel_tests');
   building.splice(at < 0 ? building.length : at + 1, 0, { key: 'machine_parallel_tests', value: across ?? '', is_default: across === null, speck_default: '', every_project: true,
-    explain: `How many test runs speck starts go at once across every project of yours on this machine, the full suite's included, while the rest wait their turn. Blank leaves it to each project's max_parallel_tests. It's saved in ${homeSettingsShown()} for every project, with \`speck config set machine_parallel_tests <n>\`, and \`speck config set machine_parallel_tests ""\` removes it.` });
+    explain: `How many test runs speck starts go at once across every project of yours on this machine, the full suite's included, while the rest wait their turn. Blank leaves it to each project's max_parallel_tests. It's saved in ${shown} for every project, with \`speck config set machine_parallel_tests <n>\`, and \`speck config set machine_parallel_tests ""\` removes it.` });
 }

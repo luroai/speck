@@ -38,14 +38,13 @@ import { takeAt, spaced, resumeTime, resumeClock, resumeWhy } from './resume-at.
 import { appCheckable, appStartSet, checkKey, checkItem, checkOf, checkBrief, checkedSays, checkStale, CHECK_ACTIONS, qaConfig, leftSays } from './app-check.mjs';
 import { stopApp } from './app.mjs';
 import { standIn, movedOf } from './watch-stand-in.mjs';
+import { hasBuildRoom } from './build-turns.mjs'; // 0726
 
 const CLI = fileURLToPath(new URL('./speck.mjs', import.meta.url));
-
 // None is <id>.json or <id>.log, so nothing that reads the runs folder's build records takes them for one.
 const STATE = 'run.foreman-agent.json'; // speck run's: the agent running, those waiting, what it has looked into
 const DID = 'run.foreman-did.jsonl'; // the agent's actions, one JSON object a line, written by `speck foreman`
 const LOG = 'run.watch.log'; // the agent's output, from its latest run. 0486: named so the lines that print it don't say foreman
-
 // The agents the Foreman can run on, and what each action is.
 export const FOREMAN_AGENTS = Object.freeze(['claude', 'codex', 'cursor']);
 export const ACTIONS = Object.freeze({
@@ -381,9 +380,10 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, set
     try { saveRecord(file, next); } catch (e) { return speak(`${t.id}: I asked for its build to be resumed, but its run record couldn't be saved (${e.message}).`); }
     const cwd = typeof rec.cwd === 'string' && fs.existsSync(rec.cwd) ? rec.cwd : repo;
     speak(`${t.id}: I asked speck run to resume its build (session ${rec.session}).`);
-    startBuild(t.id, argv, cwd, rec.session, 'a', pid => `${JSON.stringify({ ...next, pid: pid ?? rec.pid }, null, 2)}\n`, rec.env_session ?? rec.session);
+    if (startBuild(t.id, argv, cwd, rec.session, 'a', pid => `${JSON.stringify({ ...next, pid: pid ?? rec.pid }, null, 2)}\n`, rec.env_session ?? rec.session) === false) { // 0726
+      s.resumes = [...s.resumes, r]; try { saveRecord(file, { ...kept, exited: rec.exited, exit_code: rec.exit_code }); } catch { /* next check */ }
+    }
   };
-
   const due = x => !(now() < Date.parse(x.at)); // 0625: one with no time, or none that can be read, doesn't wait
 
   const { movedBack, lookOn } = standIn({ heldAgent, readyAgents, speak, agents: FOREMAN_AGENTS }); // 0637
@@ -446,7 +446,7 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, set
     for (const t of tickets) {
       if (!s.resumes.some(x => x.id === t.id && due(x)) || running.has(t.id) || t.build_running || heldBuild(t.id)) continue; // 0622
       const now = settings(); // 0549: the builder settings as they are now, or null while they can't start a build
-      if (!now || running.size >= now.max) break;
+      if (!now || !hasBuildRoom(running.size, now.max)) break;
       resume(s, t, now);
       changed = true;
     }
