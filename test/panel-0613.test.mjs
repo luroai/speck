@@ -105,5 +105,5 @@ test('0613 AC3: pressing one in the full view shows that ticket there', async ()
 
 test('0613 AC3: a link is at least 44 px high on a touch screen', () => {
   const touch = (css().match(/@media \(pointer: coarse\) \{([\s\S]*)$/) || [])[1] || '';
-  assert.match(touch, /\.waits-facts button\.waits-link \{ min-height: 44px; \}/);
+  assert.match(touch, /\.waits-facts button\.waits-link(, \.chain-facts button\.chain-id)? \{ min-height: 44px; \}/);
 });
