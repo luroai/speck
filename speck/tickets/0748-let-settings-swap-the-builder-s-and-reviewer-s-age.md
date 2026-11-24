@@ -1,7 +1,7 @@
 ---
 id: "0748"
 title: "Swap the builder's agent with the reviewer's in Settings"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: "speck/ideas/done/2026-11-24-let-settings-swap-the-builder-and-reviewer-
 after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T23:22:27.734Z"
+approved: "2026-11-24T23:49:05.743Z"
 
 ---
 # 0748 · Swap the builder's agent with the reviewer's in Settings
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Now that each setting saves by itself, swapping the builder and reviewer between agents, such as a Claude Code builder with a Codex reviewer to the other way round, can't be done: each half is refused on its own, as for a moment both would be the same family. The refusal doesn't say how to get there.
@@ -53,9 +54,14 @@ You can now swap the builder and the reviewer between two agents in Settings, su
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 145,887
+- Elapsed since build started: 27 min
+- Changed lines: 69 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none for the inbox. Known limit: a swap leaves each role's effort as it was, so a builder's effort set for one agent stays when it becomes the other.
 
