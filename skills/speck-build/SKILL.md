@@ -64,10 +64,15 @@ Follow the `speck-review` skill (in the folder next to this one) exactly. In sho
 
 When `speck next <id>` says `ship`, the reviewer has approved. Close out the build on the ticket branch:
 
-1. If minor findings or your own notes suggest follow-up ideas, write them in the ticket's `## Delivery log`. Then save to the inbox each one that would need its own ticket (a behaviour change, a bug or a missing check), so the shaping chat sees it once the ticket is done:
+1. If minor findings or your own notes suggest follow-up ideas, write them in the ticket's `## Delivery log`. Then save to the inbox only the ones worth their own ticket, so the shaping chat sees them once the ticket is done. Only two kinds qualify: something someone using speck would notice (a behaviour change or a bug), and a test that fails or is unsteady on the base branch:
    - Write each one as its own note, `speck/ideas/<YYYY-MM-DD>-<slug>.md`, with today's date and a short slug of its title. If that file already exists, add `-2`, `-3` and so on to the slug rather than overwriting it.
-   - Tidy-ups (such as unused code) and notes on known limits go only in the Delivery log. If none qualify, write no note.
-   - First check each one against every idea note in `speck/ideas/` and `speck/ideas/done/`, every ticket in `speck/tickets/` and `speck/tickets/done/` (problem, outcome and acceptance criteria), as `/speck-capture` does. Skip any that clearly duplicates one of them, but don't stop to ask the user: an auto-ship build mustn't wait. Under the Delivery log's follow-ups, list each skipped follow-up and its match (an idea's path or a ticket's id).
+   - Everything else goes only in the Delivery log: tidy-ups (such as unused code), a missing check or test, wording, notes on known limits and anything else nobody using speck would notice. If none qualify, write no note.
+   - First check each one against every idea note in `speck/ideas/` and `speck/ideas/done/`, every ticket in `speck/tickets/` and `speck/tickets/done/` (problem, outcome and acceptance criteria), as `/speck-capture` does. Check them in three places, as builds running beside yours can't see each other's notes until they ship:
+     - this branch;
+     - the base branch as it is now, which may have notes and tickets shipped since your build started (`git ls-tree -r --name-only <base_branch> -- speck/ideas speck/tickets` lists them, and `git show <base_branch>:<path>` prints one);
+     - the worktree of every other ticket that's `building`, `reviewing` or `approved` (`speck status --json` gives each ticket's `status` and `worktree`).
+
+     Skip any that clearly duplicates one of them, but don't stop to ask the user: an auto-ship build mustn't wait. A test that fails or is unsteady on the base branch is a duplicate whenever another note or an open ticket already names that test, however it words the problem: never save it again. Under the Delivery log's follow-ups, list each skipped follow-up and its match (an idea's path or a ticket's id, with the worktree's ticket id when the match is in another build's worktree).
    - Use the `/speck-capture` format, with `Status: inbox`, a `From ticket:` line and `Raised by: agent`. Its `Captured:` line gives the date and the time you write it, in 24-hour local time. Keep it under 30 lines:
 
      ```markdown
