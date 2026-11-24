@@ -23,53 +23,53 @@ export { panelProviderAddRequest } from './provider-form.mjs'; // 0401
 export const SETTING_GROUPS = [
   // 0286: the panel shows this group's settings in its own group, under the speck run switch. 0486: Watching, was Foreman. 0575: Your engineering manager, was Watching. `named`: its explanation says speck_name's name for each "speck".
   { title: 'Your engineering manager', settings: [
-    { key: 'speck_name', default: 'speck', unset: 'speck as its name',
+    { key: 'speck_name', label: 'Name', summary: 'What you call your engineering manager.', default: 'speck', unset: 'speck as its name',
       explain: 'speck is your engineering manager: once you set a ticket ready, getting it shipped is its job, so it runs the builder and reviewer you\'ve chosen, gets stuck work moving again, makes the calls that watch lets it and tells you what it did and why, asking you only when there\'s no clear answer. You decide what gets built, planning it with your own agent, and you can call your engineering manager whatever you like here, with 1 to 24 letters, digits, spaces, hyphens or apostrophes, starting with a letter.' },
-    { key: 'watch', default: 'tell', named: true, // 0487: were foreman_fixing, foreman, foreman_model and foreman_effort
+    { key: 'watch', label: 'Watch', summary: 'What speck does when a build stops with a question.', default: 'tell', named: true, // 0487: were foreman_fixing, foreman, foreman_model and foreman_effort
       explain: 'What speck does when a build stops with a question: off leaves it to you, tell also counts it under Needs you, and fix takes the build\'s recommendation when no option changes anything you\'d notice and the recommendation is a clear winner, then starts the build again, once per ticket. decide does everything fix does and takes every recommendation, whatever it changes, up to 3 per ticket, and leaves a question with no recommendation or a high-risk ticket to you. With fix or decide, it also starts an agent to look into work that stops for a reason speck has no steps for, which resumes the build, ships it again once, makes a draft fix ticket or asks you.' },
     // 0287: the agent speck looks into stops with
-    { key: 'watch_agent', default: '', named: true,
+    { key: 'watch_agent', label: 'Agent', summary: 'The agent and model speck looks into stopped work with.', default: '', named: true,
       explain: 'The agent speck runs on when it looks into work that stopped for a reason speck has no steps for: claude, codex, cursor or a model provider, such as DeepSeek, with your own API key for it. Blank uses the builder when that\'s codex, cursor or a model provider, and claude otherwise.' },
-    { key: 'watch_model', default: '', named: true,
+    { key: 'watch_model', label: 'Model', summary: 'The model speck\'s agent runs on.', default: '', named: true,
       explain: 'The model speck\'s agent runs on, picked from that agent\'s models or written as it names it. Blank leaves it to the agent\'s own default.' },
-    { key: 'watch_effort', default: '', named: true,
+    { key: 'watch_effort', label: 'Effort', summary: 'How hard speck\'s agent thinks.', default: '', named: true,
       explain: 'How hard speck\'s agent thinks: low, medium, high, xhigh or max, or blank for the agent\'s own default. Cursor isn\'t given it, as its model names carry the effort.' },
   ] },
   { title: 'Shipping', settings: [
-    { key: 'auto_ship', default: false,
+    { key: 'auto_ship', label: 'Auto-ship', summary: 'Ship approved tickets without waiting for you.', default: false,
       explain: 'When true, speck run ships each approved ticket whose risk auto_ship_risk lists: it is merged and pushed to the base branch without waiting for you. When false, every approved ticket waits for you to ship it.' },
-    { key: 'auto_ship_risk', default: ['low'],
+    { key: 'auto_ship_risk', label: 'Auto-ship risks', summary: 'Which ticket risks auto-ship covers.', default: ['low'],
       explain: 'Which ticket risks auto_ship covers: low, high or both. While auto_ship is on, a ticket it covers is merged and pushed to the base branch without waiting for you, so adding high lets risky changes ship unseen too.' },
     // 0295
-    { key: 'ship_mode', default: 'local',
+    { key: 'ship_mode', label: 'Ship mode', summary: 'Merge on this computer, or through a pull request on GitHub.', default: 'local',
       explain: 'How an approved ticket ships. local: speck merges it into the base branch on this computer and pushes it. pr: once a ticket is approved, speck pushes its branch and opens a pull request into the base branch on GitHub with gh, with its review pack, and shipping it merges that pull request on GitHub once its checks pass, as speck run does for each ticket auto_ship covers. Needs gh installed and signed in.' },
   ] },
   { title: 'Building and reviewing', settings: [
-    { key: 'builder', default: 'claude',
+    { key: 'builder', label: 'Agent', summary: 'The agent and model that builds each ticket.', default: 'claude',
       explain: 'The agent that builds each ticket, writing its tests and code: claude, codex, cursor or a model provider, such as DeepSeek, with your own API key for it, offered when it\'s installed and signed in. A ticket that doesn\'t name its own builder takes it from here when its build starts, so changing it changes who builds those tickets, sets build_command to the new builder\'s own, asking first when that was set by hand, and clears builder_model when the new builder doesn\'t offer it or its models can\'t be read.' },
-    { key: 'builder_model', default: '',
+    { key: 'builder_model', label: 'Model', summary: 'The model each build runs on.', default: '',
       explain: 'The model every build speck run starts runs on, picked from the builder\'s models or written as the builder names it, and given to Claude Code builds, to Codex builds when build_command is blank, and to Cursor builds when it is blank too. Blank leaves it to the builder\'s own default.' },
     // 0402
-    { key: 'builder_effort', default: '',
+    { key: 'builder_effort', label: 'Effort', summary: 'How hard the builder thinks.', default: '',
       explain: 'How hard the builder thinks: low, medium, high, xhigh or max, any other effort Codex offers for its model, or blank for the builder\'s own default. It\'s given to Claude Code builds and to Codex builds when build_command is blank, but not to Cursor, whose model names carry the effort, or a model provider.' },
-    { key: 'reviewer', default: 'codex',
+    { key: 'reviewer', label: 'Agent', summary: 'The agent and model that reviews each build.', default: 'codex',
       explain: 'The agent that reviews each build and decides whether it is approved: codex, claude (Claude Code, run by speck, for any builder), claude-subagent (a Claude Code subagent the builder starts, for Claude Code builders), cursor, a model provider, such as DeepSeek, with your own API key for it, or a command you have set up. A ticket that doesn\'t name its own reviewer takes it from here when each review round starts, so changing it changes who reviews those tickets from their next round.' },
-    { key: 'reviewer_model', default: '',
+    { key: 'reviewer_model', label: 'Model', summary: 'The model the reviewer runs on.', default: '',
       explain: 'The model the reviewer runs on, written as the reviewer names it, or picked from the models Codex or Cursor offers or Claude\'s model names. Blank leaves it to the reviewer\'s own default, and a ticket\'s own value overrides this one.' },
-    { key: 'reviewer_effort', default: '',
+    { key: 'reviewer_effort', label: 'Effort', summary: 'How hard the reviewer thinks.', default: '',
       explain: 'How hard the reviewer thinks: low, medium, high, xhigh or max, any other effort Codex offers for its model, or blank for the reviewer\'s own default. More effort takes longer and costs more, but can catch more.' },
-    { key: 'allow_same_model_review', default: false,
+    { key: 'allow_same_model_review', label: 'Same-model review', summary: 'Let the reviewer run the same model as the builder.', default: false,
       explain: 'Whether the builder and reviewer may be the same model, needed only when they are in the same family (such as a Claude builder and a claude-subagent reviewer) and would run the same model, or when either model is left at its default (a Cursor build left at its default runs on auto, which counts as a model of its own when speck starts the build). Leave it false so a different model checks the work: true lets a model review work like its own, which tends to catch less.' },
     // 0406: parallel runs and ticket size limits sit here too, after the builder and reviewer
-    { key: 'max_parallel_builds', default: 1,
+    { key: 'max_parallel_builds', label: 'Builds at once', summary: 'How many tickets speck run builds at the same time.', default: 1,
       explain: 'How many tickets speck run builds at once. More finish sooner, but use more of your computer and agent usage, and builds that change the same files are more likely to clash.' },
-    { key: 'max_parallel_tests', default: 1,
+    { key: 'max_parallel_tests', label: 'Test runs at once', summary: 'How many test runs go at the same time in this project.', default: 1,
       explain: 'How many test runs go at once in this project, from any build, while the rest wait their turn. Raising it shortens the wait, but can slow the computer down or make tests that share something fail.' },
-    { key: 'limits.max_acceptance_criteria', default: 5,
+    { key: 'limits.max_acceptance_criteria', label: 'Criteria per ticket', summary: 'The most acceptance criteria a ticket can have before it must be split.', default: 5,
       explain: 'The most acceptance criteria a ticket can have before speck refuses to set it ready and asks you to split it. Raising it allows bigger tickets, which are harder to review well.' },
-    { key: 'limits.max_changed_lines', default: 300,
+    { key: 'limits.max_changed_lines', label: 'Changed lines per build', summary: 'How many lines a build can change before it proposes a split.', default: 300,
       explain: 'How many lines a build can change, not counting tests and lockfiles, before it stops and proposes a split. Raising it lets bigger changes through in one review.' },
-    { key: 'limits.max_review_rounds', default: 3,
+    { key: 'limits.max_review_rounds', label: 'Review rounds per build', summary: 'How many review rounds a build gets before it asks you.', default: 3,
       explain: 'How many review rounds a build gets before it stops and asks you. More rounds let the builder fix more on its own, and fewer bring problems to you sooner.' },
   ] },
 ];
@@ -139,7 +139,7 @@ export function panelSettings(repo, { models, builderModels, foremanModels, agen
       hand_set: handSetBuildCommand(used), each_ticket: buildsEachTicket(used.build_command ?? ''), own: { ...OWN_BUILD_COMMANDS, ...Object.fromEntries(providers.map(p => [p.name, ''])) } } }; // 0401: and yours
     const machine = !MACHINE_SETTINGS.includes(s.key) ? {}
       : Object.hasOwn(mine, s.key) ? { for_machine: true, from: 'machine', repo_value: value } : { for_machine: true, from: 'repo', repo_value: value };
-    return { key: s.key, value: machine.from === 'machine' ? mine[s.key] : value, default: !inFile, explain: explainFully(s, speckNameOf(file)),
+    return { key: s.key, label: s.label, summary: namedText(s, s.summary, speckNameOf(file)), value: machine.from === 'machine' ? mine[s.key] : value, default: !inFile, explain: explainFully(s, speckNameOf(file)), // 0729: and its plain name and short line
       editable: EDITABLE.includes(s.key), ...(choices ? { choices } : {}), ...(missing ? { missing } : {}), ...build, ...machine };
   }) })), ...(models ? { reviewer_models: models } : {}), ...(builderModels ? { builder_models: builderModels } : {}),
     ...(foremanModels ? { foreman_models: foremanModels } : {}), claude_models: CLAUDE_MODELS, providers: providersShown(repo, providers), levels: levelsShown(file) }; // 0661
@@ -152,9 +152,9 @@ export function explainFully(s, name = 'speck') {
   const saved = !EDITABLE.includes(s.key) ? ' It\'s changed in speck/config.yml rather than here, and saved there for the project, with a commit.'
     : MACHINE_SETTINGS.includes(s.key) ? ' A change here is saved for your machine only, without a commit.'
       : ' A change here is saved for the project in speck/config.yml, with a commit.';
-  return `${namedExplain(s, name)}${unset}${saved}`;
+  return `${namedText(s, s.explain, name)}${unset}${saved}`;
 }
-const namedExplain = (s, name) => (s.named ? s.explain.replace(/\bspeck\b/g, () => name) : s.explain);
+const namedText = (s, text, name) => (s.named && typeof text === 'string' ? text.replace(/\bspeck\b/g, () => name) : text); // 0729: a setting with no short line has none to name
 
 // 0393: a provider's models as the Settings view lists them, its default model said as such.
 const providerModels = p => p.models.map(slug => ({ slug, display_name: null, description: slug === p.defaultModel ? `${p.label}'s default` : null }));
@@ -345,7 +345,7 @@ export function cmdConfigShow(args) {
   // 0397: the explanation without the panel's own ending, which says where a change made there is saved.
   // 0386: a value this machine holds is shown as speck uses it, marked this_machine, with speck/config.yml's in repo_value.
   const repo = findRepoRoot(), mine = machineConfig(repo), name = speckNameOf(loadConfig(repo, { machine: false })); // 0575
-  const explains = Object.fromEntries(SETTING_GROUPS.flatMap(g => g.settings).map(s => [s.key, namedExplain(s, name)]));
+  const explains = Object.fromEntries(SETTING_GROUPS.flatMap(g => g.settings).map(s => [s.key, namedText(s, s.explain, name)]));
   const groups = panelSettings(repo).groups.filter(g => g.title !== TEAM_GROUP.title).map(g => ({ title: g.title, settings: g.settings.map(s => { // 0652: Your team's are below
     const repoValue = s.repo_value ?? s.value, machine = Object.hasOwn(mine, s.key), value = machine ? mine[s.key] : repoValue;
     return { key: s.key, value, is_default: JSON.stringify(value) === JSON.stringify(defaults[s.key]), speck_default: defaults[s.key], explain: explains[s.key],

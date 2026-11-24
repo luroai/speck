@@ -37,7 +37,7 @@ test('0432 AC1: the fake page runs Settings from its own file: it opens, draws i
   p.press(p.byId('settings-open'));
   await p.settle();
   assert.equal(p.byId('settings').hidden, false, 'Settings opens');
-  assert.match(p.byId('settings').textContent, /Appearance[\s\S]*Auto-build[\s\S]*Building[\s\S]*max_parallel_builds/);
+  assert.match(p.byId('settings').textContent, /Appearance[\s\S]*Auto-build[\s\S]*Building[\s\S]*Max parallel builds/); // 0729: a setting named in words, not by its key
   p.key('Escape');
   assert.equal(p.byId('settings').hidden, true, 'and closes');
 });

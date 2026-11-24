@@ -8,8 +8,12 @@ import { QA_EXPLAIN, qaOn } from './app-check.mjs';
 import { agentHeld } from './reviewer-limit.mjs';
 import { sameModelProblem } from './same-model.mjs';
 
+// 0729: each one's plain name and short line, as the Settings view shows it on its member's card, which says whose it is.
+const BENCH_WORDS = ['Bench', 'The agents that stand in, in order, while a usage limit holds its own.'];
+const TEAM_WORDS = { watch_bench: BENCH_WORDS, builder_bench: BENCH_WORDS, reviewer_bench: BENCH_WORDS, qa_bench: BENCH_WORDS,
+  qa_agent: ['Agent', 'The agent and model QA checks the running app with.'], qa_model: ['Model', 'The model QA runs on.'], qa_effort: ['Effort', 'How hard QA thinks.'] };
 export const TEAM_GROUP = Object.freeze({ title: 'Your team', settings: Object.freeze(['watch_bench', 'builder_bench', 'reviewer_bench', 'qa_agent', 'qa_model', 'qa_effort', 'qa_bench']
-  .map(key => Object.freeze({ key, default: '', explain: BENCH_EXPLAIN[key] ?? QA_EXPLAIN[key] }))) });
+  .map(key => Object.freeze({ key, label: TEAM_WORDS[key][0], summary: TEAM_WORDS[key][1], default: '', explain: BENCH_EXPLAIN[key] ?? QA_EXPLAIN[key] }))) });
 export const TEAM_KEYS = Object.freeze(TEAM_GROUP.settings.map(s => s.key));
 
 // Each member's bench, by the name the view gives it. QA's is the watch agent's while QA's settings are all blank, as

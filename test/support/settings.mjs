@@ -19,8 +19,9 @@ export function settingsPage(views, saves = [], globals = {}) {
   return p;
 }
 export const openSettings = async p => { p.press(p.byId('settings-open')); await p.settle(); };
+// 0729: a setting's row by its key, which the row keeps in its data-key as its name is words now.
 export const rowOf = (p, key) => p.all(p.byId('settings')).filter(n => /\bsetting\b/.test(n.className || ''))
-  .find(r => p.all(r).find(n => /\bname\b/.test(n.className || ''))?.textContent === key);
+  .find(r => r.attrs?.['data-key'] === key);
 export const controlOf = (p, key) => p.all(rowOf(p, key)).find(n => n.tagName === 'select' || n.tagName === 'input');
 // 0274: the view's one Save button.
 export const saveButton = p => p.all(p.byId('settings')).find(n => n.tagName === 'button' && /\bsave-all\b/.test(n.className || ''));

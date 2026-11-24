@@ -49,7 +49,7 @@ const said = (p, key) => p.all(rowOf(p, key)).filter(n => n.tagName === 'p' && !
 // The Settings view's rows: each element with the class setting that isn't inside another.
 const topRows = p => p.all(p.byId('settings')).filter(n => /\bsetting\b/.test(n.className || '')
   && !(function up(m) { return m && m !== p.byId('settings') && (/\bsetting\b/.test(m.className || '') || up(m.parentNode)); })(n.parentNode));
-const nameOf = (p, row) => p.all(row).find(n => /\bname\b/.test(n.className || ''))?.textContent;
+const nameOf = (p, row) => row.attrs?.['data-key']; // 0729: the setting a row is for, by its key, as its name is words now
 const inside = (p, outer, n) => p.all(outer).includes(n);
 
 test('0381 AC1: each agent and its model are two lists on one row, the agent\'s first, offering the agent\'s choices and its models', async () => {

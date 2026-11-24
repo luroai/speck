@@ -37,7 +37,7 @@ function sides(sels, rs = RS) {
 }
 
 // Every button with a box of its own: its selectors, the generic `button` first. Left out: speck's screen (0438), the
-// switches, whose track is the control, and the linked ids, which are words.
+// switches, whose track is the control, and the linked ids and a setting's name in Settings (0729), which are words.
 const BUTTONS = {
   'Full ticket / Review pack on an open card': ['button', '.full-open', '.q .full-open'],
   'Stop build': ['button', '.q .stop-build'],
@@ -51,7 +51,6 @@ const BUTTONS = {
   'Reload page': ['button', '.foreman .reload'],
   'Settings\' Save beside a setting': ['button', '#settings .setting .save', '#settings .arow .save'],
   'Settings\' Save': ['button', '#settings .save-all'],
-  'Settings\' info buttons': ['button', '#settings .switch-row .info', '#settings .setting .info'],
   'Settings\' question\'s buttons': ['button', '#settings-unsaved button', '#settings-unsaved button.save-all'],
   'Settings\' question\'s other buttons': ['button', '#settings-unsaved button', '#settings-unsaved button.secondary'], // 0603: Discard and Keep editing
   'Close': ['button', '#full-ticket .close', '#doc-view .close', '#foreman .close', '#settings .close'],
