@@ -1,7 +1,7 @@
 ---
 id: "0741"
 title: "Fix tmp-cleanup's check for Node's default reporter"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: "speck/ideas/done/2026-11-24-fix-tmp-cleanup-for-nodes-default-reporter.
 after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T23:12:02.545Z"
+approved: "2026-11-24T23:15:55.010Z"
 
 ---
 # 0741 · Fix tmp-cleanup's check for Node's default reporter
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 `test/tmp-cleanup.test.mjs` AC1 AC2 expect TAP's `# fail 2` from a nested `node --test` run, but Node's default reporter prints `ℹ fail 2` when its output is captured. Every `speck test --files` run includes this check, so five builds on 2026-11-24 saw it fail for no fault of their own and spent review rounds explaining it.
@@ -54,9 +55,14 @@ To see it, later builds should stop reporting these failures as someone else's p
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 83,059
+- Elapsed since build started: 4 min
+- Changed lines: 0 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up (inbox): `speck/ideas/2026-11-24-keep-test-summaries-working-on-node-24.md`: a failing `--related` run and the reviewer's summary need TAP, which Node 24 doesn't print by default.
 
