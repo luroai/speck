@@ -1,7 +1,7 @@
 ---
 id: "0730"
 title: "Make Settings' controls look like Cursor's"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0729"]                # ticket ids that must be done first
 created: 2026-11-24
+started: "2026-11-24T18:50:03.869Z"
 
 ---
 # 0730 · Make Settings' controls look like Cursor's
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Settings uses the browser's plain select boxes and text fields and a black-and-white switch, which look unlike the controls beside them in Cursor: green switches, compact borderless menus reading "Default ⌄", and small rounded buttons.
