@@ -47,7 +47,7 @@ Every Pipeline log line still reads as a whole sentence after paths and commands
 - speck (2026-11-24 13:00 UTC) told you: Most of the extra time went on tests: changing the panel's model file pulled in 441 related test files, and with the machine's load near 80 the first runs hit their 2- and 10-minute time limits before the build narrowed them to 46. It's now on its first review round's fix and moving normally; nothing on main is broken. Why: The build log shows two test runs timing out between 12:31 and 12:43, a narrowed run passing 563 tests, and the failures it saw passing on main once it fixed its own change.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The Pipeline log hides file locations and commands so it stays readable on a phone. Lines that used to be left with a gap, such as "Conflicting files:" with nothing after it, or "or run, to carry on", now read as whole sentences or leave the empty part out. To see it, open the Pipeline log after a build stops, is paused or is cancelled. Ordinary lines are unchanged.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -56,6 +56,7 @@ Every Pipeline log line still reads as a whole sentence after paths and commands
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
+Follow-ups: none.
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ## Review rounds
@@ -133,6 +134,84 @@ Every Pipeline log line still reads as a whole sentence after paths and commands
     ],
     "escalation_question": "",
     "summary": "The targeted log messages read more clearly, and the related tests passed. One fix is needed: the cleanup also changes ordinary sentences and can erase a message that contains no path or command."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "1d2ab1eb2f8948cb2529afa1b66992daf2dd7330",
+    "session": "continued",
+    "thread_id": "01a20da1-1b08-7920-abe7-70af1f0759b6",
+    "builder_response": "F1 fixed: runPlain only tidies dangling words when it removed something, and the 'Last lines of' rule needs 'of <token>:'. Added regression tests for ordinary sentences. Ran 46 related files, test/pipeline-0706.test.mjs and test/split-0018.test.mjs.\n",
+    "seconds": 20,
+    "usage": {
+      "input_tokens": 212160,
+      "cached_input_tokens": 168960,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2014,
+      "reasoning_output_tokens": 207
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 4789,
+      "cached": 79616,
+      "write": 0,
+      "output": 662
+    },
+    "cost_usd": 0.0241596,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-24T13:10:07.492Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "All eight AC1 examples in test/pipeline-0706.test.mjs pass against the current runLogSummary implementation, covering each named source message."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The source wording names the config file and done folder; runPlain removes the clauses containing the other hidden details. The AC2 test confirms that the resume instruction retains its meaning."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "runPlain now gates dangling-word cleanup on content having been removed and narrows the log-tail rule. Both AC3 tests pass, including the ordinary sentences identified in F1."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Reported related-test results show 564 passes, zero failures and three skips. Independently executed all 11 ticket test cases against the current model successfully."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-model.js",
+        "issue": "Cleanup previously changed or erased ordinary sentences containing no path or command.",
+        "suggested_fix": "Completed: cleanup is conditional, the log-tail pattern is narrower, and regression tests cover the reported examples.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The targeted Pipeline messages read clearly after paths and commands are hidden. The ordinary-text regression is fixed and covered by tests. No blocking concerns remain."
   }
 }
 ```
