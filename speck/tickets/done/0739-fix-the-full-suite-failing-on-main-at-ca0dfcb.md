@@ -1,7 +1,7 @@
 ---
 id: "0739"
 title: "Fix the full suite failing on main at ca0dfcb"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T17:46:15.632Z"
 approved: "2026-11-24T17:53:42.990Z"
+finished: "2026-11-24T17:56:35.733Z"
 
 ---
 # 0739 · Fix the full suite failing on main at ca0dfcb
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The full suite fails on main at commit ca0dfcb (ca0dfcb1c1f0915b47bdc98deacf395f57422cfb). Failing tests:
