@@ -44,6 +44,9 @@ Every saved test password counts as a private word in every commit, in any case.
 - `saveLogin` (`scripts/logins.mjs`) checks only for an empty password and line breaks. `privateHit` (`scripts/private-words.mjs`) matches lower-cased lines with `includes`.
 - Decision: warn only, since real test apps often use simple passwords and there may be nobody to answer a prompt.
 
+- Failing before this build: none
+- Self-check: no changes
+
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
 
