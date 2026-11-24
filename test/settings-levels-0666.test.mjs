@@ -150,14 +150,15 @@ test('0666 AC3: every list and box has a visible label, no line repeats a level\
 
 // ---------- AC4 ----------
 
-test('0666 AC4: Remove is a small text button, and Add level comes after the add form\'s fields', async () => {
+test('0666 AC4: Remove is a small rounded button, and Add level comes after the add form\'s fields', async () => {
   const p = await opened(repoWith('  quick: {}').dir);
   const remove = p.all(rowNamed(p, 'quick')).find(n => n.tagName === 'button');
   assert.equal(remove.textContent, 'Remove');
   assert.ok(has(remove, 'ltextbtn') && !has(remove, 'save'), remove.className);
   const rule = styles().match(/#settings \.levels \.ltextbtn \{([^}]*)\}/)?.[1] ?? '';
   assert.match(rule, /font-size: 12px/);
-  assert.match(rule, /border: 0/);
+  assert.match(rule, /border: 1px solid var\(--line\)/); // 0730: as Cursor's small Open button, not an underline
+  assert.match(rule, /border-radius: 10px/);
   assert.match(rule, /background: none/);
   const order = p.all(adding(p)).filter(n => ['select', 'input', 'button'].includes(n.tagName)).map(n => n.tagName);
   assert.deepEqual(order, ['input', 'select', 'select', 'button']);

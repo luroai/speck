@@ -594,13 +594,19 @@ $('more-stats').addEventListener('click', () => { moreStats = !moreStats; render
 function toggleSwitch(id, label) {
   const b = el('button', 'switch');
   b.type = 'button';
-  b.id = id;
+  if (id) b.id = id; // 0730: a setting's on/off switch has no id of its own; Auto-build keeps run-switch
   b.setAttribute('role', 'switch');
   b.setAttribute('aria-label', label);
   return b;
 }
 function drawToggle(b, on, word) {
   b.setAttribute('aria-checked', String(on));
+  b.value = on ? 'true' : 'false'; // 0730: on/off settings read and write this as a list once did
+  // Keep the track and knob when they're already there (0370: flipping mustn't take nodes out of the row).
+  const kids = [...(b.children || [])];
+  const track = kids.find(c => /\btrack\b/.test(String(c.className || '')));
+  const state = kids.find(c => /\bstate\b/.test(String(c.className || '')));
+  if (track && state) { state.textContent = word; return; }
   b.replaceChildren(el('span', 'track', null, el('span', 'knob')), el('span', 'state', word));
 }
 document.addEventListener('keydown', e => {
