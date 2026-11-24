@@ -18,7 +18,7 @@ source: "speck/ideas/done/2026-11-10-show-a-plan-card-s-chain-as-facts.md"      
 after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T11:55:04.332Z"
-approved: "2026-11-24T12:40:19.135Z"
+approved: "2026-11-24T12:55:38.312Z"
 
 ---
 # 0703 · Show a Plan card's chain as facts
@@ -57,12 +57,13 @@ An open card in the Plan lane now shows what a ticket waits for and what waits o
 ## Review log
 Round 1 (codex): changes requested: F1 The chain facts inherit the ordinary three-column facts table's nowrap and overflow:hidden rules.; F2 The refresh test uses an unchanged board throughout.; F3 The review's test evidence still contains a failure and predates the final assertion change.
 Round 2 (codex): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 577,297
-- Elapsed since build started: 45 min
+- Reviewer tokens: 773,994
+- Elapsed since build started: 61 min
 - Changed lines: 31 (limit 5000)
 - Follow-up (tidy-up, no idea written): the old `.deps` / `.deps-slots` chain-box CSS and its test checks are now unused.
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
@@ -262,6 +263,106 @@ Round 2 (codex): approve.
     ],
     "escalation_question": "",
     "summary": "Plan cards now show readable chain facts, navigate to linked tickets on the page, and update without duplicates. All previous findings are resolved, and the reviewed tests pass."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "ef95973efd2cce903d9721551c3b84ee5b1cc0e3",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a20d87-4611-7611-be44-c25eb97218d0",
+    "builder_response": "- Tests run: test/panel-0703.test.mjs test/panel-0613.test.mjs test/panel-0154.test.mjs test/panel-0467.test.mjs test/panel-0041.test.mjs (one at a time; all 49 pass)\n- Merged main cleanly (no conflicts).\n- Failing on the merge: panel-0613 AC3 matched the touch-screen rule `.waits-facts button.waits-link { min-height: 44px; }` exactly. This ticket added `.chain-facts button.chain-id` to that same rule (so chain ids on a Plan card are 44 px tall), so the test now allows that selector too. Its check (a link is 44 px on touch) is unchanged. Same kind of change I made earlier to panel-0154.\n",
+    "seconds": 27,
+    "usage": {
+      "input_tokens": 770962,
+      "cached_input_tokens": 671104,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 3032,
+      "reasoning_output_tokens": 217
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 6587,
+      "cached": 189312,
+      "write": 0,
+      "output": 798
+    },
+    "cost_usd": 0.0400852,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-24T12:55:35.816Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "depsBox still renders chainFacts for Plan cards. Passing panel-0703 AC1 tests verify both facts, no Chain box and unclipped values at 320 px."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "chainFacts passes inPane=false to depNode on Plan cards, preserving goTo navigation. panel-0703 AC2 and panel-0154 navigation tests pass."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "isDeps recognises chain-facts for replacement by putDeps. Passing panel-0703 AC3 changes a linked ticket to building and verifies updated content in exactly one set of facts."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "depsBox returns null without dependencies. Passing panel-0703 AC4 verifies no chain facts or Chain box for an unconnected ticket."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Fresh test output reports 49 passes, no failures and no skips. The panel-0613 assertion still requires min-height: 44px for waits-link; it now permits the additional chain-id selector."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-cards.css",
+        "issue": "Chain facts previously inherited narrow columns and clipped values.",
+        "suggested_fix": "Completed: two columns and wrapping values remain intact after merging main, with passing browser coverage.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "test/panel-0703.test.mjs",
+        "issue": "The original refresh test did not change dependency state.",
+        "suggested_fix": "Completed: the test changes a linked ticket's state and checks updated content without duplicates.",
+        "state": "resolved"
+      },
+      {
+        "id": "F3",
+        "severity": "blocking",
+        "file": "/tmp/speck-0703-tests.txt",
+        "issue": "Earlier test evidence contained a failure and predated the final assertion change.",
+        "suggested_fix": "Completed: fresh post-merge output shows all 49 tests passing.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The merge preserves the approved behaviour. Plan cards show readable chain facts, navigate correctly and refresh without duplicates. The adjusted test retains its height check, and all 49 reviewed tests pass."
   }
 }
 ```
