@@ -115,7 +115,7 @@ $('project').addEventListener('change', () => ($('project').value === ALL_PROJEC
 // answering stays in Projects, and counts for nothing in the figures.
 const BRIDGE_MS = 5000, BRIDGE_GIVE_UP_MS = 15000, ASKED_TICKET = 'speck-open-ticket';
 const MOOD_RANK = ['asleep', 'watching', 'focused', 'asking']; // busiest last, as speckMood puts asking ahead of focused
-const NEED_WHY = new Map([['question', 'Question'], ['manager', 'Engineering manager'], ['stopped', 'Build stopped'], ['full_suite', 'Full suite'], ['ship', 'At Ship'], ['high_risk', 'High risk']]); // 0697: stopped, full_suite
+const NEED_WHY = new Map([['question', 'Question'], ['manager', 'Engineering manager'], ['stopped', 'Build stopped'], ['full_suite', 'Full suite'], ['bare_main', 'Main checkout'], ['ship', 'At Ship'], ['high_risk', 'High risk']]); // 0697: stopped, full_suite. 0749: bare_main
 const NEED_SAYS = new Map([['question', 'Blocked, waiting for your answer.'], ['manager', 'Your engineering manager has a question.'], ['stopped', 'Its build stopped before finishing.'], ['ship', 'Approved, and waiting for you at Ship.'], ['high_risk', 'High risk, so it\'s waiting for you at Ship.']]);
 let bridgeOpen = false, bridgeBody = null, bridgeError = null, bridgeAsking = false, bridgeTimer = null, bridgeDrawn = null, bridgeFace = null;
 const bridgeButtons = new Map(); // what's on it to press, by what it opens, so a redraw keeps the focus
@@ -227,7 +227,8 @@ function bridgeParts(m) {
   const cards = m.needs.map(n => {
     const id = String(n.id), why = NEED_WHY.get(n.why) || 'Needs you', reason = String(n.detail || '').split(/\s*\n\s*/).filter(Boolean).join(' ') || NEED_SAYS.get(n.why) || '';
     // 0697: a failing full suite is no ticket's, so its card names only its project, and pressing it opens that project
-    if (n.why === 'full_suite') return bridgeButton(`need ${n.port} full`, 'bridge-card', () => pressBridgeProject(n.port),
+    // 0749: as is a main checkout that isn't a work tree
+    if (n.why === 'full_suite' || n.why === 'bare_main') return bridgeButton(`need ${n.port} ${n.why === 'full_suite' ? 'full' : 'bare'}`, 'bridge-card', () => pressBridgeProject(n.port),
       el('span', 'bridge-where', `${n.project} · ${why}`), el('span', 'bridge-title', String(n.title || '')), el('span', 'bridge-reason', reason));
     return bridgeButton(`need ${n.port} ${id}`, 'bridge-card', () => pressBridgeTicket(n.port, id),
       el('span', 'bridge-where', `${n.project} · ${id} · ${why}`), el('span', 'bridge-title', String(n.title || '')), el('span', 'bridge-reason', reason));

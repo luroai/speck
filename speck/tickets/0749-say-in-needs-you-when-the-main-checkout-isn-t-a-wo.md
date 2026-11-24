@@ -42,6 +42,8 @@ A bare main checkout shows under Needs you, in the panel and `speck status`, wit
 ## Notes
 - `bareMain()` in `scripts/bare-main.mjs` (0740).
 - Failing before this build: none
+- A bare main checkout counts under Needs you while speck run is off too (the bar's word is then `Needs you 1` rather than Off), as builds started by hand fail and nothing ships until it's set back. Other things that need you still aren't counted while it's off.
+- Self-check: narrowed the real panel test's name to what it checks (its state, not the bridge summary, which the summary tests cover)
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

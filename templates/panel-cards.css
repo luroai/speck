@@ -166,6 +166,9 @@
      still reaches above and below its line. Open, a Capture or Plan row's title wraps as needed. */
   .q.row .top .line .title, .item.row:not(.open) .line .title, #shipped .line .title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .q.row .where, .item.row:not(.open) .checks, #shipped .meta { white-space: nowrap; overflow-x: clip; overflow-y: visible; text-overflow: ellipsis; }
+  /* 0749: the bare main checkout's row has nothing to open, so the command that sets it back wraps rather than being cut off */
+  .q.row.bare-main-row .where { white-space: normal; overflow-wrap: anywhere; }
+  .q.row.bare-main-row .where .cmd { font-family: var(--font-mono); font-size: 12px; }
   .item.row:not(.open) .checks { margin-left: -14px; padding-left: 14px; } /* the row's padding inside the clip, where the priority's box reaches */
   #shipped .line { height: 20px; } /* the title's line, so a tag in it, a pixel or two taller on its baseline, leaves the row as tall as one without */
   /* 0586: an empty Capture or Plan: speck asleep over its line, centred. 0608: Build and Shipped too */

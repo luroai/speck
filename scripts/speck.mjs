@@ -26,7 +26,7 @@ import { cmdConfig } from './config.mjs'; import { cmdConfigShow } from './setti
 import { cmdTest } from './turns.mjs';
 import { cmdPanel, panelServer } from './panel.mjs';
 import { cmdRun, cmdPause, cmdPlay, cmdStop, resumeCommandOf, processRows, buildKilled, resumeHint, runState } from './run.mjs';
-import { foremanView, foremanLines, readForeman, fixingOf } from './foreman.mjs'; import { leftChecks, appChecking } from './app-check.mjs'; // 0679. 0713: appChecking
+import { foremanView, foremanLines, readForeman, fixingOf } from './foreman.mjs'; import { bareMain } from './bare-main.mjs'; import { leftChecks, appChecking } from './app-check.mjs'; // 0679. 0713: appChecking
 import { withForeman, foremanBoard, foremanTicketLines, decidedFor, withCalls } from './foreman-took.mjs';
 import { agentView, readAgentState, cmdForeman, cmdWatch } from './foreman-agent.mjs';
 import { buildStop, countStop, wontResume } from './stop-wait.mjs'; import { removeScratch } from './scratch.mjs';
@@ -454,7 +454,7 @@ function cmdStatus(args = []) {
   if (!tickets.length) return console.log('No tickets yet. Capture an idea, then run /speck-ticket.');
   // 0285: the Foreman, as the panel's header shows it, from speck run's own record. Blocked tickets are listed below.
   const board = foremanBoard(tickets, cfg, runs, watchAgentOf(runs, tickets)), foremanOn = new Map(board.map(b => [b.id, b])); // 0317
-  for (const line of foremanLines(foremanView({ run: runState(runs), record: readForeman(runs), tickets: board, fixing: fixingOf(cfg), agent: agentView(runs, board, name), name }))) console.log(line);
+  for (const line of foremanLines(foremanView({ run: runState(runs), record: readForeman(runs), tickets: board, fixing: fixingOf(cfg), agent: agentView(runs, board, name), name, bare: bareMain(repo) }))) console.log(line); // 0749: bare
   const order = ['approved', 'blocked', 'reviewing', 'building', 'ready', 'draft', 'done', 'cancelled'];
   for (const s of order) {
     const group = tickets.filter(t => t.fm.status === s).map(t => ({ t, id: t.fm.id, type: ticketType(t), priority: ticketPriority(t) })).sort(byPriority);

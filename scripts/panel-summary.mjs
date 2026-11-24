@@ -30,6 +30,7 @@ function atShip(t, tickets, runOn) {
 // (waiting at Ship, and high risk), and detail the question's words. Blocked questions count as the status word counts them.
 // 0697: so do 'stopped' (a build stopped that nothing will carry on, 0616) and 'full_suite' (the full suite failing on the
 // base branch with no fix ticket on its way, 0630), its id '', and detail its failing tests or its exit code.
+// 0749: and 'bare_main', the main checkout not a work tree, its id '' too.
 export function projectSummary({ board, foreman, run, now = Date.now() }) {
   const tickets = list(board && board.tickets).filter(t => t && typeof t === 'object');
   const f = foreman && typeof foreman === 'object' ? foreman : {}, runOn = !!(run && run.on), since = now - WEEK_MS;
@@ -44,7 +45,10 @@ export function projectSummary({ board, foreman, run, now = Date.now() }) {
   const full = f.full && typeof f.full === 'object' && typeof f.full.commit === 'string' && !f.full.fixing ? f.full : null, failing = full ? list(full.tests).map(String) : [];
   const suite = full ? [{ id: '', title: `Full suite fails on ${text(full.base) || text(f.base) || 'the base branch'}`, why: 'full_suite',
     detail: `${full.commit.slice(0, 7)} · ${failing.length ? failing.join('; ') : `exit code ${Number.isInteger(full.status) ? full.status : 1}, and its output names no failing tests`}` }] : [];
-  const needs = [...questions, ...manager, ...stopped, ...suite, ...ship];
+  // 0749: a main checkout that isn't a work tree, first, its id '' and detail the command that sets it back.
+  const b = f.bare_main && typeof f.bare_main === 'object' && typeof f.bare_main.command === 'string' ? f.bare_main : null;
+  const bare = b ? [{ id: '', title: 'Main checkout isn\'t a work tree', why: 'bare_main', detail: `Set it back with ${b.command}` }] : [];
+  const needs = [...bare, ...questions, ...manager, ...stopped, ...suite, ...ship];
   const building = tickets.filter(t => t.status === 'building' || t.status === 'reviewing').length;
   // 0579: speck's mood from the board, for its face: asleep while speck run is off, asking while anything needs you,
   // focused while a build is building or reviewing or a ticket is shipping, otherwise watching.

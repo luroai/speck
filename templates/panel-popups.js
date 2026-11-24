@@ -8,6 +8,7 @@ let fullFrom = null; // 0326: { id, list } of the Full ticket button that opened
 let focusBack = false; // 0326: the pane has closed, so the next render puts the focus back
 let foremanOpen = false; // 0285: whether the Foreman's detail is open
 let fullSuiteOpen = false, fullSuiteBuilt = null, fullSuiteRowKept = null; // 0655: whether the failing full suite's view is open, what it was last drawn from, and its Build row as last made
+let bareMainRowKept = null; // 0749: the bare main checkout's Build row as last made
 let decidedOpen = false, decidedBuilt = null, decidedLineSaid = null; // 0568: whether the Decided for you list is open, and what it was last drawn from. 0590: and what the line under the bar last said
 let runLog = null, runLogFor = null, runLogAsking = false, runLogShown, runLogDrawn = null; // 0415: runLogShown: the log's lines as drawn (runLogDrawn), joined, undefined when not drawn
 let runLogFilter = 'all', logFilters = [], logFace = null, logMood = null, logSaid = null, logScheduled = null; // 0592: the filter chosen in the Pipeline log, its buttons, and speck's face and line in it
@@ -925,6 +926,22 @@ function fullSuiteRow(f) {
   top.addEventListener('keydown', pressWithKeys);
   const node = el('div', 'q row full-suite-row', null, top);
   fullSuiteRowKept = { sig, node };
+  return node;
+}
+// 0749: the main checkout while it isn't a work tree, as scripts/foreman.mjs gives it (bare_main), or null.
+function bareMainOf(st) {
+  const b = st && st.foreman && typeof st.foreman === 'object' && st.foreman.bare_main && typeof st.foreman.bare_main === 'object' ? st.foreman.bare_main : null;
+  return b && typeof b.command === 'string' && b.command ? { command: b.command, says: typeof b.says === 'string' ? b.says : '' } : null;
+}
+// 0749: its row, first under Build's Needs you, with the orange dot and the command that sets it back, which wraps
+// rather than being cut off. There's nothing more to open, so it isn't a button, and its tooltip says why it needs you.
+function bareMainRow(b) {
+  const sig = signature([b.command, b.says]);
+  if (bareMainRowKept && bareMainRowKept.sig === sig) return bareMainRowKept.node;
+  const top = el('div', 'top', null, el('div', 'line', null, titled(el('span', 'title', 'Main checkout isn\'t a work tree'))),
+    wholeTip(detailsLine('where needs', [el('span', 'said', 'Set it back with ', el('code', 'cmd', b.command))]), null, b.says || `Set it back with ${b.command}`));
+  const node = el('div', 'q row bare-main-row', null, top);
+  bareMainRowKept = { sig, node };
   return node;
 }
 function closeFullSuite() {
