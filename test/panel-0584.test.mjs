@@ -227,7 +227,7 @@ test('0584 AC3: its counter runs on the clock, and a review pack over it stops t
   await open(p, '0801');
   const sub = inLive(p, 'sub');
   sub.textContent = 'stale';
-  [...p.intervals.values()].find(i => i.ms === 1000).fn();
+  [...p.intervals.values()].find(i => i.ms === 250).fn();
   assert.match(inLive(p, 'sub').textContent, /^\d/);
   await p.set({ tickets: [building('0801', { rounds: [{ round: 1, reviewer: 'codex', verdict: 'approve', seconds: 1, tokens: 1 }] })] });
   p.press(p.all(pane(p)).find(n => n.className === 'pane-row' && n.textContent === 'Review pack'));

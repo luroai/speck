@@ -69,7 +69,7 @@ test('0434 AC2: the one time keeps counting on its own timer, and nothing counts
   const p = fakePage([board()], { Date: Clock });
   await p.settle();
   at += 2 * 60000;
-  for (const w of p.intervals.values()) if (w.ms === 1000) w.fn();
+  for (const w of p.intervals.values()) if (w.ms === 250) w.fn();
   assert.equal(statusOf(card(p, '0901')).textContent, 'Writing · 3 min');
   assert.equal(statusOf(card(p, '0905')).textContent, 'Shipping · 19 min');
 });

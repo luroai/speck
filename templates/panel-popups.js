@@ -456,7 +456,7 @@ function paneTone(t) {
   if (paneFrom === 'shipped' || !t.inFlight) return '';
   const d = doing(t, t.shipping || shippingId === String(t.id), speckCalled());
   if (d.moving) return 'working';
-  return d.tone === 'to-ship' || (d.tone === 'bad' && t.foreman_will !== true) ? 'waits' : '';
+  return d.tone === 'to-ship' || (d.tone === 'bad' && t.foreman_will !== true && t.app_checking !== true) ? 'waits' : ''; // 0713
 }
 // 0583: its four bars, each 'done', 'now' (filled, where it is), 'waits' (filled in orange: it waits for you there) or empty.
 const PANE_STEPS = ['Ready', 'Built', 'Reviewed', 'Ship'];
@@ -606,7 +606,7 @@ function criteriaCallout(t) {
 }
 // 0465, 0583: the track and facts, by the list the ticket is in, and (0467) its dependency box. 0588: the callout between them.
 function paneSteps(t) {
-  return el('div', 'steps', null, paneTrack(t, paneTone(t)), criteriaCallout(t), paneFacts(t), paneFrom === 'shipped' ? null : withDeps(t, true));
+  return el('div', 'steps', null, paneTrack(t, paneTone(t)), criteriaCallout(t), paneFacts(t), paneFrom === 'shipped' ? null : withDeps(t, true), paneFrom === 'shipped' ? null : goneNote(t)); // 0704
 }
 // What the pane's track and table show. The callout is compared by what it's drawn from, in renderFull.
 const stepsShown = n => {

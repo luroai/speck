@@ -19,17 +19,25 @@ export function ticketAt(repo, ref, id) {
 const baseName = f => f.slice(f.lastIndexOf('/') + 1);
 
 // The id in `fm`'s built_on:, or null when it has none. speck start writes only ticket ids there, so anything else is none.
-const builtOnId = fm => /^\d+$/.test(String(fm?.built_on ?? '').trim()) ? String(fm.built_on).trim() : null;
+export const builtOnId = fm => /^\d+$/.test(String(fm?.built_on ?? '').trim()) ? String(fm.built_on).trim() : null;
 
-// The ticket `fm`'s build started on, while it isn't done on the base branch: { id, branch }, with its branch, or null
-// once it's gone. null for a ticket built on nothing, or on a ticket that has shipped.
+// The ticket `fm`'s build started on, while it isn't done on the base branch: { id, branch, cancelled }, with its branch,
+// or null once it's gone. null for a ticket built on nothing, or on a ticket that has shipped. 0710: `cancelled` when
+// that ticket is cancelled, on the base branch or committed so on its own branch (0686), so it will never ship.
 export function builtOnWaiting(repo, cfg, fm) {
   const v = builtOnId(fm);
   if (!v) return null;
-  const id = padId(v);
-  if (ticketAt(repo, cfg.base_branch, id)?.fm.status === 'done') return null;
-  return { id, branch: ticketBranches(repo, cfg, id)[0] ?? null };
+  const id = padId(v), status = ticketAt(repo, cfg.base_branch, id)?.fm.status;
+  if (status === 'done') return null;
+  const branch = ticketBranches(repo, cfg, id)[0] ?? null;
+  return { id, branch, cancelled: status === 'cancelled' || (!!branch && ticketAt(repo, branch, id)?.fm.status === 'cancelled') };
 }
+
+// 0710: why a ticket built on a ticket that was cancelled can't ship, with the two ways on, as one sentence starting
+// in lower case, so it reads the same alone and inside another message.
+export const cancelledWhy = (pad, on, base) => `ticket ${pad} was built on ticket ${on}, which was cancelled, so it can't ship as it is. Either rebuild it from ${base} with \`speck built-on ${pad} --rebuild\`, or keep ${on}'s work in it and have all of it reviewed as ${pad}'s own with \`speck built-on ${pad} --keep\``;
+export const CANCELLED_WHY = /^ticket \d+ was built on ticket \d+, which was cancelled,/;
+export const CancelledWhy = (...a) => { const s = cancelledWhy(...a); return `${s[0].toUpperCase()}${s.slice(1)}.`; };
 
 // Where the own change of a ticket built on another starts, as of `ref`: git's own merge of where `ref` meets the base
 // branch and where it meets that ticket's branch, which is what speck start's merge made. Once that ticket has shipped,
@@ -114,5 +122,6 @@ export function builtOnCheck(repo, cfg, pad) {
   const branches = ticketBranches(repo, cfg, pad);
   if (branches.length !== 1) return; // shipTicket says why
   const on = builtOnWaiting(repo, cfg, ticketAt(repo, branches[0], pad)?.fm);
+  if (on?.cancelled) throw new SpeckError(`${CancelledWhy(pad, on.id, cfg.base_branch)} Nothing was shipped.`);
   if (on) throw new SpeckError(`Ticket ${pad} was built on ticket ${on.id}, which hasn't shipped yet, so nothing was shipped. Ship ${on.id} first, then ship ${pad}.`);
 }

@@ -59,7 +59,7 @@ test('0153 AC1: the ship\'s time isn\'t shown or counted between polls (0434)', 
   await p.settle();
   assert.ok(!texts(p, row(p)).includes('0 min'));
   now += 60000;
-  for (const { fn, ms } of p.intervals.values()) if (ms === 1000) fn();
+  for (const { fn, ms } of p.intervals.values()) if (ms === 250) fn();
   assert.ok(!texts(p, row(p)).includes('1 min'), texts(p, row(p)).join(' | '));
   assert.ok(texts(p, row(p)).includes('50 min'), 'its build\'s time, held at its approval');
 });

@@ -1,0 +1,52 @@
+---
+id: "0737"
+title: "Wait to start dependent builds when approved work conflicts with main"                # one outcome, no "and"
+status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
+size: S                  # S | M  (L is never ready; split it)
+risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
+kind: code               # code | task (what the build does: changes the project's code, or does a task and leaves its result in outputs/)
+type: fix                 # blank | bug (a ticket that fixes a defect) | fix (fixes a broken base branch, at priority 0)
+level: ""                # blank: no level, so the settings decide. Otherwise one of the levels in speck/config.yml, such as quick, balanced or deep
+builder: ""              # blank: the builder your settings give when the build starts
+builder_model: ""        # blank: your settings' builder_model, given only to the builder they name
+builder_effort: ""       # blank: your settings' builder_effort. Otherwise low | medium | high | xhigh | max
+reviewer: ""             # blank: the reviewer your settings give when each review round starts
+reviewer_model: ""       # blank: your settings' reviewer_model (blank there too: the reviewer's default)
+reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low | medium | high | xhigh | max
+source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
+after: []                # ticket ids that must be done first
+created: 2026-11-24
+
+---
+# 0737 · Wait to start dependent builds when approved work conflicts with main
+
+**Status:** 📝 draft
+
+## Problem
+0730 was launched because 0729 is approved, but its approved branch conflicts with main, so the scheduler needs to wait for that conflict to clear rather than launch a build that cannot start.
+
+## Outcome
+<!-- What is true when this ships. One outcome. -->
+
+## Acceptance criteria
+<!-- 1–5 testable statements. Each one becomes a test before any code is written. `speck check <id>` runs the ready check on the ticket. -->
+1.
+
+## Out of scope
+-
+
+## Notes
+<!-- Constraints, links and decisions. Optional. -->
+
+## In plain words
+<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+
+## Blocked question
+<!-- Filled in by speck only when status is blocked. -->
+
+## Review log
+<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+
+## Delivery log
+<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->

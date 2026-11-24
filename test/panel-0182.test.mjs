@@ -3,50 +3,12 @@ import './support/tmp.mjs'; // first: sends every temporary folder into one per-
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import http from 'node:http';
-import { spawn, spawnSync } from 'node:child_process';
-import { pathToFileURL } from 'node:url';
-import { ROOT, findChrome, browserPage } from './support/panel.mjs';
+import { findChrome, browserPage } from './support/panel.mjs';
+import { runFile, runOutOfTime, goneWithin10s } from './support/chromium-file.mjs';
 
 const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
-const SUPPORT = pathToFileURL(path.join(ROOT, 'test', 'support', 'panel.mjs')).href;
-
-// The pids of every process whose command line mentions `marker`.
-const mentioning = marker => spawnSync('ps', ['-A', '-ww', '-o', 'pid=,command='], { encoding: 'utf8' }).stdout.split('\n')
-  .filter(l => l.includes(marker)).map(l => Number(l.trim().split(/\s+/)[0])).filter(pid => pid && pid !== process.pid);
-
-// Runs `body` (test code that has browserPage) as a test file of its own, with its own temporary folder, so every
-// Chromium it starts has its profile there. Resolves once the file's process has exited, with the folder, the pids it
-// logged and when it exited. The file doesn't import tmp.mjs, so only browserPage's own clean-up can end Chromium.
-async function runFile(body, args = []) {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-0182-file-'));
-  const log = path.join(dir, 'pids.log');
-  const file = path.join(dir, 'browser.test.mjs');
-  fs.writeFileSync(file, `import { test } from 'node:test';\nimport fs from 'node:fs';\nimport { browserPage } from ${JSON.stringify(SUPPORT)};\n`
-    + `const logPid = p => fs.appendFileSync(${JSON.stringify(log)}, p + '\\n');\n${body}\n`);
-  const env = { ...process.env, TMPDIR: dir, TMP: dir, TEMP: dir };
-  delete env.NODE_TEST_CONTEXT; // a test file of its own, not one inside this one's run
-  const child = spawn(process.execPath, ['--test', ...args, file], { cwd: dir, env, stdio: ['ignore', 'pipe', 'pipe'] });
-  let out = '';
-  child.stdout.on('data', d => { out += d; });
-  child.stderr.on('data', d => { out += d; });
-  const code = await new Promise((resolve, reject) => {
-    const t = setTimeout(() => { child.kill('SIGKILL'); reject(new Error(`the test file didn't finish within 60 s:\n${out}`)); }, 60000);
-    child.on('exit', c => { clearTimeout(t); resolve(c); });
-  });
-  const pids = fs.existsSync(log) ? fs.readFileSync(log, 'utf8').trim().split('\n').map(Number) : [];
-  return { dir, code, out, pids, exited: Date.now() };
-}
-
-// Waits up to 10 s from when the file exited for every process started in its folder to be gone.
-async function goneWithin10s({ dir, exited, out }) {
-  let left = mentioning(dir);
-  while (left.length && Date.now() - exited < 10000) { await new Promise(r => setTimeout(r, 100)); left = mentioning(dir); }
-  for (const pid of left) try { process.kill(pid, 'SIGKILL'); } catch { /* gone */ }
-  assert.deepEqual(left, [], `Chromium still running 10 s after the test file finished:\n${out}`);
-}
 
 test('0182 AC1: a test file starts Chromium once, however many of its tests open a real browser, at the same time or one after another', skip, async () => {
   const f = await runFile(`
@@ -168,8 +130,8 @@ test('then another passes', async () => { const b = await browserPage('about:bla
 });
 
 test('0182 AC3: Chromium has closed within 10 s of a test file finishing that ran out of time under --test-timeout', skip, async () => {
-  const f = await runFile(`test('hangs', async () => { const b = await browserPage('about:blank'); logPid(b.pid); await new Promise(() => {}); });
-test('never starts', () => {});`, ['--test-timeout=1500']);
+  const f = await runOutOfTime(`test('hangs', async () => { const b = await browserPage('about:blank'); logPid(b.pid); await new Promise(() => {}); });
+test('never starts', () => {});`);
   assert.notEqual(f.code, 0, f.out);
   assert.equal(f.pids.length, 1, f.out);
   await goneWithin10s(f);

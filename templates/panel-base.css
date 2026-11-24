@@ -127,6 +127,13 @@
     color-scheme: dark;
   }
 
+  /* 0708: with the system's more-contrast setting on, edges and small muted text meet 0161's limits (3:1 and 7:1), which
+     the chosen look relaxes. Without the setting, every colour above stays as it is. */
+  @media (prefers-contrast: more) {
+    :root { --border: #7F8590; --line: #7F8590; --line-soft: #7F8590; --muted: #454B53; --muted-large: #454B53; --faint: #454B53; }
+    :root[data-theme="dark"] { --border: #7A7F87; --line: #7A7F87; --line-soft: #7A7F87; --muted: #B4BAC2; --muted-large: #B4BAC2; --faint: #B4BAC2; }
+  }
+
   /* 0140: a phone screen. One column, nothing past the right edge and labels kept on one line. Wider screens are
      unchanged. 0417: the 44 px tap areas are in the touch screen rules below, so a narrow pane used with a mouse keeps
      compact controls. 0418: the panel's own layout is the same at every width, so these are for Settings and the full

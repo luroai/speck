@@ -4,7 +4,8 @@ import { styles } from './panel.mjs';
 const vars = block => Object.fromEntries([...block.matchAll(/(--[\w-]+)\s*:\s*([^;}]+)/g)].map(m => [m[1], m[2].trim()]));
 // Each look's tokens: every plain :root block, and the dark look's block over them.
 export function looks(text = styles()) {
-  const plain = text.replace(/\/\*[\s\S]*?\*\//g, '');
+  // 0708: the more-contrast setting's colours are a look of their own, checked in test/contrast-0708.test.mjs
+  const plain = text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/@media \(prefers-contrast: more\) \{(?:[^{}]|\{[^{}]*\})*\}/g, '');
   const light = Object.assign({}, ...[...plain.matchAll(/(?:^|\n)\s*:root \{([^}]*)\}/g)].map(m => vars(m[1])));
   const dark = { ...light, ...Object.assign({}, ...[...plain.matchAll(/:root\[data-theme="dark"\] \{([^}]*)\}/g)].map(m => vars(m[1]))) };
   return { light, dark };

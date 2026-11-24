@@ -16,7 +16,8 @@ function atShip(t, tickets, runOn) {
   if (t.status !== 'approved' || shipping(t)) return false;
   const s = t.ship && typeof t.ship === 'object' ? t.ship : null, approved = time(t.approved), ended = s ? time(s.ended) ?? time(s.started) : null;
   const failed = !!s && s.running === false && s.auto === true && (approved === null || (ended !== null && ended >= approved));
-  if (!failed) return t.auto_ship !== true || !runOn;
+  // 0709: one built on a ticket that hasn't shipped (ships_after) waits for that one, not for you.
+  if (!failed) return !(typeof t.ships_after === 'string' && t.ships_after) && (t.auto_ship !== true || !runOn);
   // Unless speck run carries it on: handed back to its build since, which is at work on it or has other tickets on their way.
   const handed = time(t.handed_back);
   const carried = runOn && handed !== null && (ended === null || handed >= ended)
@@ -33,7 +34,7 @@ export function projectSummary({ board, foreman, run, now = Date.now() }) {
   const tickets = list(board && board.tickets).filter(t => t && typeof t === 'object');
   const f = foreman && typeof foreman === 'object' ? foreman : {}, runOn = !!(run && run.on), since = now - WEEK_MS;
   const blocked = list(f.blocked).filter(b => b && typeof b === 'object'), byId = new Map(tickets.map(t => [String(t.id), t]));
-  const questions = f.fixing === 'off' ? [] : blocked.filter(b => !b.foreman).map(b => ({ id: String(b.id), title: text(b.title), why: 'question', detail: text(b.question) }));
+  const questions = f.fixing === 'off' ? [] : blocked.filter(b => !b.foreman && !b.checking).map(b => ({ id: String(b.id), title: text(b.title), why: 'question', detail: text(b.question) }));
   const manager = list(f.agent && f.agent.asks).filter(a => a && byId.has(String(a.id)) && !blocked.some(b => String(b.id) === String(a.id)))
     .map(a => ({ id: String(a.id), title: text(byId.get(String(a.id)).title), why: 'manager', detail: text(a.question) }));
   const ship = tickets.filter(t => atShip(t, tickets, runOn)).map(t => ({ id: String(t.id), title: text(t.title), why: t.risk === 'high' ? 'high_risk' : 'ship', detail: '' }));

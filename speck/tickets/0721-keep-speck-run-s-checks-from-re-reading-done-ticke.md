@@ -7,8 +7,8 @@ size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
 kind: code               # code | task (what the build does: changes the project's code, or does a task and leaves its result in outputs/)
 type: ""                 # blank | bug (a ticket that fixes a defect) | fix (fixes a broken base branch, at priority 0)
-level: "deep"                # blank: no level, so the settings decide. Otherwise one of the levels in speck/config.yml, such as quick, balanced or deep
-builder: ""              # blank: the builder your settings give when the build starts
+level: ""                # blank: no level, so the settings decide. Otherwise one of the levels in speck/config.yml, such as quick, balanced or deep
+builder: cursor              # blank: the builder your settings give when the build starts
 builder_model: ""        # blank: your settings' builder_model, given only to the builder they name
 builder_effort: ""       # blank: your settings' builder_effort. Otherwise low | medium | high | xhigh | max
 reviewer: ""             # blank: the reviewer your settings give when each review round starts

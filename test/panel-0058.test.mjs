@@ -83,13 +83,13 @@ test('0058 AC2: a started in the future shows <1 min rather than a negative time
   assert.equal(subOf(p, '0001').textContent, '<1 min');
 });
 
-test('0058 AC3: the counter moves on once a second from its own timer, between polls, and touches nothing else', async () => {
+test('0058 AC3: the counter moves on four times a second from its own timer, between polls, and touches nothing else', async () => {
   const c = clock(NOW);
   const p = fakePage([board()], { Date: c.Date });
   await p.settle();
   const all = intervals(p);
   assert.equal(all.length, 1, 'one repeating timer');
-  assert.equal(all[0].ms, 1000, 'every second');
+  assert.equal(all[0].ms, 250, 'four times a second (0705)');
   // Everything in the queue as it is before the tick, apart from each counter.
   const snap = () => p.all(p.byId('queue')).map(n => [n, n._text, n.className, [...(n.children || [])], n.detached || 0, n.title]);
   const before = snap(), fetches = p.calls.length, timers = p.timers.length;

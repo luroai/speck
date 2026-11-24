@@ -63,7 +63,7 @@ test('0462 AC2: the full view\'s time keeps counting on the page\'s timer', asyn
   const v = await view(p, '0901');
   const time = () => p.all(v).find(n => n.className === 'sub').textContent;
   assert.equal(time(), '01:05');
-  const tick = [...p.intervals.values()].find(i => i.ms === 1000);
+  const tick = [...p.intervals.values()].find(i => i.ms === 250);
   assert.ok(tick, 'the counter runs');
   clock = NOW + 1000;
   tick.fn();

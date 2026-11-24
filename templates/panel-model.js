@@ -39,7 +39,7 @@ const SHORT = {
 // 0576: `name` is what you call speck, which a ticket's sentence and short words say when it will answer.
 function doing(t, shipping, name = 'speck') {
   const d = doingNow(t, shipping, name);
-  const short = d.sentence === willTake(name) ? `${name} will answer` : Object.prototype.hasOwnProperty.call(SHORT, d.sentence) ? SHORT[d.sentence] : null;
+  const short = d.sentence === willTake(name) ? `${name} will answer` : d.sentence === checkingInApp(name) ? `${name} is checking` : d.after ? 'Approved' : Object.prototype.hasOwnProperty.call(SHORT, d.sentence) ? SHORT[d.sentence] : null;
   return { ...d, short, word: wordOf(t, d, short) };
 }
 // 0462: what it's doing in a word or two, for an open card's Now cell: reviewing, fixing, checking or writing while an
@@ -60,6 +60,11 @@ function workerOf(t, d) {
   return { label: 'Builder', value: name ? `${name[0].toUpperCase()}${name.slice(1)}${model ? ` · ${model}` : ''}` : '–' };
 }
 const willTake = name => `Blocked · ${name} will take its recommendation`;
+// 0713: one whose question speck's watch agent is checking, or will check, in the running app (app_checking) waits for speck.
+const checkingInApp = name => `Blocked · ${name} is checking it in the app`;
+const waitsForSpeck = t => t.foreman_will === true || t.app_checking === true;
+// 0709: the ticket an approved one was built on and waits to ship after (speck status --json's ships_after), or null.
+const waitsToShipAfter = t => (t.status === 'approved' && typeof t.ships_after === 'string' && t.ships_after ? t.ships_after : null);
 function doingNow(t, shipping, called) {
   if (shipping) return { sentence: 'Shipping', tone: '', moving: true };
   if (t.ship_waiting) return { sentence: 'Approved · waiting to ship', tone: '', moving: true };
@@ -67,10 +72,12 @@ function doingNow(t, shipping, called) {
   const autoShips = t.status === 'approved' && t.auto_ship === true && !t.red && !t.to_ship;
   const tone = t.red ? 'bad' : t.to_ship || (approved && !autoShips) ? 'to-ship' : '';
   const at = sentence => ({ sentence, tone, moving: false });
-  if (t.status === 'blocked') return at(t.foreman_will === true ? willTake(called) : 'Blocked · it has a question for you'); // 0317
+  if (t.status === 'blocked') return at(t.app_checking === true ? checkingInApp(called) : t.foreman_will === true ? willTake(called) : 'Blocked · it has a question for you'); // 0317. 0713
   if (t.red && (t.status === 'building' || t.status === 'reviewing')) return at('The build stopped');
   if (t.paused) return at('Paused');
   if (t.run_waiting) return at('Approved · turn on Auto-build to ship it');
+  // 0709: one built on a ticket that hasn't shipped waits for it, not for you, in the normal text colour.
+  if (waitsToShipAfter(t) && !t.red && !t.to_ship) return { sentence: `Approved · ships after ${waitsToShipAfter(t)}`, tone: '', moving: false, after: true };
   if (t.status === 'approved' && t.criteria_changed === true) return at('Approved · waiting for you because a criterion changed'); // 0565
   if (t.doc_finished) return at('Finished · read the result'); // 0361, 0492
   if (approved) return at(autoShips ? 'Approved · waiting to ship' : 'Approved · waiting for you to ship it');
@@ -107,7 +114,7 @@ function buildGroup(t, d, asked) {
   if (!d) return 'queued';
   if (d.sentence === 'Shipping') return 'building';
   if (t.left_stopped === true) return 'needs'; // 0616
-  return (t.status === 'blocked' && t.foreman_will !== true) || (t.status === 'approved' && (t.to_ship || t.red)) ? 'needs' : 'building';
+  return (t.status === 'blocked' && !waitsForSpeck(t)) || (t.status === 'approved' && (t.to_ship || t.red)) ? 'needs' : 'building';
 }
 // A row's dot: orange for needs you, blue while it's worked on, grey while it waits.
 const rowDot = (group, d) => (group === 'needs' ? 'needs' : d && d.moving ? 'run' : 'wait');
@@ -202,18 +209,20 @@ function chains(tickets) {
 // it. Before it: the one it waits on, then the one that one waits on when it waits on only one. After it: the lowest
 // id waiting on it, then the lowest waiting on that. When more lie beyond an end, its last slot is { more: n } in their
 // place, n counting the ones not shown. A slot with nothing in it is null.
+// 0704: one in its after_cancelled was cancelled: its state is 'cancelled', and `gone` gives its title.
 const byNumber = (a, b) => a.localeCompare(b, 'en', { numeric: true });
-function depsOf(t, byId, unlocks) {
+function depsOf(t, byId, unlocks, gone = new Map()) {
   const id = String(t.id), waiting = new Set((Array.isArray(t.waiting_on) ? t.waiting_on : []).map(String));
+  const cancelled = new Set((Array.isArray(t.after_cancelled) ? t.after_cancelled : []).map(String));
   const afterOf = x => [...new Set((x && Array.isArray(x.after) ? x.after : []).map(String))].filter(a => a !== String(x.id));
   // Shipped is done, building is in flight, queued the rest. One not on the board is shipped when it's in the ticket's
   // after: and its waiting_on leaves it out, as speck counts it done.
   const after = afterOf(t);
-  const stateOf = d => { const o = byId.get(d); return o ? o.status === 'done' ? 'shipped' : IN_FLIGHT.includes(o.status) ? 'building' : 'queued' : after.includes(d) && !waiting.has(d) ? 'shipped' : 'queued'; };
+  const stateOf = d => { if (cancelled.has(d)) return 'cancelled'; const o = byId.get(d); return o ? o.status === 'done' ? 'shipped' : IN_FLIGHT.includes(o.status) ? 'building' : 'queued' : after.includes(d) && !waiting.has(d) ? 'shipped' : 'queued'; };
   if (after.length >= 2) {
     // Shipped or not as its facts table counts them, from waiting_on.
     // 0613: and its title, or '' for one not on the board.
-    const items = after.sort(byNumber).map(d => ({ id: d, title: String(byId.get(d)?.title ?? ''), state: !waiting.has(d) ? 'shipped' : stateOf(d) === 'building' ? 'building' : 'queued' }));
+    const items = after.sort(byNumber).map(d => ({ id: d, title: String((byId.get(d) ?? gone.get(d))?.title ?? ''), state: cancelled.has(d) ? 'cancelled' : !waiting.has(d) ? 'shipped' : stateOf(d) === 'building' ? 'building' : 'queued' }));
     const count = s => items.filter(i => i.state === s).length;
     return { kind: 'waits', items, shipped: count('shipped'), building: count('building'), queued: count('queued') };
   }
@@ -286,12 +295,16 @@ function leftStopped(t, on, foreman) {
   return !((f.fixing === 'fix' || f.fixing === 'decide') && has(a.waiting));
 }
 function panelModel(state) {
-  const tickets = (state && Array.isArray(state.tickets) ? state.tickets : []).filter(t => t && t.status !== 'cancelled');
+  const every = (state && Array.isArray(state.tickets) ? state.tickets : []).filter(t => t);
+  const tickets = every.filter(t => t.status !== 'cancelled');
   const links = chains(tickets), byId = new Map(tickets.map(t => [String(t.id), t]));
+  const gone = new Map(every.filter(t => t.status === 'cancelled').map(t => [String(t.id), t])); // 0704: for their titles
   // A ticket starts a chain when it waits on nothing and an unfinished ticket waits on it. 0467: deps, its dependency box.
+  // 0704: waiting_on leaves out the cancelled tickets in its after_cancelled, which nothing waits for.
   const chain = t => {
-    const waiting_on = Array.isArray(t.waiting_on) ? t.waiting_on : [], unlocks = links.unlocks(t.id);
-    return { ...t, waiting_on, unlocks, chain: !waiting_on.length && unlocks.length > 0, linked: links.linked(t.id), deps: depsOf({ ...t, waiting_on }, byId, links.unlocks) };
+    const after_cancelled = (Array.isArray(t.after_cancelled) ? t.after_cancelled : []).map(String), unlocks = links.unlocks(t.id);
+    const waiting_on = (Array.isArray(t.waiting_on) ? t.waiting_on : []).filter(d => !after_cancelled.includes(String(d)));
+    return { ...t, waiting_on, after_cancelled, unlocks, chain: !waiting_on.length && unlocks.length > 0, linked: links.linked(t.id), deps: depsOf({ ...t, waiting_on, after_cancelled }, byId, links.unlocks, gone) };
   };
   const ideas = (state && Array.isArray(state.ideas) ? state.ideas : []).filter(i => i);
   const statusOf = i => String(i.status || '').trim();
@@ -397,11 +410,13 @@ function panelModel(state) {
       const others = tickets.some(o => String(o.id) !== String(t.id) && ['ready', 'building', 'reviewing', 'approved'].includes(o.status));
       const carried_by = !handed || !runOn ? null : t.build_running === true ? 'Handed back to its build, which is working on it'
         : others ? 'It will be shipped again when main or its branch has a new commit' : null;
-      const exit_label = shipping || ship_waiting || run_waiting ? null : auto_failed || blocked_failed ? "Auto-ship didn't finish" : stopped ? 'Build stopped unexpectedly' : !exited ? null : t.status === 'approved' ? 'Build finished without shipping'
+      // 0709: one built on a ticket that hasn't shipped waits for that one, so its build ending at approved isn't news.
+      const after = waitsToShipAfter(t) !== null && !auto_failed;
+      const exit_label = shipping || after || ship_waiting || run_waiting ? null : auto_failed || blocked_failed ? "Auto-ship didn't finish" : stopped ? 'Build stopped unexpectedly' : !exited ? null : t.status === 'approved' ? 'Build finished without shipping'
         : t.status === 'building' || t.status === 'reviewing' ? 'Build stopped before finishing' : null;
       // An approved ticket whose build has exited is waiting for you to ship it, so it's green (purple until 0440) rather than red (0138),
       // unless its auto-ship failed. 0167: so is one auto-ship doesn't cover, whatever its build is doing, unless it's shipping.
-      const to_ship = t.status === 'approved' && !auto_failed && (exit_label !== null || run_waiting || (t.auto_ship === false && !shipping));
+      const to_ship = t.status === 'approved' && !auto_failed && !after && (exit_label !== null || run_waiting || (t.auto_ship === false && !shipping));
       // 0361: a task whose build has finished is done, and its result waits in its review pack: its row
       // says so, with no exit line or log box.
       const doc_finished = t.kind === 'task' && exit_label === 'Build finished without shipping';
@@ -689,7 +704,12 @@ const RUN_ID = /(?<![\w:./-])(\d{4,})(?![\w:/-]|\.\w)/;
 // A sentence without what it mustn't show: parentheses with a session or process in them, `code`, ids of sessions,
 // processes, paths, links, file names and speck's or a tool's commands. Whatever is left is tidied of the gaps they leave.
 function runPlain(s) {
-  return s
+  const cut = s
+    .replace(/^\S*\/\S*\.(?:ya?ml|json|md|mjs)(?= (?:has|is|was)\b)/, 'The file')
+    .replace(/\s*Last lines of \S+:(?:\n[\s\S]*)?$/, '')
+    .replace(/\bConflicting files:[\s\S]*?\.(?=\s+[A-Z]|\s*$)\s*/g, '')
+    .replace(/,?\s+or run\s+(?:`[^`]*`|\/[\w-]+(?: \d{4,})?),?/gi, '')
+    .replace(/\bRun\s+`[^`]*`\s+to\b[^.]*\.\s*/g, '')
     .replace(/\([^()]*\b(?:session|process|pid)\b[^()]*\)/gi, '')
     .replace(/`[^`]*`/g, '')
     .replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi, '')
@@ -698,12 +718,16 @@ function runPlain(s) {
     .replace(/\S*\w\.(?:mjs|cjs|js|ts|md|log|json|ya?ml|css|html|txt|lock|git)\b\S*/g, '')
     .replace(/(?<![\w.'-])(?:speck|npm|npx|node|git|gh|claude|codex|cursor-agent)\s+[a-z][\w-]*(?:\s+(?:--?[\w=.-]+|\d{4,}))+/g, '')
     .replace(/(?<![\w.'-])npm (?:test|ci|install)\b/g, '')
-    .replace(/\bLog:\s*(?=$|[.,;])/g, '')
+    .replace(/\b(?:Its\s+)?log:\s*(?=$|[.,;])/gi, '')
     .replace(/\(\s*\)/g, '')
-    .replace(/\s+/g, ' ')
+    .replace(/\s+/g, ' ');
+  // Only a sentence that lost something is tidied of what it leaves behind: one that lost nothing reads as written.
+  return (cut === s.replace(/\s+/g, ' ') ? cut : cut
+    .replace(/\s+(?:with|in|into|of)(?=\s*[.,;:!?]|\s*$)/gi, '')
+    .replace(/\b(then|or|and)\s+run(?=\s*[.,;:!?]|\s*$)/gi, '$1')
     .replace(/\s+([.,;:!?])/g, '$1')
     .replace(/([,;:])(?=[.,;:]|$)/g, '')
-    .trim();
+    .trim()).trim();
 }
 // The short reasons a ship gives, for `<id> didn't ship`, or null for one it doesn't. 0620: any other reason whole.
 function shipWhy(why) {

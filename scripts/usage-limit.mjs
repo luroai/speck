@@ -162,10 +162,11 @@ export function usageLimitQueue({ repo, runs, settings, running, startBuild, res
   };
 
   // 0648: while held, each stopped build that `takeOver` moves to another agent, dropped from the wait before it starts.
+  // 0711: an approved ticket's handed-back build too, as inHand has it.
   const moveOn = (agent, s, tickets) => {
     for (const id of [...s.builds]) {
       const t = tickets.find(x => String(x.id) === id), rec = readRec(path.join(runs(), `${id}.json`)), current = settings();
-      if (!t || !IN_HAND.includes(t.status) || t.build_running || running.has(id) || !rec || !Object.hasOwn(rec, 'exited')) continue;
+      if (!t || !inHand(t.status, rec) || t.build_running || running.has(id) || !rec || !Object.hasOwn(rec, 'exited')) continue;
       if (!current || running.size >= current.max) return;
       const start = takeOver(agent, id, rec, current, s);
       if (!start) continue;

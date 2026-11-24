@@ -145,7 +145,9 @@ export function cliCopy() {
 // The page's pure model function, run outside the browser.
 export const page = () => fs.readFileSync(PAGE, 'utf8');
 // 0430: the page's styles, from their own file. 0472: from each area's file, in the order the page loads them.
-export const styles = () => STYLES.map(f => fs.readFileSync(f, 'utf8')).join('\n');
+// 0708: without the more-contrast setting's block, which test/contrast-0708.test.mjs checks from the file itself.
+export const rawStyles = () => STYLES.map(f => fs.readFileSync(f, 'utf8')).join('\n');
+export const styles = () => rawStyles().replace(/@media \(prefers-contrast: more\) \{(?:[^{}]|\{[^{}]*\})*\}/g, '');
 // 0431: the page's model, from its own file.
 export const model = () => fs.readFileSync(MODEL, 'utf8');
 // 0432: the Settings view's script, from its own file.
@@ -380,7 +382,9 @@ export const findText = (p, row, text) => p.all(row).find(n => n._text === text)
 // ---------- 0039: a real headless browser, for what the fake page can't show (text selection) ----------
 
 // A headless Chromium driven over the DevTools protocol, with no dependencies: SPECK_TEST_CHROME, or one Playwright installed.
+// 0734: SPECK_TEST_CHROME=none finds none, so the tests that need one are skipped.
 export function findChrome() {
+  if (process.env.SPECK_TEST_CHROME === 'none') return null;
   if (process.env.SPECK_TEST_CHROME) return process.env.SPECK_TEST_CHROME;
   const cache = path.join(os.homedir(), '.cache', 'ms-playwright');
   const found = fs.existsSync(cache) ? fs.readdirSync(cache).sort().reverse().flatMap(d => [
@@ -480,12 +484,23 @@ process.on('exit', () => {
     fs.rmSync(profile, { recursive: true, force: true });
   }
 });
-// A file stopped with a signal, as the test runner stops one that runs out of time, exits through the handler above.
+// A file stopped with a signal, as the test runner stops one that runs out of time, ends its Chromium and waits for it to
+// have exited, up to 5 s, before it exits through the handler above. The handler can't wait, and a Chromium ended there
+// can outlive the file's process by seconds on a busy machine (0723).
 let stopping = false;
+const STOP_WAIT_MS = 5000;
+const endRunning = () => Promise.race([
+  Promise.all([...running].map(({ chrome }) => new Promise(resolve => {
+    if (chrome.exitCode !== null || chrome.signalCode !== null) return resolve();
+    chrome.once('exit', resolve);
+    try { chrome.kill('SIGKILL'); } catch { resolve(); }
+  }))),
+  new Promise(resolve => setTimeout(resolve, STOP_WAIT_MS)),
+]);
 const exitOnSignals = () => {
   if (stopping) return;
   stopping = true;
-  for (const [sig, n] of [['SIGINT', 2], ['SIGTERM', 15], ['SIGHUP', 1]]) process.once(sig, () => process.exit(128 + n));
+  for (const [sig, n] of [['SIGINT', 2], ['SIGTERM', 15], ['SIGHUP', 1]]) process.once(sig, () => endRunning().then(() => process.exit(128 + n)));
 };
 
 // How long b.until() and b.loaded() wait when the call gives no limit of its own.
