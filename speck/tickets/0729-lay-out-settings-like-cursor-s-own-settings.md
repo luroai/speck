@@ -2,7 +2,7 @@
 id: "0729"
 title: "Lay out Settings like Cursor's own settings"                # one outcome, no "and"
 status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
-priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
+priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
 kind: code               # code | task (what the build does: changes the project's code, or does a task and leaves its result in outputs/)

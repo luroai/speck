@@ -2,7 +2,7 @@
 id: "0723"
 title: "Steady the 0182 AC3 Chromium test under load"                # one outcome, no "and"
 status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
-priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
+priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
 kind: code               # code | task (what the build does: changes the project's code, or does a task and leaves its result in outputs/)
