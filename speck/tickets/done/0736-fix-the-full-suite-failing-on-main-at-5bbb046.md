@@ -1,7 +1,7 @@
 ---
 id: "0736"
 title: "Fix the full suite failing on main at 5bbb046"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T15:53:48.835Z"
 approved: "2026-11-24T16:08:58.370Z"
+finished: "2026-11-24T16:22:12.362Z"
 
 ---
 # 0736 · Fix the full suite failing on main at 5bbb046
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The full suite fails on main at commit 5bbb046 (5bbb0466df17e16d3dd3a9fdb44997e1ac1ea63c). Failing tests:
