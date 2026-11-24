@@ -106,12 +106,13 @@ export function handBackQueue({ repo, cfg, words, max, settings = () => ({ cfg, 
 
   // Resumes the build's own session with the hand-back's message, from the folder it started in, logging to the end of
   // its log. Its record loses its exit while it runs, so the board shows the build running, and counts the hand-backs
-  // for conflicts and failing tests, so the third asks the session to block the ticket instead.
+  // for conflicts and failing tests, so the third asks the session to block the ticket instead. 0711: and keeps what it
+  // was handed back for, for an agent that takes the build over (handBackOf).
   const resumeHandBack = (id, file, rec, { cfg, words }) => {
     const { hand_back: h, exited: _e, exit_code: _c, ...kept } = rec;
     const count = (Number.isInteger(rec.hand_backs) ? rec.hand_backs : 0) + (h.kind === 'base' || h.kind === 'changes' ? 0 : 1);
     const { argv, why } = resumeFor(words, cfg, id, rec, handBackMessage({ id, kind: h.kind, why: String(h.why ?? ''), base: cfg.base_branch, count }));
-    const next = { ...resumedRecord(kept), handed_back: new Date().toISOString(), hand_backs: count, hand_back_command: argv };
+    const next = { ...resumedRecord(kept), handed_back: new Date().toISOString(), hand_backs: count, hand_back_command: argv, handed_back_for: { kind: h.kind, why: String(h.why ?? '') } };
     if (!argv) { try { saveRecord(file, { ...kept, exited: rec.exited, exit_code: rec.exit_code }); } catch { /* said below */ } return cantHandBack({ id, kind: h.kind }, rec, why); }
     try { saveRecord(file, next); } catch (e) { return cantHandBack({ id, kind: h.kind }, rec, `its run record couldn't be saved (${e.message})`); }
     const cwd = typeof rec.cwd === 'string' && fs.existsSync(rec.cwd) ? rec.cwd : repo;
@@ -155,6 +156,22 @@ export function handBackQueue({ repo, cfg, words, max, settings = () => ({ cfg, 
   // while that build runs, as the tickets the ship queue is given may have been read before it started.
   return { keep, check, waiting: id => !!pending(id)?.live || running.has(String(id)) || limitWaiting(runs()).includes(String(id)) };
 }
+
+// 0711: the hand-back the build in run record `rec` was given last, for an agent that takes over that build of an approved
+// ticket (build-take-over.mjs): { message, merges }, message being what the build was told, from the kind and reason its
+// record keeps, and merges whether those steps merge the base branch (Conflict or Tests fail together, not Handed back
+// again), so it may have stopped partway through a merge. null when its record doesn't say what it was handed back for.
+export function handBackOf(rec, id, base) {
+  const h = rec?.handed_back_for;
+  if (!h || typeof h !== 'object' || typeof h.kind !== 'string' || !Object.hasOwn(HAND_BACK_STEPS, h.kind) || typeof h.why !== 'string') return null;
+  const count = Number.isInteger(rec.hand_backs) ? rec.hand_backs : 0;
+  return { message: handBackMessage({ id, kind: h.kind, why: h.why, base, count }), merges: (h.kind === 'conflict' || h.kind === 'tests') && count <= 2 };
+}
+
+// 0711: what run record `rec` says of the hand-backs its build was given, for the record of another agent that takes the
+// build over: when it was last handed back, how many count and what for. So the take-over waits out its own agent's
+// limit as the build did (inHand, usage-limit.mjs), and the ticket's next hand-back is counted on from these.
+export const handBackKeeps = rec => Object.fromEntries(['handed_back', 'hand_backs', 'handed_back_for'].filter(k => rec && typeof rec === 'object' && Object.hasOwn(rec, k)).map(k => [k, rec[k]]));
 
 // 0338: when speck run last handed the ticket back to its build after a ship it started (above), from the
 // build's run record, or null.
