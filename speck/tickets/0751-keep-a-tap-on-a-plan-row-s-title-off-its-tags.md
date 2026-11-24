@@ -39,6 +39,7 @@ A tap anywhere on a closed Plan row's title opens the row.
 - Open rows and other lanes.
 
 ## Notes
+- Failing before this build: none
 - From 0739's own note: a tap 4 px inside the title's left end landed on the "low" tag below it in headless Chrome; unchecked on a real phone.
 
 ## In plain words
