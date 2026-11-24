@@ -15,6 +15,10 @@ import { blockedRepo } from './support/blocked.mjs';
 import { goWithQueue, goWith } from '../scripts/go-with.mjs';
 import { statusData } from '../scripts/speck.mjs';
 import { keptFile } from './support/copy.mjs';
+import { usageLimitQueue, readLimit, GRACE_MS } from '../scripts/usage-limit.mjs';
+import { reviewerLimitQueue, readLimits } from '../scripts/reviewer-limit.mjs';
+import { saveRecord } from '../scripts/build-records.mjs';
+import { T } from './support/panel.mjs';
 
 const tmp = name => fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), `speck-0726-${name}-`)));
 
@@ -314,4 +318,66 @@ test('0726 F2: when startBuild gets no machine slot after the room check, go_wit
   } finally {
     if (prev === undefined) delete process.env.SPECK_HOME_SETTINGS_DIR; else process.env.SPECK_HOME_SETTINGS_DIR = prev;
   }
+});
+
+
+test('0726 F2: a builder usage-limit wait keeps its run record and queue entry when startBuild gets no slot, then starts once it can', () => {
+  const dir = tmp('usage-limit'), clock = { now: Date.parse('2026-11-10T11:57:00Z') };
+  const RESET = Date.parse('2026-11-10T12:30:00Z');
+  const cfg = { base_branch: 'main', branch_prefix: 'speck/', builder: 'claude' };
+  const words = ['claude', '-p', '/speck-build {id}', '--session-id', '{session}'];
+  let allow = false, starts = [];
+  const running = new Set();
+  const q = usageLimitQueue({
+    repo: dir, runs: () => dir, settings: () => ({ cfg, words, max: 2 }), running,
+    say: () => {}, now: () => clock.now, resumeHint: () => '', statusOf: () => 'building',
+    startBuild: (id, argv) => { if (!allow) return false; running.add(id); starts.push(id); return true; },
+  });
+  const event = (status, resetsAt = RESET / 1000) => ({ type: 'rate_limit_event', rate_limit_info: { status, resetsAt, rateLimitType: 'five_hour' } });
+  const REFUSED = [ { type: 'system', subtype: 'init' }, { type: 'assistant', message: { model: 'claude-opus-5-5', content: [{ type: 'text', text: 'Working.' }] } },
+    event('allowed_warning'), event('rejected'),
+    { type: 'assistant', error: 'rate_limit', api_error: 'usage_limit_reached', message: { model: '<synthetic>', content: [{ type: 'text', text: "You've hit your session limit · resets 12:30pm (UTC)" }] } },
+    { type: 'result', subtype: 'success', is_error: true, api_error_status: 429, result: "You've hit your session limit · resets 12:30pm (UTC)" },
+  ].map(e => JSON.stringify(e)).join('\n') + '\n';
+  fs.writeFileSync(path.join(dir, '0001.log'), REFUSED);
+  saveRecord(path.join(dir, '0001.json'), { id: '0001', session: 's-0001', cwd: dir, pid: 1, exited: new Date(clock.now).toISOString(), exit_code: 1 });
+  assert.equal(q.ended('0001', path.join(dir, '0001.log'), path.join(dir, '0001.json')), true);
+  clock.now = RESET + GRACE_MS;
+  q.check([T('0001', 'building')]);
+  assert.deepEqual(starts, []);
+  assert.ok(Object.hasOwn(JSON.parse(fs.readFileSync(path.join(dir, '0001.json'), 'utf8')), 'exited'), 'run record still has its exit');
+  assert.deepEqual(readLimit(dir).builds, ['0001'], 'still on the wait list');
+  allow = true;
+  q.check([T('0001', 'building')]);
+  assert.deepEqual(starts, ['0001']);
+  assert.equal(Object.hasOwn(JSON.parse(fs.readFileSync(path.join(dir, '0001.json'), 'utf8')), 'exited'), false);
+});
+
+test('0726 F2: a reviewer usage-limit wait keeps its run record and limit file when startBuild gets no slot, then starts once it can', () => {
+  const dir = tmp('reviewer-limit'), clock = { now: Date.parse('2026-11-10T11:57:00Z') };
+  const RESET = Date.parse('2026-11-10T12:30:00Z');
+  const cfg = { base_branch: 'main', branch_prefix: 'speck/', builder: 'claude' };
+  const words = ['claude', '-p', '/speck-build {id}', '--session-id', '{session}'];
+  let allow = false, starts = [];
+  const running = new Set();
+  const q = reviewerLimitQueue({
+    repo: dir, runs: () => dir, settings: () => ({ cfg, words, max: 2 }), running,
+    say: () => {}, now: () => clock.now, resumeHint: () => '',
+    startBuild: (id) => { if (!allow) return false; running.add(id); starts.push(id); return true; },
+  });
+  fs.mkdirSync(path.join(dir, 'reviewer-limits'), { recursive: true });
+  saveRecord(path.join(dir, 'reviewer-limits', '0001.json'), {
+    reviewer: 'codex', resets: new Date(RESET).toISOString(),
+    carry_on: new Date(RESET + GRACE_MS).toISOString(), session: 's-0001',
+  });
+  saveRecord(path.join(dir, '0001.json'), { id: '0001', session: 's-0001', cwd: dir, pid: 1, exited: new Date(clock.now).toISOString(), exit_code: 0 });
+  clock.now = RESET + GRACE_MS;
+  q.check([T('0001', 'reviewing')]);
+  assert.deepEqual(starts, []);
+  assert.ok(Object.hasOwn(JSON.parse(fs.readFileSync(path.join(dir, '0001.json'), 'utf8')), 'exited'), 'run record still has its exit');
+  assert.equal(readLimits(dir).length, 1, 'limit file put back');
+  allow = true;
+  q.check([T('0001', 'reviewing')]);
+  assert.deepEqual(starts, ['0001']);
+  assert.equal(readLimits(dir).length, 0);
 });

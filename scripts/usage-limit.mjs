@@ -87,8 +87,10 @@ export function carryOn({ repo, runs, startBuild, resumeHint, countStop, now, sp
   try { saveRecord(recordFile, next); } catch (e) { speak(`${id}: ${who} has reset, but its run record couldn't be saved (${e.message}), so it wasn't resumed. ${resumeHint(cfg, rec)}.`); return true; }
   const cwd = typeof rec.cwd === 'string' && fs.existsSync(rec.cwd) ? rec.cwd : repo;
   speak(`${id}: ${who} has reset, so I'm carrying on its build (session ${rec.session}).`);
-  // 0726: false when the machine slot was taken; caller puts the ticket back on the wait list.
-  return startBuild(id, argv, cwd, rec.session, 'a', pid => `${JSON.stringify({ ...next, pid: pid ?? rec.pid }, null, 2)}\n`, rec.env_session ?? rec.session) !== false;
+  // 0726: false when the machine slot was taken; put the run record back so the next check still sees its exit.
+  if (startBuild(id, argv, cwd, rec.session, 'a', pid => `${JSON.stringify({ ...next, pid: pid ?? rec.pid }, null, 2)}\n`, rec.env_session ?? rec.session) !== false) return true;
+  try { saveRecord(recordFile, rec); } catch { /* next check retries from the queue entry the caller restored */ }
+  return false;
 }
 
 // speck run's side. ended(id, log, file) reads a build that has ended, true when it stopped on the limit and speck run
