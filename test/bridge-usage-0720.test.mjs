@@ -35,6 +35,19 @@ test('0720 AC1: a limited agent is warned about, with the window it reached', ()
   assert.deepEqual(refused[0].windows.map(x => [x.label, x.limited]), [['5 hours', true]], 'limited under 90% still counts');
 });
 
+test('0720 AC1: a Codex limit whose type naming no window still warns, with each open window\'s reset', () => {
+  // readingShown only marks a window limited for an unrecognised limit_type when that window is at 100%; a kept
+  // reading can still say limit_reached with lower percentages (codexUsageInSession keeps any non-empty type).
+  const odd = { read_at: at(-3), limit_reached: true, limit_type: 'credits_exhausted',
+    windows: { five_hour: { used_percent: 12, resets_at: at(45) }, seven_day: { used_percent: null, resets_at: at(1800) } } };
+  const [w] = usageWarnings({ codex: odd }, NOW);
+  assert.equal(w.name, 'Codex');
+  assert.deepEqual(w.windows.map(x => [x.label, x.limited, x.used_percent, x.resets_at]),
+    [['5 hours', true, 12, at(45)], ['Week', true, null, at(1800)]]);
+  const over = { ...odd, windows: { five_hour: { used_percent: 12, resets_at: at(-1) }, seven_day: { used_percent: 8, resets_at: at(-2) } } };
+  assert.deepEqual(usageWarnings({ codex: over }, NOW), [], 'windows that have already reset are not warned about');
+});
+
 test('0720 AC2: each agent at or over 90% is named; one under 90% everywhere, or with no reading, is not', () => {
   const cursor = { read_at: at(-1), resets_on: '2026-12-12', windows: { included: { used_percent: 90 }, auto: { used_percent: 0 } } };
   const ws = usageWarnings({ claude: claude(89.9, 10), codex: { read_at: at(-1), windows: { five_hour: { used_percent: 95, resets_at: at(60) } } }, cursor }, NOW);

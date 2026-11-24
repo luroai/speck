@@ -133,13 +133,18 @@ export async function subscriptionsAnswer(repo, { find = findAgentsAsync, readCu
 // HIGH_PERCENT or more, or limited, and only those windows. A window whose reset time has passed has reset since its
 // reading, so it isn't one.
 const USAGE_NAMES = Object.freeze({ claude: 'Claude Code', codex: 'Codex', cursor: 'Cursor' });
+const stillOpen = (w, now) => !(w.resets_at && Date.parse(w.resets_at) <= now);
+const asWarn = (w, limited = w.limited) => ({ label: w.label, used_percent: w.used_percent, limited, resets_at: w.resets_at, resets_on: w.resets_on });
 export function usageWarnings(usage, now = Date.now()) {
   if (!plain(usage)) return [];
   return Object.keys(USAGE_NAMES).filter(id => Object.hasOwn(usage, id) && plain(usage[id])).flatMap(id => {
-    const shown = readingShown(id, usage[id], now);
+    const reading = usage[id], shown = readingShown(id, reading, now);
     if (!shown.read_at) return [];
-    const windows = shown.windows.filter(w => w.high && !(w.resets_at && Date.parse(w.resets_at) <= now))
-      .map(({ label, used_percent, limited, resets_at, resets_on }) => ({ label, used_percent, limited, resets_at, resets_on }));
+    let windows = shown.windows.filter(w => w.high && stillOpen(w, now)).map(w => asWarn(w));
+    // An explicit limit_reached whose type readingShown can't map (and whose windows are under 100%) still counts for
+    // the bridge: name the agent and every open window with the reset times speck has, marked limited.
+    if (!windows.length && reading.limit_reached === true)
+      windows = shown.windows.filter(w => stillOpen(w, now)).map(w => asWarn(w, true));
     return windows.length ? [{ id, name: USAGE_NAMES[id], windows }] : [];
   });
 }
