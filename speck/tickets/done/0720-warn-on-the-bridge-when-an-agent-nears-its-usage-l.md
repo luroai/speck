@@ -1,7 +1,7 @@
 ---
 id: "0720"
 title: "Warn on the bridge when an agent nears its usage limit"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -20,11 +20,12 @@ created: 2026-11-24
 started: "2026-11-24T14:33:58.528Z"
 waited_seconds: 10
 approved: "2026-11-24T15:07:59.257Z"
+finished: "2026-11-24T16:15:11.508Z"
 
 ---
 # 0720 · Warn on the bridge when an agent nears its usage limit
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Settings shows each subscription's usage since 1.2 (0646), but you only see it if you open Settings. Usage limits decide whether work moves, so a limit coming should be visible where you look first.
