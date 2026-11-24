@@ -8,7 +8,7 @@ risk: low                # low | high (auth, payments, data deletion, migrations
 kind: code               # code | task (what the build does: changes the project's code, or does a task and leaves its result in outputs/)
 type: ""                 # blank | bug (a ticket that fixes a defect) | fix (fixes a broken base branch, at priority 0)
 level: ""                # blank: no level, so the settings decide. Otherwise one of the levels in speck/config.yml, such as quick, balanced or deep
-builder: ""              # blank: the builder your settings give when the build starts
+builder: cursor              # blank: the builder your settings give when the build starts
 builder_model: ""        # blank: your settings' builder_model, given only to the builder they name
 builder_effort: ""       # blank: your settings' builder_effort. Otherwise low | medium | high | xhigh | max
 reviewer: ""             # blank: the reviewer your settings give when each review round starts
@@ -42,6 +42,7 @@ The bridge shows a line for each agent at 90% or more of a usage window, or limi
 ## Notes
 - Readings come from `GET /api/usage` (`scripts/subscriptions.mjs`), which only `templates/panel-settings.js` reads today. 90% is where Settings' bars turn orange.
 - Failing before this build: none
+- Builder: Cursor took over this build from Claude at 2026-11-24 14:41 UTC, because Claude's usage limit was reached until 2026-11-24 16:10 UTC, more than an hour away.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
