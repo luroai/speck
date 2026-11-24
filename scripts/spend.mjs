@@ -283,7 +283,8 @@ export const delegatedRuns = runs => jsonLines(runs, DELEGATED_SPEND).filter(v =
 
 // 0534: the Codex threads already counted, which a session started in ticket `id`'s worktree mustn't be counted as
 // again: its builds' sessions (its run record's, its earlier builds', its log's and those --backfill recovered), its
-// review rounds' thread_id, and every watch agent run's and every session already kept as delegated spend.
+// review rounds' thread_id, and every watch agent run's and every session already kept as delegated spend. 0718: as
+// another ticket's delegated spend, as one kept as this ticket's is counted again when it has grown (recordDelegatedSpend).
 function countedThreads(runs, id, rounds) {
   const rec = runRecord(runs, id);
   let log = [];
@@ -291,7 +292,7 @@ function countedThreads(runs, id, rounds) {
   return new Set([rec?.session, ...earlierOf(rec).map(b => b.session), threadOf(log),
     ...jsonLines(runs, BACKFILL_BUILDS).filter(b => b.id === pad(id)).map(b => b.session),
     ...(Array.isArray(rounds) ? rounds : []).map(r => (plain(r) && plain(r.meta) ? r.meta.thread_id : null)),
-    ...watchRuns(runs).flatMap(x => [x.session, x.thread]), ...delegatedRuns(runs).map(x => x.thread)].filter(t => typeof t === 'string' && t));
+    ...watchRuns(runs).flatMap(x => [x.session, x.thread]), ...delegatedRuns(runs).filter(x => x.id !== id).map(x => x.thread)].filter(t => typeof t === 'string' && t));
 }
 
 // 0534: keeps what each Codex session started in ticket `id`'s worktree `worktree` spent (codexSessionsIn), with its
@@ -300,11 +301,14 @@ function countedThreads(runs, id, rounds) {
 // rest, a sub-agent whose parent is also one of them counts with it, so it's kept with the first that isn't, even when
 // that one has no usage itself. `rounds` are the ticket's saved review rounds and `home` Codex's home, $CODEX_HOME or
 // ~/.codex when it isn't given. 0556: `started`, the time the ticket's first build started, limits both to the session
-// files that last changed at or after it, or every file is read when it's missing. Returns what it kept.
+// files that last changed at or after it, or every file is read when it's missing. 0718: a session already kept as this
+// ticket's is kept again, at its new total, only when its tokens, sub-agents' included, have grown since, as when a
+// later build carries it on or a sub-agent starts under it. Returns what it kept.
 export function recordDelegatedSpend(runs, id, { worktree, rounds, home, started } = {}) {
   id = String(id ?? '');
   if (!/^[\w-]+$/.test(id) || typeof worktree !== 'string' || !worktree) return [];
   const counted = countedThreads(runs, id, rounds), kept = [];
+  const before = new Map(delegatedOf(runs, id).map(x => [x.thread, num(x.tokens) ?? 0]));
   const n = v => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : 0);
   const sessions = codexSessionsIn(worktree, home, { since: started });
   const open = new Set(sessions.filter(s => ![s.thread, ...s.ancestors].some(t => counted.has(t))).map(s => s.thread));
@@ -315,6 +319,7 @@ export function recordDelegatedSpend(runs, id, { worktree, rounds, home, started
     const split = s.usage && roundTokens(s.usage, { codex: true }), cost = priced(s.model, split);
     const own = s.usage ? { tokens: n(s.usage.input_tokens) + n(s.usage.output_tokens), cost_usd: cost, models: [{ model: s.model, tokens: split, cost_usd: cost }] } : { tokens: 0, cost_usd: 0, models: [] };
     const entry = { id, thread: s.thread, ended: s.ended, ...withSubagents(own, subs) };
+    if (before.has(s.thread) && !(num(entry.tokens) > before.get(s.thread))) continue;
     fs.mkdirSync(runs, { recursive: true });
     fs.appendFileSync(path.join(runs, DELEGATED_SPEND), `${JSON.stringify(entry)}\n`);
     kept.push(entry);
@@ -322,12 +327,14 @@ export function recordDelegatedSpend(runs, id, { worktree, rounds, home, started
   return kept;
 }
 
-// 0534: each Codex session kept as ticket `id`'s delegated spend, each thread once.
+// 0534: each Codex session kept as ticket `id`'s delegated spend, each thread once. 0718: at the last total kept for it,
+// as a session is kept again only when it has grown.
 const delegatedOf = (runs, id) => {
   id = String(id ?? '');
   if (!/^[\w-]+$/.test(id)) return [];
-  const seen = new Set();
-  return delegatedRuns(runs).filter(x => x.id === id && !seen.has(x.thread) && seen.add(x.thread));
+  const last = new Map();
+  for (const x of delegatedRuns(runs)) if (x.id === id) last.set(x.thread, x);
+  return [...last.values()];
 };
 
 // 0534: what the Codex sessions started in ticket `id`'s worktree spent, summed: {tokens, cost_usd}, each null when no
