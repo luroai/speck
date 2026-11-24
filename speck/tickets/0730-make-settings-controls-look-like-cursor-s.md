@@ -42,6 +42,7 @@ Settings' switches, menus, boxes and buttons look like Cursor's settings control
 - The Save button's place and saving model.
 
 ## Notes
+- Failing before this build: none
 - Raised by the user on 2026-11-24 with a screenshot of Cursor's General settings.
 - Switches are `[role="switch"]` in `templates/panel-settings.css`; lists are `select` elements built in `templates/panel-settings.js`. Keeping them as native `select` elements, styled, keeps phones' own pickers.
 - Green: pick one that meets 3:1 against the track's surroundings in both looks, kept apart from the panel's status green if they would be confused.
