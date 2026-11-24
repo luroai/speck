@@ -30,7 +30,9 @@ function brokenCopy() {
   gIn(dir, 'init', '-q', '-b', 'main'); gIn(dir, 'add', '-A'); gIn(dir, 'commit', '-qm', 'broken');
   return dir;
 }
-const cleanEnv = () => { const e = { ...env }; delete e.NODE_TEST_CONTEXT; return e; };
+// 0734: with no browser, so the rule files' real-browser tests, which start real panels that a busy machine can be too
+// slow to start, are skipped: the two broken rules are checked without a browser.
+const cleanEnv = () => { const e = { ...env, SPECK_TEST_CHROME: 'none' }; delete e.NODE_TEST_CONTEXT; return e; };
 const failed = (out, name) => assert.match(out, new RegExp(`^not ok \\d+ - ${name}`, 'm'), `${name} fails`);
 
 test('0657 AC3: 13 px text, or a fill with no text colour of its own, fails speck test --files with another file, and the quick run', () => {

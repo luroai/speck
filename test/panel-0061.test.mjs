@@ -236,9 +236,12 @@ test('0061 AC2-AC4: in a real browser, the pane formats Markdown, runs no HTML a
 test('0061 self-check: odd input shows as written or plainly formatted, quickly, and never breaks the pane', async () => {
   const deep = Array.from({ length: 2000 }, (_, i) => `${' '.repeat(i)}- level ${i}`).join('\n');
   const heavy = ['<a>'.repeat(10000), '<div>\n'.repeat(5000), '!['.repeat(10000), '<!--'.repeat(10000), '<a '.repeat(10000), '['.repeat(20000), '*a '.repeat(10000), '**a '.repeat(10000), '_a '.repeat(10000), '`a``'.repeat(5000), `${'*a '.repeat(3000)}x${' a*'.repeat(3000)}`].join('\n\n');
-  const started = Date.now();
+  // 0734: the CPU time this process spends drawing it, which a busy machine barely changes, not time on the clock
+  const cpuMs = () => { const u = process.cpuUsage(); return (u.user + u.system) / 1000; };
+  const started = cpuMs();
   const p = await showPane(full('0001', { problem: '0. zero\n1. one', outcome: '[](https://x.y) and [x]() and __proto__ and constructor', out_of_scope: deep, notes: heavy }));
-  assert.ok(Date.now() - started < 2000, 'quick on long, odd text');
+  const spent = cpuMs() - started;
+  assert.ok(spent < 2000, `quick on long, odd text (${Math.round(spent)} ms of CPU time)`);
   const ol = section(p, 'Problem');
   assert.equal(Number(kids(ol)[0].start), 0, 'a list can start at 0');
   assert.equal(section(p, 'Outcome').textContent, '[](https://x.y) and [x]() and __proto__ and constructor', 'empty links show as written');

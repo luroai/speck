@@ -58,7 +58,10 @@ test('0202 AC1, AC2: a stalled run ends every process it started, in a group of 
     // Another run going at the same time, with an orphan of its own, that keeps writing so doesn't stall.
     const second = stallRun(dir, 'node spawn.mjs orphan c; while true; do echo tick; sleep 0.2; done', 60000);
     const orphanC = await pidIn(path.join(dir, 'c'));
-    const first = stallRun(dir, 'node spawn.mjs orphan a; node spawn.mjs kept b & echo started; sleep 300', 1000);
+    // 0734: it writes a line every 0.2 s until both its processes have started, as node can take more than the stall
+    // time to start on a busy machine (for up to 30 s, so a process that never starts still ends in a stall), then goes
+    // quiet; and the stall time is 3 s, above the 0.6 s one gap once took.
+    const first = stallRun(dir, '(while :; do echo starting; sleep 0.2; done) & T=$!; node spawn.mjs orphan a; node spawn.mjs kept b & for i in $(seq 600); do [ -f b ] && break; sleep 0.05; done; kill $T; echo started; sleep 300', 3000);
     const orphanA = await pidIn(path.join(dir, 'a'));
     const keptB = await pidIn(path.join(dir, 'b'));
 
