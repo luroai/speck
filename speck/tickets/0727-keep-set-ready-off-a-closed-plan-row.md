@@ -18,7 +18,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T15:15:49.304Z"
-approved: "2026-11-24T16:52:42.765Z"
+approved: "2026-11-24T17:25:35.044Z"
 
 ---
 # 0727 · Keep Set ready off a closed Plan row
@@ -57,12 +57,13 @@ Closed drafts in Plan no longer show Set ready on the row, so each title has the
 ## Review log
 Round 1 (codex): approve.
 Round 2 (codex, merge round): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 2, 1 of them a merge round
+- Review rounds: 3, 2 of them merge rounds
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 456,535
-- Elapsed since build started: 97 min
+- Reviewer tokens: 678,570
+- Elapsed since build started: 130 min
 - Changed lines: 10 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
@@ -206,6 +207,77 @@ Follow-ups:
     "findings": [],
     "escalation_question": "",
     "summary": "The merge preserves the approved behaviour and main's newer documentation. Closed drafts hide Set ready; opening a draft restores it with the existing checks. Relevant tests pass, with only the previously recorded unrelated failure."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "ab2bf71365a2c07522e12e9f5a1070738cce977d",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a20e47-477c-7963-bbd3-b1126e78d938",
+    "builder_response": "- Tests run: test/panel-0727.test.mjs test/panel-0586.test.mjs test/panel-0419.test.mjs test/panel-0463.test.mjs test/panel.test.mjs\n- Failing before this build (unchanged): test/tmp-cleanup.test.mjs AC1 AC2\n- Merge conflict resolution:\n  - docs/brief.md (class: logic): kept this ticket's Plan wording (Set ready on an open draft and in its full view, priority on the row) and main's newer Settings description (Cursor-like groups and rows).\n  - templates/panel.js and templates/panel-cards.css: clean auto-merge; Set ready still only on open drafts.\n",
+    "seconds": 21,
+    "usage": {
+      "input_tokens": 676369,
+      "cached_input_tokens": 576896,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2201,
+      "reasoning_output_tokens": 112
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 27510,
+      "cached": 193920,
+      "write": 0,
+      "output": 605
+    },
+    "cost_usd": 0.080462,
+    "saved_at": "2026-11-24T17:25:29.066Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.js ticketHead still omits Set ready when closed; panel-cards.css retains title and details truncation. Unchanged panel-0727 AC1 tests and panel-0586 AC4 browser layout test pass."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "ticketHead still adds setReadyButton for open drafts. Passing panel-0727 AC2 exercises readiness disabling, explanation, pending text and the ready request; existing refusal tests also pass."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "templates/panel-popups.js retains readyBar. Passing panel-0727 AC3 checks Set ready in the draft's full-view bar."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The docs/brief.md diff against merged main contains only the intended Plan change: priority on the row, Set ready on an open draft and in its full view. Main's newer Settings description is preserved. panel-0727 AC4 passes."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The supplied post-merge run reports 224 passes, three skips and only the recorded pre-existing tmp-cleanup failure. The ticket's behaviour tests remain unchanged from the previous approval."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The latest merge preserves both the intended Plan behaviour and main's updated Settings documentation. All relevant checks pass; the only reported failure predates this change. No new concerns."
   }
 }
 ```
