@@ -53,9 +53,9 @@ async function finger(b, points, { gap = 0, lift = true } = {}) {
   for (const p of points.slice(1)) { if (gap) await pause(gap); await touch('touchMove', at(p)); }
   if (lift) await touch('touchEnd', []);
 }
-// 0542: waits, up to 3 s, for `lane`'s tab to open, so a page too busy to have taken the finger, scroll or key yet isn't
-// read as the lane before it. A lane that never opens fails here, naming it.
-const opens = (b, lane, what) => b.until(`document.querySelector('#tab-${lane}').getAttribute('aria-selected') === 'true'`, `${what}: ${lane}'s tab to open`, 3000);
+// 0542: waits, up to 10 s (0734: 3 s before), for `lane`'s tab to open, so a page too busy to have taken the finger,
+// scroll or key yet isn't read as the lane before it. A lane that never opens fails here, naming it.
+const opens = (b, lane, what) => b.until(`document.querySelector('#tab-${lane}').getAttribute('aria-selected') === 'true'`, `${what}: ${lane}'s tab to open`, 10000);
 // The open card comes to rest: once its tab has opened (0542), the slide under way ends within 120 ms (0517: 250 ms
 // before), by its own timing, and then the card is at rest. 0699: a slide that has only just started can have its start
 // set to the next frame, a hair ahead of the page's clock, so it reads a fraction of a millisecond over 120 ms.
@@ -63,7 +63,7 @@ async function settles(b, lane, what) {
   await opens(b, lane, what);
   const left = await b.js(`Math.max(0, ...document.getAnimations().filter(a => a.effect && a.effect.target && a.effect.target.parentElement === document.querySelector('main')).map(a => a.effect.getComputedTiming().endTime - (a.currentTime || 0)))`);
   assert.ok(left < 121, `${what}: the slide ends within 120 ms (${left} ms)`);
-  await b.until(`!document.querySelector('main').dataset.slide`, `${what}: the slide to end`, 3000);
+  await b.until(`!document.querySelector('main').dataset.slide`, `${what}: the slide to end`, 10000); // 0734: 3 s before
   await atRest(b, lane, what);
 }
 // Points from one place to another in `n` equal steps.

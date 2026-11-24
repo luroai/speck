@@ -42,7 +42,7 @@ test('0314 AC3: the reviewer\'s other options are as before', () => {
     assert.equal(after(args, '--permission-mode'), 'dontAsk');
     assert.ok(args.includes('--setting-sources='));
     assert.deepEqual(after(args, '--disallowedTools').split(/[\s,]+/).sort(), ['Edit', 'NotebookEdit', 'Write']);
-    assert.equal(after(args, '--output-format'), 'json');
+    assert.equal(after(args, '--output-format'), 'stream-json'); // 0719: was json
     assert.equal(after(args, '--model'), 'opus');
     assert.equal(after(args, '--effort'), 'high');
     assert.ok(!args.some(a => /bypass|dangerously/i.test(a)));

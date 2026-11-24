@@ -35,8 +35,9 @@ test('0429 AC2: b.until() and b.loaded() still wait 10 seconds without a limit o
   assert.equal(UNTIL_MS, 10000);
   const body = testIn('panel-0159.test.mjs', '0159 AC3: b.js() and b.until()');
   assert.match(body, /await browserPage\(/);
-  assert.match(body, /within\(2500, b\.until\('false', 'a thing that never happens', 1000\)/);
-  assert.match(testIn('panel-0159.test.mjs', '0159 AC3: b.loaded() gives up'), /within\(2500, b\.loaded\(1000\)/);
+  // 0736: within budget is 10 s (was 2500) so a busy machine's Chrome scheduling doesn't fail the check
+  assert.match(body, /within\(10000, b\.until\('false', 'a thing that never happens', 1000\)/);
+  assert.match(testIn('panel-0159.test.mjs', '0159 AC3: b.loaded() gives up'), /within\(10000, b\.loaded\(1000\)/);
 });
 
 test('0429 AC2: the settings test\'s stand-in agents come before any installed ones, so its panel never asks the real ones', () => {

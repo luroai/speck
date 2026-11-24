@@ -44,6 +44,19 @@ export const appStartSet = cfg => String(cfg?.commands?.start ?? '').trim() !== 
 export const appCheckable = (cfg, t) => !!cfg && speckActs(fixingOf(cfg)) && checksInApp(t) && t.status === 'blocked' && t.risk === 'low';
 // The question as checked, so each is checked once: its text, what to check and the recommendation.
 export const checkKey = t => crypto.createHash('sha256').update(JSON.stringify([t.blocked_question ?? '', t.blocked_check_in_app ?? '', t.blocked_recommendation ?? ''])).digest('hex').slice(0, 16);
+// 0713: whether speck's watch agent is checking, or will check, board ticket `t`'s question in the app, so it waits for
+// speck rather than for you: speck run checks it (appCheckable), the agent hasn't asked you about it (`asks`, agentView's),
+// and this question hasn't been checked yet, or its check is still waiting or running (`state`, readAgentState's). Once
+// checked with no action taken, it waits for you.
+export function appChecking(cfg, t, state, asks = []) {
+  if (!t || !appCheckable(cfg, t)) return false;
+  const id = String(t.id), key = checkKey(t), mine = x => !!x && String(x.id) === id;
+  if ((Array.isArray(asks) ? asks : []).some(mine)) return false;
+  const s = state && typeof state === 'object' ? state : {}, checked = s.checked && typeof s.checked === 'object' ? s.checked : {};
+  if (!Object.hasOwn(checked, id) || checked[id] !== key) return true;
+  const ours = x => mine(x) && x.key === key && !!checkOf(x);
+  return (Array.isArray(s.queue) ? s.queue : []).some(ours) || ours(s.running);
+}
 // The agent's queue entry for it, with what its brief needs.
 export const checkItem = (t, log) => ({ id: String(t.id), key: checkKey(t), what: `its build is blocked on a question to check in the app: ${t.blocked_check_in_app}`, log,
   check: { question: t.blocked_question ?? '', line: t.blocked_check_in_app, recommendation: t.blocked_recommendation ?? '' } });
@@ -83,7 +96,7 @@ export function checkBrief({ id, check, skill, watch, startSet = true }) {
     '5. Then do exactly one of these, with --saw saying what you checked and saw, and --why why, each in a sentence:',
     ...(!rec ? [] : watch === 'decide' ? [`${dec}   when what you saw agrees with the recommendation: speck goes with it and resumes the build`]
       : [`${dec}   only when the check clearly passes: speck goes with the recommendation and resumes the build`]),
-    ...(rec && watch === 'decide' ? [`- ${CLI} watch leave ${id} --saw="<why you couldn't make the check>" --why="..."   only when what the check asks for is something you can't see or do, such as a sound, another device, or a browser or account you can't use: speck goes with the recommendation, resumes the build and leaves the check for the user, and the ticket waits for them to ship it. Never use it when what you saw disagrees with the recommendation, or for a check you could make`] : []),
+    ...(rec && watch === 'decide' ? [`- ${CLI} watch leave ${id} --saw="<why you couldn't make the check>" --why="..."   only when what the check asks for is something you can't see or do, such as a sound, another device, or a browser you can't use, or an account with no saved login in \`${CLI} logins\`: speck goes with the recommendation, resumes the build and leaves the check for the user, and the ticket waits for them to ship it. Never use it when what you saw disagrees with the recommendation, or for a check you could make, or when a saved login fails to sign in (ask about that instead)`] : []),
     `- ${CLI} watch ask ${id} "<one question for the user>" --saw="..." --why="..."   ${rec ? 'otherwise' : 'as the build recommends nothing'}, saying what you saw`,
     'Never set a ticket ready, approve work, ship anything yourself, merge, push or change any code or file in the repo by hand.',
   ].join('\n');

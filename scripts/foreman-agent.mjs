@@ -35,7 +35,7 @@ import { usualBuild, runningLong, canRunLong } from './long-build.mjs';
 import { limitWaiting, keepUsageOfLog } from './usage-limit.mjs';
 import { reviewerWaiting } from './reviewer-limit.mjs';
 import { takeAt, spaced, resumeTime, resumeClock, resumeWhy } from './resume-at.mjs';
-import { appCheckable, appStartSet, checkKey, checkItem, checkOf, checkBrief, checkedSays, checkStale, CHECK_ACTIONS, qaOn, qaConfig, leftSays } from './app-check.mjs';
+import { appCheckable, appStartSet, checkKey, checkItem, checkOf, checkBrief, checkedSays, checkStale, CHECK_ACTIONS, qaConfig, leftSays } from './app-check.mjs';
 import { stopApp } from './app.mjs';
 import { standIn, movedOf } from './watch-stand-in.mjs';
 
@@ -306,7 +306,7 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, set
       if (agentView(runs(), tickets).asks.some(a => a.id === t.id)) continue;
       s.checked[t.id] = checkKey(t);
       s.queue = [...s.queue.filter(q => q.id !== t.id), checkItem(t, path.join(runs(), `${t.id}.log`))];
-      if (save(s)) speak(`${t.id}: ${qaOn(c) ? 'QA will' : 'I\'ll'} check its question in the app, as watch is ${fixingOf(c)}: ${t.blocked_check_in_app}`);
+      if (save(s)) speak(`${t.id}: QA will check its question in the app, as watch is ${fixingOf(c)}: ${t.blocked_check_in_app}`);
     }
   };
 
@@ -344,7 +344,7 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, set
   const launch = (s, c, next) => {
     const known = providers ?? knownProviders(repo); // 0401: read on each start, so a provider added since counts
     const token = crypto.randomUUID(), agent = foremanAgentOf(c, known), label = agentLabel(c, known);
-    const check = checkOf(next), qa = !!check && qaOn(c); // 0636. 0651: `c` is QA's already
+    const check = checkOf(next), qa = !!check; // 0636. 0714: a check in the app is always QA's, with its settings blank or not
     const brief = check ? checkBrief({ id: next.id, check, skill: skillPath(agent), watch: fixingOf(c), startSet: appStartSet(c) })
       : foremanBrief({ id: next.id, what: next.what, log: next.log ? path.relative(repo, next.log) : 'its log', tail: next.log ? logTail(next.log) : '', agent, decide: fixingOf(c) === 'decide', long: next.long === true });
     const argv = foremanArgv(c, brief, undefined, known, !!check);
