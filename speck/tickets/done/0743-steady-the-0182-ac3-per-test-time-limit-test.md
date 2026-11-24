@@ -1,7 +1,7 @@
 ---
 id: "0743"
 title: "Steady the 0182 AC3 per-test time limit test"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T23:12:02.998Z"
 approved: "2026-11-24T23:21:42.808Z"
+finished: "2026-11-24T23:47:16.227Z"
 
 ---
 # 0743 · Steady the 0182 AC3 per-test time limit test
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The 0182 AC3 test "Chromium has closed within 10 s of a test file finishing whose test timed out waiting on its page" gives its inner test 1.5 s, which also covers starting Chromium. On a busy machine Chromium can take longer to open, so the test can fail with no real fault and turn main red.
