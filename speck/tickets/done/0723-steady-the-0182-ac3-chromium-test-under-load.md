@@ -1,7 +1,7 @@
 ---
 id: "0723"
 title: "Steady the 0182 AC3 Chromium test under load"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T11:55:06.030Z"
 approved: "2026-11-24T12:53:47.793Z"
+finished: "2026-11-24T13:21:17.618Z"
 
 ---
 # 0723 · Steady the 0182 AC3 Chromium test under load
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The 0182 AC3 test ("Chromium has closed within 10 s of a test file finishing that ran out of time") fails now and then in the full suite on a busy machine, then passes on retry. Each failure turns main red, so speck run raises fix tickets and builds can't trust the baseline.
