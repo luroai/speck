@@ -18,7 +18,7 @@ import { shipPrTicket } from './pr-ship.mjs';
 import { privateLinesInSpeck, privateSaid } from './private-words.mjs';
 import { receiptWhyNot } from './receipts.mjs'; export { receiptWhyNot }; // for speck status --json (0629)
 import { leftChecks } from './app-check.mjs'; import { builtOnWaiting, builtOnCheck, cancelledWhy, CANCELLED_WHY } from './built-on.mjs'; // 0679, 0674, 0710
-import { notPushed } from './not-pushed.mjs';
+import { notPushed } from './not-pushed.mjs'; import { refuseBareMain } from './bare-main.mjs'; // 0740
 
 // ---------- ship (the user's gate: merge an approved ticket locally) ----------
 
@@ -252,7 +252,7 @@ export function shipTicket(repo, id) {
       // 0355: a task changes only speck/, so there's nothing for the tests to check.
       if (doc) { console.log(`Ticket ${pad} is a task, so no tests run before it ships.`); break; }
       // A merge with conflicts can't be tested, so the branch alone is, as before: the merge then refuses with them.
-      const r = tested ? testMerged(work, cfg, branch, tested) : runTests(work, cfg);
+      const r = tested ? testMerged(work, cfg, branch, tested) : runTests(work, cfg); refuseBareMain(repo, base); // 0740: they may have made the main checkout bare
       if (!r.ok) throw testFailure(work, cfg, base, target, { moved: !!tested && !isAncestor(work, target, branchSha), failing: failingTests(r.output) });
       clash(', made while the tests ran');
       const now = git(['rev-parse', base], repo).trim();
@@ -593,7 +593,7 @@ export function cmdShip(args) {
     endShip(took, false, null);
     throw new SpeckError(`Another ship is running in this repo, so ${id.padStart(4, '0')} wasn't shipped. Nothing was changed.`, 15);
   }
-  try { if (pr) shipPrTicket(repo, id, { auto }); else shipTicket(repo, id); }
+  try { refuseBareMain(repo, loadConfig(repo).base_branch); if (pr) shipPrTicket(repo, id, { auto }); else shipTicket(repo, id); } // 0740: refuseBareMain first, in either ship_mode
   catch (e) { if (auto && e?.together) e.code = 16; if (took) endShip(took, auto, e); throw e; }
   finally { if (lock) releaseShipLock(lock); }
   if (took) endShip(took, auto, null);

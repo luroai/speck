@@ -8,6 +8,7 @@ import { sh, ticketBranches } from './core.mjs';
 import { shipState, otherShipRunning, shipsRunning } from './ship.mjs';
 import { sharedCacheDir } from './turns.mjs';
 import { foremanOnly } from './foreman-agent.mjs';
+import { bareMain, bareMainHold } from './bare-main.mjs';
 
 const list = v => (Array.isArray(v) ? v : []);
 const CLI = fileURLToPath(new URL('./speck.mjs', import.meta.url));
@@ -87,6 +88,15 @@ export function shipQueue(repo, cfg, { say = console.log, launch = launchShip, h
   let holdWhy = '';
   const forced = new Set(); // 0287: tickets the Foreman asked to ship once more
   const after = new Set(); // 0675: approved tickets it has said wait to ship after the ticket they were built on
+  let bare = null; // 0740: the main checkout's path while it isn't a work tree: no ship starts until it's set back
+  // Checks the main checkout again, saying once when it stops being a work tree and when it's one again.
+  const checkBare = () => {
+    const now = bareMain(repo);
+    if (now && now !== bare) say(`Shipping is ${bareMainHold(now, base)}`);
+    else if (!now && bare) say(`The main checkout at ${bare} is a work tree again, so speck run is shipping again.`);
+    bare = now;
+    return bare;
+  };
   const same = (id, prev, refs) => prev.base === refs.base && (prev.head === refs.head || foremanOnly(repo, id, prev.head, refs.head));
 
   const ended = (id, prev, refs, log, since, code, error) => {
@@ -107,6 +117,14 @@ export function shipQueue(repo, cfg, { say = console.log, launch = launchShip, h
     const why = error || (rec?.started >= since && rec.message) || lastLine(log) || (code === null ? 'it was stopped' : `it exited with ${code}`);
     // 0216: merged but not pushed, so the ticket is done and won't be tried again: its message says how to push it.
     if (!error && rec?.unpushed && rec.started >= since) return say(`${id} merged into ${base} but wasn't pushed: ${why}`);
+    // 0740: refused while the main checkout isn't a work tree, which says nothing about the ticket, so it's tried
+    // again once the main checkout is set back, without a new commit, and isn't handed back or looked into. Its
+    // ship record goes too, so it doesn't count as the ticket's last try (earlierTry), even after a restart.
+    if (bareMain(repo)) {
+      prev ? last.set(id, prev) : last.delete(id);
+      if (rec?.started >= since) try { fs.rmSync(path.join(runs, `${id}.ship.json`), { force: true }); } catch { /* left: it counts as a try */ }
+      return say(`${id} didn't ship: ${why}`);
+    }
     say(`${id} didn't ship: ${why}\nspeck run will try it again once ${base} or its branch has a new commit.`);
     said.set(id, why);
     if (code === 14) {
@@ -127,6 +145,7 @@ export function shipQueue(repo, cfg, { say = console.log, launch = launchShip, h
       say(gone ? `${t.id} is approved but can't ship: ${t.auto_ship_why || `it was built on ${gone}, which was cancelled`}.` : `${t.id} is approved and waits to ship after ${t.ships_after}, which it was built on and which hasn't shipped yet.`);
     }
     if (current) return;
+    if (checkBare()) return;
     if (hold !== null && headOf(repo, base) !== hold) {
       hold = null;
       say(`${base} has a new commit, so speck run is shipping again.`);
@@ -176,7 +195,7 @@ export function shipQueue(repo, cfg, { say = console.log, launch = launchShip, h
         continue;
       }
       if (t.build_running) { wait('build', 'its build is still running'); continue; }
-      if (hold !== null && t.type !== 'fix') { wait('hold', 'shipping is on hold'); continue; }
+      if (bare || (hold !== null && t.type !== 'fix')) { wait('hold', 'shipping is on hold'); continue; }
       const prev = last.get(t.id);
       if (prev && !forced.has(t.id) && same(t.id, prev, refsOf(repo, cfg, t.id))) {
         const message = `waiting for a new commit on ${base} or its branch. Its last try: ${said.get(t.id) || 'it didn\'t ship'}`;
@@ -188,7 +207,9 @@ export function shipQueue(repo, cfg, { say = console.log, launch = launchShip, h
       else if (shipping) wait('running', `waiting for the ship of ${shipping} to end`);
       else { wait('next', next ? `next to ship after ${next}` : 'next to ship'); next = t.id; }
     }
-    return { running: shipping, hold: hold === null ? null : { message: `on hold until ${base} has a new commit: ${holdWhy}. Only a fix ticket ships meanwhile.` }, refused, waiting: queued };
+    const held = bare ? { message: bareMainHold(bare, base) } // 0740
+      : hold === null ? null : { message: `on hold until ${base} has a new commit: ${holdWhy}. Only a fix ticket ships meanwhile.` };
+    return { running: shipping, hold: held, refused, waiting: queued };
   };
 
   const again = id => { forced.add(String(id)); };

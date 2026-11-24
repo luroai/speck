@@ -8,6 +8,7 @@ import { loadConfig, parseTicket } from '../../scripts/core.mjs';
 import { shipRepo, gIn, env } from './ship.mjs';
 import { speck } from './cli.mjs';
 import { fakeGh } from './gh.mjs';
+import { initBare } from './git-env.mjs';
 
 export const TICKET = 'speck/tickets/0001-export-bookings.md';
 export const runs = dir => path.join(dir, 'speck', '.cache', 'runs');
@@ -15,8 +16,7 @@ export const runs = dir => path.join(dir, 'speck', '.cache', 'runs');
 // `mode` is ship_mode, `test` the test command as shipRepo takes it, and `config` any other lines to set, such as 'auto_ship: true', on both branches.
 export function prRepo({ mode = 'pr', config = [], test = 'true' } = {}) {
   const r = shipRepo({ test });
-  const bare = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-remote-'));
-  gIn(bare, 'init', '-q', '--bare', '-b', 'main');
+  const bare = initBare(fs.mkdtempSync(path.join(os.tmpdir(), 'speck-remote-')));
   for (const cwd of [r.dir, r.wt]) {
     const file = path.join(cwd, 'speck', 'config.yml');
     let text = fs.readFileSync(file, 'utf8').replace(/^ship_mode: .*$/m, `ship_mode: ${mode}`);

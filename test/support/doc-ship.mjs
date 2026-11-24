@@ -8,6 +8,7 @@ import { loadConfig } from '../../scripts/core.mjs';
 import { gIn, runIn, env } from './ship.mjs';
 import { speck } from './cli.mjs';
 import { fakeGh } from './gh.mjs';
+import { initBare } from './git-env.mjs';
 
 const approveVerdict = { verdict: 'approve', criteria: [{ id: 1, status: 'pass', evidence: 'ok' }], findings: [], summary: 's', escalation_question: '' };
 const body = `## Problem\nThe team needs a pricing plan.\n## Outcome\nA pricing plan in outputs/plans.\n## Acceptance criteria\n1. The plan names three tiers.\n## Out of scope\n- Launch dates\n`;
@@ -60,8 +61,7 @@ function build(dir, { test, outside, auto }) {
 // that merges into it.
 export function docPrRepo(opts = {}) {
   const r = docRepo(opts);
-  const bare = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-remote-'));
-  gIn(bare, 'init', '-q', '--bare', '-b', 'main');
+  const bare = initBare(fs.mkdtempSync(path.join(os.tmpdir(), 'speck-remote-')));
   for (const cwd of [r.dir, r.wt]) {
     const file = path.join(cwd, 'speck', 'config.yml');
     fs.writeFileSync(file, fs.readFileSync(file, 'utf8').replace(/^ship_mode: .*$/m, 'ship_mode: pr'));

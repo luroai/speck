@@ -9,6 +9,7 @@
 // every file commands.checks lists in speck/config.yml, heavy or not (0657), so a change that breaks a rule for the
 // whole panel fails before ship.
 
+import './git-env.mjs'; // first (0740): no test file it starts inherits a variable that points git at a repository
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';

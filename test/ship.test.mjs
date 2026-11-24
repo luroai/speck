@@ -8,6 +8,7 @@ import { spawnSync } from 'node:child_process';
 import { parseYaml, setField } from '../scripts/speck.mjs';
 import { ROOT, CLI, gitEnv, approveVerdict, shipRepo, doneRepo } from './support/speck.mjs';
 import { keepLatestReceipt } from './support/receipts.mjs';
+import { initBare } from './support/git-env.mjs';
 
 test('AC1: approved is a valid status, listed first by speck status as waiting for the user', () => {
   const r = shipRepo();
@@ -122,7 +123,7 @@ test('AC4: speck ship pushes main to its remote, or says why it did not', () => 
   // With a remote.
   const r = shipRepo();
   const bare = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-remote-'));
-  spawnSync('git', ['init', '-q', '--bare', '-b', 'main', bare]);
+  initBare(bare);
   r.g('remote', 'add', 'origin', bare);
   r.g('push', '-q', '-u', 'origin', 'main');
   r.g('push', '-q', '-u', 'origin', 'speck/0001-export-bookings');
@@ -142,7 +143,7 @@ test('AC4: speck ship pushes main to its remote, or says why it did not', () => 
   // A refused push: the merge stays, and the user is told how to fix it.
   const refused = shipRepo();
   const bare2 = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-remote-'));
-  spawnSync('git', ['init', '-q', '--bare', '-b', 'main', bare2]);
+  initBare(bare2);
   refused.g('remote', 'add', 'origin', bare2);
   refused.g('push', '-q', '-u', 'origin', 'main');
   refused.g('push', '-q', '-u', 'origin', 'speck/0001-export-bookings');
@@ -296,7 +297,7 @@ test('init skips a ticket file it cannot read, and still updates speck', () => {
 function shipWithRemoteMoved(file, content) {
   const r = shipRepo();
   const bare = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-remote-'));
-  spawnSync('git', ['init', '-q', '--bare', '-b', 'main', bare]);
+  initBare(bare);
   r.g('remote', 'add', 'origin', bare);
   r.g('push', '-q', '-u', 'origin', 'main');
   const other = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-other-'));
