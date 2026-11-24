@@ -1,7 +1,7 @@
 ---
 id: "0702"
 title: "Keep Shipped's figure labels whole at middle widths"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: "speck/ideas/done/2026-11-10-keep-shipped-s-figure-labels-whole-at-middl
 after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T11:55:03.414Z"
+approved: "2026-11-24T12:29:11.594Z"
 
 ---
 # 0702 · Keep Shipped's figure labels whole at middle widths
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Between about 480 and 760 px wide, Shipped's figures switch to four columns that are too narrow for the longer labels ("median review rounds", "median builder tokens"), so they end in an ellipsis. A side-panel column or a small tablet often sits in that range.
@@ -53,10 +54,14 @@ The figures at the top of Shipped now keep their full labels on narrower screens
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
-
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 126,244
+- Elapsed since build started: 34 min
+- Changed lines: 4 (limit 5000)
 Follow-ups (tidy-ups, no note): the comment above `.stats` in panel-cards.css still says 480 px and one-line labels, and the panel-0157 test title still says one line.
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
