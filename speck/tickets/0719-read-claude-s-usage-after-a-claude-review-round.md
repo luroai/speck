@@ -42,6 +42,7 @@ After a review round on Claude Code, speck keeps Claude's latest usage reading, 
 ## Notes
 - `CLAUDE_READ_ONLY` in `scripts/reviewers.mjs` uses `--output-format json`; `keepUsage` passes the output to `claudeUsageInLog` (`scripts/agent-usage.mjs`), which looks for `rate_limit_event` lines. `verdictFromOutput`/`jsonIn` parse the whole output as one JSON value.
 - Checked 2026-11-24: `claude -p --output-format stream-json --verbose` prints `rate_limit_event` lines and ends with a `type: "result"` line carrying `session_id`, `total_cost_usd` and `usage` (Claude Code 2.1.331, `claude --help` and a saved build log).
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
