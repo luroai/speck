@@ -43,6 +43,8 @@ A change to the builder or reviewer that clashes with the other offers to swap t
 - From 0731's own note: its refusal used to say "pick it as the reviewer in the same Save", which 0731 removed.
 - Decision: offer the swap in one step, rather than only explaining the way round.
 - Failing before this build: none
+- Self-check: a swap offer the page can't use (malformed, or no confirm dialog) was treated as a "no" and hid the refusal's reason; now the refusal is shown as it came, with a test.
+- Pictures: none, because the change shows nothing new on the page: the question is the browser's own yes-or-no dialog, as the auto_ship question is.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

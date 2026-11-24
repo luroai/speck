@@ -1475,7 +1475,27 @@ function saveSetting(keys) {
   for (const k of keys) { settingRefused.delete(k); settingDone.delete(k); }
   const done = settingsQueue.then(() => sendSettings(job));
   settingsQueue = done.catch(() => {});
-  return done;
+  // 0748: a swap said yes to is saved as a change of its own, once this one is answered, outside the queue it waits on.
+  return done.then(r => r !== null && typeof r === 'object' && Array.isArray(r.again) ? saveSetting(r.again) : r);
+}
+// 0748: the server refused a builder or reviewer of the other's family, and offers `swap`, the other's agent and model
+// that would fix it. Asks whether to swap the two; on yes, gives the keys to save together, the change kept as picked;
+// on no, null, and the change goes back with nothing saved. Undefined, asking nothing, when there's no swap it can
+// offer, and then the refusal is shown as it came.
+function askSwap(job, swap) {
+  const role = ['builder', 'reviewer'].find(k => job.keys.includes(k)), other = role === 'builder' ? 'reviewer' : 'builder';
+  if (!role || typeof swap[other] !== 'string' || !swap[other] || settingRows().every(r => r.key !== other) || typeof confirm !== 'function') return undefined;
+  const picked = job.changes.find(c => c.key === role), model = ROLES[role].model, otherModel = ROLES[other].model;
+  const pickedModel = (job.changes.find(c => c.key === model) || {}).value ?? settingSaved(model);
+  const swapModel = typeof swap[otherModel] === 'string' ? swap[otherModel] : settingSaved(otherModel);
+  const ask = `The ${other} is ${roleWords(other, `${settingSaved(other)}|${settingSaved(otherModel)}`)}, the same family as ${roleWords(role, `${picked.value}|${pickedModel}`)}, so the ${role} can't be that while the ${other} is. `
+    + `Swap them, making the ${other} ${roleWords(other, `${swap[other]}|${swapModel}`)}, the ${role}'s until now?`;
+  if (!confirm(ask)) return null;
+  for (const c of job.changes) settingTyped.set(c.key, c.value);
+  settingTyped.set(other, swap[other]);
+  const keys = [other];
+  if (typeof swap[otherModel] === 'string' && settingRows().some(r => r.key === otherModel)) { settingTyped.set(otherModel, swap[otherModel]); keys.push(otherModel); }
+  return [...job.keys, ...keys];
 }
 // The view drawn again as it was, keeping how far it's scrolled and which setting's control has the keyboard focus.
 function renderKeeping() {
@@ -1499,7 +1519,7 @@ function savedAs(x, c) {
 // later change to it is waiting to be saved or being typed.
 async function sendSettings(job) {
   const { keys, changes, more, replacing } = job;
-  let refused = null, why = null, reread = false, said = null;
+  let refused = null, why = null, reread = false, said = null, swap = null;
   // 0387: machine:<key>= clears this machine's value, so a blank one for this machine is sent as blank:<key>=.
   const query = [...changes.map(c => `${!c.machine ? 'repo' : c.value === '' && !c.clear ? 'blank' : 'machine'}%3A${encodeURIComponent(c.key)}=${encodeURIComponent(c.value)}`),
     ...(more !== null ? [`confirm=${encodeURIComponent(more.risks)}`] : []),
@@ -1512,6 +1532,7 @@ async function sendSettings(job) {
       why = body && typeof body.error === 'string' && body.error ? body.error : `The server refused (${res.status}).`;
       refused = body && body.refused !== null && typeof body.refused === 'object' ? body.refused : null;
       reread = res.status === 409 && body !== null && (body.confirm === true || body.replace === true); // 0259, 0293: changed since
+      if (body !== null && body.swap !== null && typeof body.swap === 'object' && !Array.isArray(body.swap)) swap = body.swap; // 0748
     } else {
       const cleared = body && body.cleared !== null && typeof body.cleared === 'object' ? body.cleared.builder_model : undefined;
       if (typeof cleared === 'string' && cleared) said = `builder_model was cleared, because ${cleared}.`; // 0311
@@ -1519,6 +1540,15 @@ async function sendSettings(job) {
   } catch { why = "Couldn't reach the panel server, so nothing was saved."; }
   for (const [k, m] of job.marks) if (settingPending.get(k) === m) settingPending.delete(k);
   if (job.session !== settingsSession || settingsView === null) return; // closed since: saved or not, there's no view to show it in
+  if (why !== null && swap !== null && keys.every(k => !settingPending.has(k)) && job.changes.every(c => c.clear || !settingTyped.has(c.key) || settingTyped.get(c.key) === c.value)) {
+    const again = askSwap(job, swap); // 0748
+    if (Array.isArray(again)) return { again };
+    if (again === null) {
+      for (const k of keys) { settingTyped.delete(k); settingClear.delete(k); settingRefused.delete(k); } // no: back as saved, with nothing saved
+      renderKeeping();
+      return;
+    }
+  }
   if (why !== null) {
     // Each setting's own reason, or the server's one reason for them all.
     for (const k of keys) {
