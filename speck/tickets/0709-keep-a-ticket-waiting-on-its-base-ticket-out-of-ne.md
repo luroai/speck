@@ -42,7 +42,9 @@ Such a ticket stays under Building, saying it ships after its base ticket, and a
 
 ## Notes
 - Failing before this build: none
+- Self-check: tightened the speck status test to read each ticket's own lines, so a ships-after line under the wrong ticket fails it; checked an auto-ship that didn't finish still shows under Needs you.
 - `autoShipWhyNot` (`scripts/ship.mjs`) turns auto-ship off while `built_on` hasn't shipped, so the board sets `auto_ship: false` and `ships_after`. `buildGroup` and `doingNow` (`templates/panel-model.js`), `atShip` (`scripts/panel-summary.mjs`) and the status line (`scripts/foreman.mjs`, the speck-status skill) are where it shows. A ticket speck will act on (`foreman_will`) is already grouped under Building, which this follows.
+- speck (2026-11-24 12:25 UTC) told you: The build is slow because the machine is overloaded, not because of the ticket or a broken base branch. Its real-browser tests keep timing out at startup, and the failures move between reruns. The build is now waiting for the load to drop before it re-runs them. Why: The load average reached about 150 on 16 cores while other builds ran, and every failure was a 'panel didn't start' timeout, with different tests failing on each run, including tests that had passed before.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
