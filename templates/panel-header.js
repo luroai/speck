@@ -166,7 +166,15 @@ function bridgeModel(body) {
     building: up.reduce((n, p) => n + count(p.building), 0), busy: up.filter(p => p.busy === true || count(p.building) > 0).length,
     needsYou: up.reduce((n, p) => n + count(p.needs_you), 0), shipped: up.reduce((n, p) => n + count(p.shipped_week), 0),
     minutes: median(up.flatMap(p => (Array.isArray(p.build_minutes) ? p.build_minutes.filter(Number.isFinite) : []))),
-    spent: spends.length ? spends.reduce((n, v) => n + v, 0) : null, spentUnknown: up.some(p => p.spent_week_unknown === true) };
+    spent: spends.length ? spends.reduce((n, v) => n + v, 0) : null, spentUnknown: up.some(p => p.spent_week_unknown === true),
+    usage: bridgeUsage(body && body.usage) };
+}
+// 0720: one line for each agent at 90% or more of a usage window, or limited, from speck's newest readings: the agent,
+// each such window with how much of it is used, and when it resets.
+function bridgeUsage(list) {
+  const win = w => w && typeof w === 'object' && typeof w.label === 'string' && w.label;
+  return (Array.isArray(list) ? list : []).filter(a => a && typeof a === 'object' && typeof a.name === 'string' && a.name && Array.isArray(a.windows) && a.windows.some(win))
+    .map(a => `${a.name} · ${a.windows.filter(win).map(w => `${w.label} ${w.limited === true ? 'limited' : Number.isFinite(w.used_percent) ? `${Math.floor(w.used_percent)}% used` : '90% or more used'}, ${resetWords(w)}`).join(' · ')}`);
 }
 // An amount spent this week: "+" when some of it has no known cost, a dash when none of it does.
 function bridgeSpend(usd, unknown) {
@@ -227,7 +235,8 @@ function bridgeParts(m) {
   const rows = m.projects.map(p => bridgeButton(`row ${p.port}`, 'bridge-row', () => pressBridgeProject(p.port),
     el('span', `bridge-dot ${bridgeDot(p)}`), el('span', 'bridge-about', null, el('span', 'bridge-name', p.label), el('span', 'bridge-line', bridgeLine(p))),
     el('span', 'bridge-spend', p.running ? bridgeSpend(p.spent_week_usd, p.spent_week_unknown === true) : '')));
-  return [bar, el('h3', 'bridge-section', 'Needs you'), ...(cards.length ? cards : [el('p', 'bridge-none', 'Nothing needs you.')]), el('h3', 'bridge-section', 'Projects'), ...rows];
+  const usage = m.usage.map(line => el('p', 'bridge-usage', line)); // 0720
+  return [bar, ...usage, el('h3', 'bridge-section', 'Needs you'), ...(cards.length ? cards : [el('p', 'bridge-none', 'Nothing needs you.')]), el('h3', 'bridge-section', 'Projects'), ...rows];
 }
 const shownHere = port => !projectsGoneList && state && state.projects && state.projects.self === port;
 // A row: that project's panel here, by the same switch as the menu. The project already shown just comes back.

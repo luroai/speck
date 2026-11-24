@@ -154,6 +154,7 @@
   #bridge .bridge-tile { display: flex; flex-direction: column; min-width: 0; padding: 8px; border: .5px solid var(--bar-line); border-radius: 8px; }
   #bridge .bridge-tile .num { font-size: 20px; line-height: 24px; font-weight: 600; font-variant-numeric: tabular-nums; }
   #bridge .bridge-tile .label { font-size: 12px; line-height: 16px; color: var(--bar-muted); background: var(--bar); }
+  #bridge .bridge-usage { margin: 8px 0 0; font-size: 14px; line-height: 20px; color: var(--needs-you-text); } /* 0720: an agent near its usage limit */
   #bridge .bridge-section { margin: 20px 0 8px; font-size: 14px; line-height: 20px; font-weight: 600; }
   #bridge .bridge-none { margin: 0; font-size: 14px; line-height: 20px; color: var(--muted); }
   #bridge .bridge-error { margin: 0 0 10px; font-size: 14px; line-height: 20px; color: var(--bad); }
