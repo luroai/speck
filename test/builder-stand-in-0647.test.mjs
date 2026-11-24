@@ -89,7 +89,9 @@ test('0647 AC1: a ticket waiting for a build slot isn\'t moved, so it starts on 
 
 test('0647 AC1: speck run picks a stand-in only while a build slot is free', () => {
   const src = fs.readFileSync(new URL('../scripts/run.mjs', import.meta.url), 'utf8');
-  assert.match(src, /standIns\.pick\(now\.cfg, now\.command, t, running\.size < now\.max\)/);
+  // 0726: room is hasBuildRoom(running.size, now.max), so a stand-in also waits for machine_parallel_builds.
+  assert.match(src, /standIns\.pick\(now\.cfg, now\.command, t, room\)/);
+  assert.match(src, /hasBuildRoom\(running\.size, now\.max\)/);
 });
 
 // ---------- AC2 ----------

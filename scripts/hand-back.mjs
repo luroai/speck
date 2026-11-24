@@ -15,6 +15,7 @@ import { knownProviders } from './custom-providers.mjs';
 import { providerNamed } from './provider-review.mjs';
 import { providerStartWords } from './provider-build.mjs';
 import { limitWaiting } from './usage-limit.mjs';
+import { hasBuildRoom } from './build-turns.mjs'; // 0726
 
 // What a killed build is told when speck run resumes it.
 const resumeMessage = (id, skill = '/speck-build') => `The build of ticket ${id} was stopped unexpectedly before it finished, and speck run has resumed it. Carry on with ${skill} ${id} from where you left off.`;
@@ -117,7 +118,10 @@ export function handBackQueue({ repo, cfg, words, max, settings = () => ({ cfg, 
     try { saveRecord(file, next); } catch (e) { return cantHandBack({ id, kind: h.kind }, rec, `its run record couldn't be saved (${e.message})`); }
     const cwd = typeof rec.cwd === 'string' && fs.existsSync(rec.cwd) ? rec.cwd : repo;
     console.log(`${id}'s ship needs work on the ticket, so speck run is handing it back to its build (session ${rec.session}).`);
-    startBuild(id, argv, cwd, rec.session, 'a', pid => `${JSON.stringify({ ...next, pid: pid ?? rec.pid }, null, 2)}\n`, rec.env_session ?? rec.session);
+    // 0726: if the machine slot was taken between hasBuildRoom and startBuild, put the hand-back back for the next check.
+    if (startBuild(id, argv, cwd, rec.session, 'a', pid => `${JSON.stringify({ ...next, pid: pid ?? rec.pid }, null, 2)}\n`, rec.env_session ?? rec.session) === false) {
+      try { saveRecord(file, { ...kept, hand_back: h, exited: rec.exited, exit_code: rec.exit_code }); } catch { /* next check retries */ }
+    }
   };
 
   // A ticket's hand-back from its run record: { file, rec, h, live }, live while its branch is where the ship found it,
@@ -147,7 +151,7 @@ export function handBackQueue({ repo, cfg, words, max, settings = () => ({ cfg, 
       if (!p.live) { const { hand_back: _, ...kept } = p.rec; try { saveRecord(p.file, kept); } catch { /* tried again next check */ } continue; }
       if (shipState(runs(), t.id)?.running) continue;
       const s = settings();
-      if (!s || running.size >= s.max) return;
+      if (!s || !hasBuildRoom(running.size, s.max)) return;
       resumeHandBack(t.id, p.file, p.rec, s);
     }
   };
