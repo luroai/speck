@@ -39,6 +39,7 @@ tmp-cleanup's checks, and related-0676's failing-run check, pass whatever report
 - Other tests, which already pass `--test-reporter=tap` to the runs they read.
 
 ## Notes
+- Failing before this build: none
 - Raised by the builds of 0719, 0720, 0722, 0724 and 0727; their four other notes are dropped as duplicates of this one.
 - Other tests that read `# fail` already spawn their fixture with `--test-reporter=tap`, which may be the simplest fix.
 
