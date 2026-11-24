@@ -1,7 +1,7 @@
 ---
 id: "0701"
 title: "Give a hovered closed row room inside its fill"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: "speck/ideas/done/2026-11-10-give-a-hovered-closed-row-room-inside-its-f
 after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T11:55:01.303Z"
+approved: "2026-11-24T12:17:02.848Z"
 
 ---
 # 0701 · Give a hovered closed row room inside its fill
 
-**Status:** 🔨 building
+**Status:** 👍 approved
 
 ## Problem
 On a computer with a mouse, a closed Plan or Capture row under the pointer gets the raised fill, but its text runs right to the fill's edges. Since 0614 an open row's fill reaches past its text, so a hovered closed row looks cramped beside it.
@@ -55,7 +56,172 @@ On a computer, a closed Plan or Capture row under the pointer now has its raised
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Closed Plan rows with linked tickets receive .hl when hovered, which excludes them from the new side fill.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 237,487
+- Elapsed since build started: 22 min
+- Changed lines: 2 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "b9378443e847383be4f28bd99d742876feabfc24",
+    "session": "fresh",
+    "thread_id": "01a20d78-e1ca-7be1-b7c3-48b1a80d8c44",
+    "builder_response": "Round 1: added a hover rule for closed rows (side box-shadows of 12px in --raise, inside the hover media query). Ran test/panel-0701.test.mjs plus the related files; panel start-up timeouts under load passed when re-run alone.\n",
+    "seconds": 32,
+    "usage": {
+      "input_tokens": 116957,
+      "cached_input_tokens": 81152,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 796,
+      "reasoning_output_tokens": 53
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 35805,
+      "cached": 81152,
+      "write": 0,
+      "output": 796
+    },
+    "cost_usd": 0.0876852,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-24T12:13:06.862Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "templates/panel-cards.css excludes .hl rows from the new hover rule. templates/panel.js lightUp() adds .hl to the hovered Plan ticket itself when it has linked tickets, so those closed rows retain the cramped fill. The AC1 test permits this exclusion and misses the case."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The new rule changes only box-shadow, which does not affect text layout. test/panel-0701.test.mjs AC2 checks that the rule adds no layout-changing declarations."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The new side shadows are inside @media (hover: hover). test/panel-0701.test.mjs AC3 checks that the closed-row hover rule does not appear outside that query."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The supplied test results report 243 passes, zero failures and three skips. The change leaves existing tests and open-row rules unchanged."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-cards.css",
+        "issue": "Closed Plan rows with linked tickets receive .hl when hovered, which excludes them from the new side fill. The requested spacing therefore works only for some Plan rows.",
+        "suggested_fix": "Extend the hovered closed-row fill to .hl rows while preserving their existing linked-ticket ring and lighting behaviour. Add coverage for a hovered closed Plan row with linked tickets; the current selector regex accepts the exclusion that causes this bug.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The change gives Capture rows and unlinked Plan rows the extra space without moving text or changing touch behaviour. Plan rows with linked tickets still have the cramped fill when hovered. Fix that case while preserving the existing linked-ticket ring."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "58abfa53bdab01d2e3b1b894b3c4297730329757",
+    "session": "continued",
+    "thread_id": "01a20d78-e1ca-7be1-b7c3-48b1a80d8c44",
+    "builder_response": "Round 2: hovered closed rows lit by a link (.hl) now get the side fill plus their existing inset ring; test added. Ran test/panel-0701.test.mjs and the checks.\n",
+    "seconds": 112,
+    "usage": {
+      "input_tokens": 236132,
+      "cached_input_tokens": 195328,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1355,
+      "reasoning_output_tokens": 58
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 4999,
+      "cached": 114176,
+      "write": 0,
+      "output": 559
+    },
+    "cost_usd": 0.0270056,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-24T12:16:59.557Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel-cards.css now gives all hovered closed rows 12 px side shadows, including .hl rows while retaining their inset ring. Both AC1 tests in test/panel-0701.test.mjs passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Both hover rules change only box-shadow, which leaves text positions unchanged. The AC2 test checks for layout-changing declarations and passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Both new rules remain inside @media (hover: hover), leaving devices without hover unchanged. The AC3 test passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The supplied round-two results report 147 passes, zero failures and three skips. The CSS change preserves existing open-row and linked-ring behaviour."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-cards.css",
+        "issue": "Hovered closed Plan rows with linked tickets previously missed the extended fill.",
+        "suggested_fix": "Addressed: highlighted closed rows now receive the side fill together with their existing inset ring, with a regression test.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Hovered closed Plan and Capture rows now have the extra space around their text, including rows with linked tickets. Text stays put, touch behaviour is unchanged, and the reported checks pass. The previous blocking issue is resolved."
+  }
+}
+```
+
+</details>
