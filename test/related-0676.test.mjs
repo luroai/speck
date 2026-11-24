@@ -21,8 +21,8 @@ const speck = (cwd, ...a) => spawnSync(process.execPath, [CLI, ...a], { cwd, enc
 const PASS = "import { test } from 'node:test';\ntest('fine', () => {});\n";
 const FAIL = "import { test } from 'node:test';\ntest('broken', () => { throw new Error('no'); });\n";
 
-// A repo set up with speck and `node --test {files}`, where test/by-import.test.mjs names scripts/turns.mjs.
-function speckRepo({ testFiles = 'node --test {files}', byImport = FAIL } = {}) {
+// A repo set up with speck and `node --test {files}`, asking for TAP as Node 24 doesn't by default (0741), where test/by-import.test.mjs names scripts/turns.mjs.
+function speckRepo({ testFiles = 'node --test --test-reporter=tap {files}', byImport = FAIL } = {}) {
   const dir = repo({
     'scripts/turns.mjs': 'export const a = 1;\n',
     'test/by-import.test.mjs': `${byImport}// '../scripts/turns.mjs'\n`,
@@ -102,7 +102,7 @@ test('0676 AC2: no line when a failing --related run\'s failing tests\' files ca
 
 test('0676 AC1: with commands.test_files blank, a failing --related run of the whole suite ends with the line too', () => {
   const dir = speckRepo({ testFiles: '' });
-  assert.equal(speck(dir, 'config', 'set', 'commands.test', 'node --test').status, 0);
+  assert.equal(speck(dir, 'config', 'set', 'commands.test', 'node --test --test-reporter=tap').status, 0);
   const res = speck(dir, 'test', '--related', 'test/ticket.test.mjs');
   assert.notEqual(res.status, 0, res.stdout);
   assert.equal(lastLine(res.stdout), `${NEXT_RUN}speck test --files test/ticket.test.mjs test/by-import.test.mjs test/other.test.mjs`);

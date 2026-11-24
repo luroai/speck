@@ -40,6 +40,8 @@ tmp-cleanup's checks, and related-0676's failing-run check, pass whatever report
 
 ## Notes
 - Failing before this build: none
+- The recorded result is from Node 22.23.3, which prints TAP when piped. The failures show on Node 24.18.1 (the one bundled with Cursor's server, `~/.cursor-server/bin/`), checked there before and after.
+- Self-check: no changes
 - Raised by the builds of 0719, 0720, 0722, 0724 and 0727; their four other notes are dropped as duplicates of this one.
 - Other tests that read `# fail` already spawn their fixture with `--test-reporter=tap`, which may be the simplest fix.
 
