@@ -229,12 +229,12 @@
   #full-ticket .top > .back { display: inline-block; padding: 2px 0; font-size: 14px; line-height: 20px; font-weight: 400; color: var(--run); cursor: pointer; }
   #full-ticket .top > .back::before { content: '‹'; margin-right: 4px; }
   /* 0603: a chain in the full view: two facts, each ticket's id a link when it's on the page, then its state */
-  #full-ticket .facts.chain-facts { margin-top: 8px; }
-  #full-ticket .chain-facts .chain-id { display: inline-flex; align-items: center; margin: 0; padding: 0; font: inherit; color: var(--text); background: none; border: 0; }
-  #full-ticket .chain-facts .sid { font-family: var(--font-mono); }
-  #full-ticket .chain-facts button.chain-id { color: var(--run); cursor: pointer; }
-  #full-ticket .chain-facts button.chain-id:hover { text-decoration: underline; }
-  #full-ticket .chain-facts .chain-state, #full-ticket .chain-facts .chain-more { color: var(--muted); }
+  .facts.chain-facts { margin-top: 8px; }
+  .chain-facts .chain-id { display: inline-flex; align-items: center; margin: 0; padding: 0; font: inherit; color: var(--text); background: none; border: 0; }
+  .chain-facts .sid { font-family: var(--font-mono); }
+  .chain-facts button.chain-id { color: var(--run); cursor: pointer; }
+  .chain-facts button.chain-id:hover { text-decoration: underline; }
+  .chain-facts .chain-state, .chain-facts .chain-more { color: var(--muted); }
   /* 0613: what it waits on, one line for each across the view */
   #full-ticket .facts.waits-facts { margin-top: 8px; }
   #full-ticket .waits-facts .waits-link { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; } /* 0624: wraps within its tile */
@@ -352,7 +352,7 @@
   /* 0417: a touch screen, at any width: every button and clickable control at least 44 px each way */
   @media (pointer: coarse) {
     /* The full ticket and review pack */
-    #full-ticket .pane-row, #full-ticket .close, #full-ticket .ship, #full-ticket .ask-changes, #doc-view .close, #doc-view .ship, #doc-view .ask-changes, #foreman.log-view .back, #foreman.log-view .log-filter, #decided .close, #full-ticket .top > .back, #full-ticket .chain-facts button.chain-id { min-width: 44px; min-height: 44px; }
+    #full-ticket .pane-row, #full-ticket .close, #full-ticket .ship, #full-ticket .ask-changes, #doc-view .close, #doc-view .ship, #doc-view .ask-changes, #foreman.log-view .back, #foreman.log-view .log-filter, #decided .close, #full-ticket .top > .back, .chain-facts button.chain-id { min-width: 44px; min-height: 44px; }
     #full-ticket .md summary, #doc-view .md summary { min-height: 44px; padding-top: 12px; }
   }
 

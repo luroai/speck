@@ -376,6 +376,9 @@
   .waits-facts .sid { font-family: var(--font-mono); }
   .waits-facts button.waits-link { color: var(--run); cursor: pointer; }
   .waits-facts button.waits-link:hover { text-decoration: underline; }
+  /* 0703: an open card's chain: two cells, their values wrapping so no state or +n more is cut off */
+  .item.ticket .facts.chain-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .item.ticket .chain-facts .value { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
   .waits-facts .waits-state { flex: none; color: var(--muted); }
   /* 0154: a ticket gone to from a dependency box (0467) lights briefly. It fades out over its 1.5 seconds (in the block for motion above), or stays still until they're up when the browser asks for reduced motion */
   @media (prefers-reduced-motion: reduce) { .item.flash, .q.flash { box-shadow: inset 0 0 0 2px var(--text); } }
@@ -441,7 +444,7 @@
   .tag-row { gap: 18px; }
   .prio-menu button { min-width: 44px; min-height: 44px; }
   .set-ready, .full-open { min-width: 44px; min-height: 44px; }
-  .deps .slot, .waits-facts button.waits-link { min-height: 44px; } /* 0467, 0613 */
+  .deps .slot, .waits-facts button.waits-link, .chain-facts button.chain-id { min-height: 44px; } /* 0467, 0613, 0703 */
   .waits-facts .waits-item { min-height: 44px; align-items: center; } /* 0613: every line the height of a link's, so they stay evenly spaced */
   .dep-chip { min-width: 44px; min-height: 44px; margin: -13px 0; } /* 0468: its pill in the middle, and the title line no taller */
 
