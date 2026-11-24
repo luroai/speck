@@ -37,7 +37,7 @@ import { questionFacts } from './question-facts.mjs'; import { cmdSplitOff } fro
 import { goWithResumable, goWithWaiting, callsOf } from './go-with.mjs';
 import { handedBack } from './hand-back.mjs'; import { buildSession } from './build-records.mjs'; import { noteThisBuild } from './seen-builds.mjs';
 import { changesPending } from './changes-asked.mjs'; import { cmdChanges } from './changes.mjs';
-import { cmdApp } from './app.mjs'; import { SET_USAGE, setSeveralReady } from './set-ready.mjs'; // 0634, 0681
+import { cmdApp } from './app.mjs'; import { SET_USAGE, BLANKABLE, setSeveralReady } from './set-ready.mjs'; // 0634, 0681
 import { startWaits, startedOn, mergeBuiltOn, markBuiltOn, builtOnWaiting, CancelledWhy } from './built-on.mjs'; // 0674
 import { cmdBuiltOn } from './built-on-cancelled.mjs'; // 0710
 
@@ -119,8 +119,6 @@ function cmdCheck(args) {
   if (!errors.length) console.log(`✓ ${t.fm.id} passes size rules (${acceptanceCriteria.length} acceptance criteria, size ${t.fm.size}, risk ${t.fm.risk}).`);
   if (errors.length) throw new SpeckError('', 1);
 }
-
-const BLANKABLE = ['level', 'builder', 'builder_model', 'builder_effort', 'reviewer', 'reviewer_model', 'reviewer_effort'];
 
 function cmdSet(args) {
   if (/^\d+$/.test(args[1] ?? '')) return setSeveralReady(args, cmdSet); // 0681: `speck set <id> <id>… status ready`
