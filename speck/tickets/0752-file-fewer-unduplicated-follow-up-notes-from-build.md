@@ -43,6 +43,8 @@ Builds save an inbox note only for a follow-up worth its own ticket that no othe
 - Asked for by the user on 2026-11-24 after the Capture list grew from 8 to 23.
 - The follow-up steps are in `skills/speck-build/SKILL.md`, section 5 step 1. Other open tickets' worktrees are under `<repo>.worktrees/`, and `speck status --json` lists them.
 - Failing before this build: none
+- No new tests: AC1–AC3 are skill wording (checked by review), and AC4 is checked by the existing tests that read `skills/speck-build/SKILL.md` (followups-0036 among them), run with `speck test --related`.
+- Self-check: no changes. The rewording keeps the phrases followups-0036 checks (behaviour change, bug, missing check, tidy-ups, unused code, known limits); `speck status --json` does give `status` and `worktree` per ticket.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
