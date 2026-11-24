@@ -1,7 +1,7 @@
 ---
 id: "0741"
 title: "Fix tmp-cleanup's check for Node's default reporter"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -21,7 +21,7 @@ created: 2026-11-24
 ---
 # 0741 · Fix tmp-cleanup's check for Node's default reporter
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 `test/tmp-cleanup.test.mjs` AC1 AC2 expect TAP's `# fail 2` from a nested `node --test` run, but Node's default reporter prints `ℹ fail 2` when its output is captured. Every `speck test --files` run includes this check, so five builds on 2026-11-24 saw it fail for no fault of their own and spent review rounds explaining it.
