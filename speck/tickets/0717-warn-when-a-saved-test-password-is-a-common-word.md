@@ -1,7 +1,7 @@
 ---
 id: "0717"
 title: "Warn when a saved test password is a common word"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: "speck/ideas/done/2026-11-11-warn-when-a-saved-test-password-is-a-common
 after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T14:23:11.729Z"
+approved: "2026-11-24T14:26:56.470Z"
 
 ---
 # 0717 · Warn when a saved test password is a common word
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Every saved test password counts as a private word in every commit, in any case. A simple password like `test` would then refuse almost every commit that touches a test file, and you wouldn't know why until a commit fails.
@@ -54,9 +55,15 @@ Saving a test login with a short password, or one that already appears in the pr
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 weakPasswordReason passes the plaintext password as a git command-line argument on every save.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 203,248
+- Elapsed since build started: 4 min
+- Changed lines: 13 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ## Review rounds
