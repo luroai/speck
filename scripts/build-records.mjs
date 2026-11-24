@@ -12,8 +12,46 @@ import { providerNamed } from './provider-review.mjs';
 import { providerResumeCommand } from './provider-build.mjs';
 import { pidAlive } from './run-switch.mjs';
 import { sessionInUse } from './build-procs.mjs';
+import { logTail } from './build-log.mjs';
 
 export const DEFAULT_RESUME_COMMAND = 'claude --resume {session}';
+
+// How a build launched by `speck run` ended, from its run record and log in the main checkout's speck/.cache/runs/
+// (where speck run keeps them): {at, code, message}, or null when there's no record, it can't be read or the build
+// hasn't exited. message is the last 50 lines of the log, trailing blank lines dropped, or null when it's missing or empty.
+export function buildExit(runs, id) {
+  id = String(id ?? '');
+  if (!/^[\w-]+$/.test(id)) return null;
+  let rec;
+  try { rec = JSON.parse(fs.readFileSync(path.join(runs, `${id}.json`), 'utf8')); } catch { return null; }
+  if (!rec || typeof rec !== 'object' || !Object.hasOwn(rec, 'exited')) return null;
+  let message = null;
+  try { message = logTail(path.join(runs, `${id}.log`)); } catch { /* no log */ }
+  return { at: rec.exited ?? null, code: rec.exit_code ?? null, message };
+}
+
+// True while a build launched by `speck run` is paused: `speck pause` left a <id>.paused file beside its run record
+// naming this build's session and pid, and the build has neither exited nor gone. The mark is a file of its own, so
+// pause and play never write the run record that speck run keeps.
+export function buildPaused(runs, id) {
+  id = String(id ?? '');
+  if (!/^[\w-]+$/.test(id)) return false;
+  let rec, mark;
+  try { rec = JSON.parse(fs.readFileSync(path.join(runs, `${id}.json`), 'utf8')); mark = JSON.parse(fs.readFileSync(path.join(runs, `${id}.paused`), 'utf8')); } catch { return false; }
+  return !!rec && typeof rec === 'object' && !!mark && typeof mark === 'object' && !Object.hasOwn(rec, 'exited')
+    && Number.isInteger(rec.pid) && rec.pid > 0 && mark.pid === rec.pid && mark.session === rec.session && pidAlive(rec.pid);
+}
+
+// True while a build launched by `speck run` is running, as `speck pause` sees it: its run record has no exit, and its
+// pid is alive and leads its own process group (`leads`).
+export function buildRunning(runs, id, leads) {
+  id = String(id ?? '');
+  if (!/^[\w-]+$/.test(id)) return false;
+  let rec;
+  try { rec = JSON.parse(fs.readFileSync(path.join(runs, `${id}.json`), 'utf8')); } catch { return false; }
+  return !!rec && typeof rec === 'object' && !Array.isArray(rec) && !Object.hasOwn(rec, 'exited')
+    && Number.isInteger(rec.pid) && rec.pid > 0 && pidAlive(rec.pid) && leads(rec.pid);
+}
 
 // A word for a POSIX shell: as it is when it's only letters, digits, /, ., _ and -, otherwise in single quotes.
 const shellWord = w => (/^[A-Za-z0-9\/._-]+$/.test(w) ? w : `'${w.replace(/'/g, "'\\''")}'`);

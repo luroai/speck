@@ -18,7 +18,6 @@ source: "speck/ideas/done/2026-11-15-keep-speck-run-s-checks-from-re-reading-bui
 after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T14:39:13.738Z"
---note: "Failing before this build: none"
 
 ---
 # 0721 · Keep speck run's checks from re-reading done tickets' logs
@@ -44,6 +43,8 @@ An idle check costs about the same however many done tickets there are.
 ## Notes
 - `statusData` (`scripts/speck.mjs`) works out, for every ticket: spend (`earlierBuilds` in `scripts/spend.mjs` reads the whole log when the run record has no `builder`; `watchSpent`/`delegatedSpent` read jsonl files per ticket) and `shipState`, `prShown`, `buildSession`, `handedBack`. `logTail` is already cached by stat.
 - Test by counting file reads and process starts, not by timing, as `test/run-reads-0682.test.mjs` does.
+- Failing before this build: none
+- Self-check: no changes. Checked a done ticket with no run record or log, a log without a record, and a record that has not exited; each caches and gives the same board on the next check.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

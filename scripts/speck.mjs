@@ -25,21 +25,21 @@ import { cmdAgents } from './your-agents.mjs';
 import { cmdConfig } from './config.mjs'; import { cmdConfigShow } from './settings.mjs';
 import { cmdTest } from './turns.mjs';
 import { cmdPanel, panelServer } from './panel.mjs';
-import { cmdRun, cmdPause, cmdPlay, cmdStop, resumeCommandOf, pidAlive, processRows, buildKilled, resumeHint, runState } from './run.mjs';
+import { cmdRun, cmdPause, cmdPlay, cmdStop, resumeCommandOf, processRows, buildKilled, resumeHint, runState } from './run.mjs';
 import { foremanView, foremanLines, readForeman, fixingOf } from './foreman.mjs'; import { leftChecks } from './app-check.mjs'; // 0679
 import { withForeman, foremanBoard, foremanTicketLines, decidedFor, withCalls } from './foreman-took.mjs';
 import { agentView, cmdForeman, cmdWatch } from './foreman-agent.mjs';
-import { logTail } from './build-log.mjs';
 import { buildStop, countStop, wontResume } from './stop-wait.mjs'; import { removeScratch } from './scratch.mjs';
 import { roundRunning } from './review-running.mjs';
 import { runInProcess } from './in-process.mjs';
 import { questionFacts } from './question-facts.mjs'; import { cmdSplitOff } from './split-off.mjs'; // 0563
 import { goWithResumable, goWithWaiting, callsOf } from './go-with.mjs';
-import { handedBack } from './hand-back.mjs'; import { buildSession } from './build-records.mjs'; import { noteThisBuild } from './seen-builds.mjs';
+import { handedBack } from './hand-back.mjs'; import { buildSession, buildExit, buildPaused, buildRunning } from './build-records.mjs'; import { noteThisBuild } from './seen-builds.mjs';
 import { changesPending } from './changes-asked.mjs'; import { cmdChanges } from './changes.mjs';
 import { cmdApp } from './app.mjs'; import { SET_USAGE, setSeveralReady } from './set-ready.mjs'; // 0634, 0681
 import { startWaits, startedOn, mergeBuiltOn, markBuiltOn, builtOnWaiting, CancelledWhy } from './built-on.mjs'; // 0674
 import { cmdBuiltOn } from './built-on-cancelled.mjs'; // 0710
+import { closedHit, keepClosed, sweepClosed } from './closed-board.mjs'; // 0721
 
 // Every name speck.mjs exported before it was split into modules (0018, 0078) can still be imported from it.
 export { panelServer };
@@ -326,43 +326,7 @@ function selfCheck(lines) {
   return null;
 }
 
-// How a build launched by `speck run` ended, from its run record and log in the main checkout's speck/.cache/runs/
-// (where speck run keeps them): {at, code, message}, or null when there's no record, it can't be read or the build
-// hasn't exited. message is the last 50 lines of the log, trailing blank lines dropped, or null when it's missing or empty.
-function buildExit(runs, id) {
-  id = String(id ?? '');
-  if (!/^[\w-]+$/.test(id)) return null;
-  const dir = runs;
-  let rec;
-  try { rec = JSON.parse(fs.readFileSync(path.join(dir, `${id}.json`), 'utf8')); } catch { return null; }
-  if (!rec || typeof rec !== 'object' || !Object.hasOwn(rec, 'exited')) return null;
-  let message = null;
-  try { message = logTail(path.join(dir, `${id}.log`)); } catch { /* no log */ }
-  return { at: rec.exited ?? null, code: rec.exit_code ?? null, message };
-}
-
-// True while a build launched by `speck run` is paused: `speck pause` left a <id>.paused file beside its run record
-// naming this build's session and pid, and the build has neither exited nor gone. The mark is a file of its own, so
-// pause and play never write the run record that speck run keeps.
-export function buildPaused(runs, id) {
-  id = String(id ?? '');
-  if (!/^[\w-]+$/.test(id)) return false;
-  let rec, mark;
-  try { rec = JSON.parse(fs.readFileSync(path.join(runs, `${id}.json`), 'utf8')); mark = JSON.parse(fs.readFileSync(path.join(runs, `${id}.paused`), 'utf8')); } catch { return false; }
-  return !!rec && typeof rec === 'object' && !!mark && typeof mark === 'object' && !Object.hasOwn(rec, 'exited')
-    && Number.isInteger(rec.pid) && rec.pid > 0 && mark.pid === rec.pid && mark.session === rec.session && pidAlive(rec.pid);
-}
-
-// True while a build launched by `speck run` is running, as `speck pause` sees it: its run record has no exit, and its
-// pid is alive and leads its own process group (`leads`).
-function buildRunning(runs, id, leads) {
-  id = String(id ?? '');
-  if (!/^[\w-]+$/.test(id)) return false;
-  let rec;
-  try { rec = JSON.parse(fs.readFileSync(path.join(runs, `${id}.json`), 'utf8')); } catch { return false; }
-  return !!rec && typeof rec === 'object' && !Array.isArray(rec) && !Object.hasOwn(rec, 'exited')
-    && Number.isInteger(rec.pid) && rec.pid > 0 && pidAlive(rec.pid) && leads(rec.pid);
-}
+export { buildPaused }; // still imported from speck.mjs (0078)
 
 // A ticket a build has in hand, which a killed build leaves behind.
 const inHand = t => t.fm.status === 'building' || t.fm.status === 'reviewing';
@@ -393,16 +357,28 @@ export function statusData(repo) {
   const cancelled = new Set(tickets.filter(t => t.fm.status === 'cancelled').map(t => padId(t.fm.id))); // 0686
   const runs = runsOf(repo);
   const leads = groupLeader(), fixing = fixingOf(cfg), builderOf = boardBuilders(cfg, repo), providers = knownProviders(repo);
+  const shippedForDecided = new Map(); // 0721: done tickets' shippedCriteriaChanged, kept with the closed board so a second check starts no git for them
+  const seenClosed = new Set();
+  const now = Date.now();
   const entries = tickets.map(t => {
+    const pad = padId(t.fm.id), closed = ['done', 'cancelled'].includes(t.fm.status);
+    if (closed) {
+      seenClosed.add(pad);
+      const hit = closedHit(runs, t.fm.id, t.file);
+      if (hit) {
+        if (hit.shipped !== undefined) shippedForDecided.set(pad, hit.shipped);
+        return hit.entry;
+      }
+    }
     const lint = lintTicket(t, cfg);
     const facts = questionFacts(contentLines(t.sections['blocked question'])); // 0283
     const after = Array.isArray(t.fm.after) ? t.fm.after : [];
     const num = v => (typeof v === 'number' && Number.isFinite(v) ? v : null);
-    const builtOn = ['done', 'cancelled'].includes(t.fm.status) ? null : builtOnWaiting(repo, cfg, t.fm), shipsAfter = builtOn && !builtOn.cancelled ? builtOn.id : '', waiting_on = after.filter(id => !done.has(padId(id))); // 0674
-    const criteria_change = ['done', 'cancelled'].includes(t.fm.status) ? null : criteriaChange(t.at || repo, cfg, t.fm.id), criteria_changed = criteria_change !== null; // 0565
-    const shipsWhyNot = autoShipWhyNot(cfg, padId(t.fm.id), t.fm.risk, ticketRounds(t.raw).rounds, ticketKind(t), changesPending(t.raw, ticketRounds(t.raw).rounds).length > 0, criteria_changed, ['done', 'cancelled'].includes(t.fm.status) ? '' : () => receiptWhyNot(repo, t.fm.id, ticketRounds(t.raw).rounds), leftChecks(t.sections.notes), builtOn ?? ''); // 0629. 0679. 0674
+    const builtOn = closed ? null : builtOnWaiting(repo, cfg, t.fm), shipsAfter = builtOn && !builtOn.cancelled ? builtOn.id : '', waiting_on = after.filter(id => !done.has(padId(id))); // 0674
+    const criteria_change = closed ? null : criteriaChange(t.at || repo, cfg, t.fm.id), criteria_changed = criteria_change !== null; // 0565
+    const shipsWhyNot = autoShipWhyNot(cfg, pad, t.fm.risk, ticketRounds(t.raw).rounds, ticketKind(t), changesPending(t.raw, ticketRounds(t.raw).rounds).length > 0, criteria_changed, closed ? '' : () => receiptWhyNot(repo, t.fm.id, ticketRounds(t.raw).rounds), leftChecks(t.sections.notes), builtOn ?? ''); // 0629. 0679. 0674
     const stop = inHand(t) ? buildStop(runs, t.fm.id) : null, builder = builderSpent(runs, t.fm.id), watch = watchSpent(runs, t.fm.id), delegated = delegatedSpent(runs, t.fm.id);
-    return withForeman(t, fixing, { // 0317
+    const entry = withForeman(t, fixing, { // 0317
       ...t.fm,
       // 0388: the builder and reviewer it would use now: its own, or else the settings'. 0391: a provider's, by its name
       ...builderOf(t.fm), build_with: ticketBuild(t.fm, cfg, providers), // 0545: and the model its builds run on. 0669: its Builder fact, and where it comes from
@@ -458,9 +434,18 @@ export function statusData(repo) {
       build_stopped_at: stop?.killed && !stop.counted && stop.since !== null ? new Date(stop.since).toISOString() : null, build_wont_resume: !!stop?.killed && !stop.counted && wontResume(cfg, runs, t.fm.id), // 0616: resumed once already, or it can't be
       ship: shipState(runs, t.fm.id), watch_tokens: watch.tokens, watch_cost_usd: watch.cost_usd, delegated_tokens: delegated.tokens, delegated_cost_usd: delegated.cost_usd, // 0525: the watch agent's spend, 0534: Codex sessions started in its worktree
       pull_request: prShown(runs, t.fm.id, t.fm), // 0295: its pull request's link, or why it couldn't be opened
-      builder_tokens: builder.tokens, builder_cost_usd: builder.cost_usd, builder_models: builder.models ?? [], reviewer_cost_usd: reviewerCost(ticketRounds(t.raw).rounds, runs, t.fm.id), ...totalSpent(runs, t.fm.id, ticketRounds(t.raw).rounds, Date.now() - 7 * 864e5), // 0529, 0530, 0595: and what it spent in the last 7 days: builder_models, 0526: total_cost_usd, total_tokens, total_cost_unknown
+      builder_tokens: builder.tokens, builder_cost_usd: builder.cost_usd, builder_models: builder.models ?? [], reviewer_cost_usd: reviewerCost(ticketRounds(t.raw).rounds, runs, t.fm.id), ...totalSpent(runs, t.fm.id, ticketRounds(t.raw).rounds, now - 7 * 864e5), // 0529, 0530, 0595: and what it spent in the last 7 days: builder_models, 0526: total_cost_usd, total_tokens, total_cost_unknown
     });
+    // 0721: keep a done ticket's shipped-criteria answer with its cached entry, for decidedFor on the next check.
+    let shipped;
+    if (t.fm.status === 'done' && (entry.foreman_took || []).some(w => now - Date.parse(w.at) <= 7 * 864e5)) {
+      shipped = shippedCriteriaChanged(repo, cfg, t.fm.id, t.sections['acceptance criteria']);
+      shippedForDecided.set(pad, shipped);
+    }
+    if (closed) keepClosed(t.fm.id, runs, t.file, entry, shipped);
+    return entry;
   });
+  sweepClosed(seenClosed);
   entries.sort(byPriority);
   const dir = path.join(repo, 'speck', 'ideas');
   const ideas = (fs.existsSync(dir) ? fs.readdirSync(dir).filter(f => f.endsWith('.md')).sort() : []).map(f => {
@@ -471,7 +456,8 @@ export function statusData(repo) {
   // Codex's, for Codex builds).
   // 0568: what speck decided in the last 7 days. A shipped ticket has no branch to compare, so its criteria come from history. Left out when there are none.
   // 0589: with each one's question and other options.
-  const decided = withCalls(decidedFor(entries, e => (e.status === 'done' ? shippedCriteriaChanged(repo, cfg, e.id, tickets.find(t => t.fm.id === e.id)?.sections['acceptance criteria']) : e.criteria_changed)), id => callsOf(runs, id));
+  // 0721: done tickets use the answer kept above, so a second check with nothing changed starts no git for them.
+  const decided = withCalls(decidedFor(entries, e => (e.status === 'done' ? shippedForDecided.get(padId(e.id)) === true : e.criteria_changed), now), id => callsOf(runs, id));
   return { tickets: entries, ...(decided.length ? { decided } : {}), ideas, idea_counts: ideaCounts(repo), resume_command: resumeCommandOf(cfg), levels: levelNames(cfg), level_builds: levelBuilds(cfg, repo) }; // 0662: the levels the panel's Level picker offers. 0667: and what each builds with
 }
 
