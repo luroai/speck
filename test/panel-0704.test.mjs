@@ -79,3 +79,15 @@ test('0704 AC4: a ticket whose after: names no cancelled ticket reads as it does
   assert.doesNotMatch(view.textContent, /cancelled/);
   assert.deepEqual(factsOf(p, view).find(([label]) => label === 'Waits for'), ['Waits for', '0691 queued']);
 });
+
+test('0704 AC1 (round 1 F1): a blocked or approved ticket in flight says so on its Build row too, keeping where it is', async () => {
+  const started = new Date(Date.now() - 60000).toISOString();
+  const p = await show([cancelled(),
+    T('0705', 'blocked', { started, after: ['0690'], waiting_on: ['0690'], after_cancelled: ['0690'], blocked_question: 'Which?' }),
+    T('0706', 'approved', { started, after: ['0690'], waiting_on: ['0690'], after_cancelled: ['0690'], build_exit: { code: 0, at: started } })]);
+  for (const id of ['0705', '0706']) {
+    const where = whereOf(p, id).textContent;
+    assert.match(where, GONE, `${id}: ${where}`);
+    assert.doesNotMatch(where, /^Ready ·/, `${id}: ${where}`);
+  }
+});

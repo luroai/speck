@@ -760,7 +760,7 @@ const noteOf = i => el('div', 'note md', null, ...mdBlocks(markdown(typeof i.bod
 function whereLine(t) {
   const id = String(t.id), d = rowDoing(t), asked = !!foremanAskOf(id);
   const said = asked ? `${speckCalled()} has a question` : !t.inFlight ? 'Ready' : d.round !== null && d.round !== undefined ? `Reviewing · round ${d.round}` : d.word;
-  const waits = !t.inFlight ? list(t.waiting_on).map(String) : [], on = startsOn(t), after = shipsAfter(t), gone = !t.inFlight ? goneSay(t) : null;
+  const waits = !t.inFlight ? list(t.waiting_on).map(String) : [], on = startsOn(t), after = shipsAfter(t), gone = goneSay(t);
   // 0698: one that can start on another's approved work says so in place of what it waits on, and an approved one built
   // on another says it ships after that one.
   const line = detailsLine(`where ${rowDot(buildGroup(t, d, asked), d)}`, [el('span', 'said', said),
