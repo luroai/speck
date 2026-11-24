@@ -1,7 +1,7 @@
 ---
 id: "0707"
 title: "Show the machine-wide test limit in Settings"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -21,7 +21,7 @@ created: 2026-11-24
 ---
 # 0707 · Show the machine-wide test limit in Settings
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 0678 added `machine_parallel_tests`, a limit on test runs across every project on the machine, but only `speck config set` and `speck config show` reach it. Someone who tunes speck from the panel won't know it exists, or that it's set.
