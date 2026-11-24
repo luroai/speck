@@ -1,7 +1,7 @@
 ---
 id: "0729"
 title: "Lay out Settings like Cursor's own settings"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T11:55:19.985Z"
+approved: "2026-11-24T13:49:54.012Z"
 
 ---
 # 0729 · Lay out Settings like Cursor's own settings
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The panel mostly runs inside Cursor's browser pane, and its Settings view looks out of place there: raw config keys in a mono font as labels, explanations hidden behind ⓘ buttons, and bordered cards with dividers. Cursor's own settings show a plain name with a muted line under it, rows grouped on soft filled blocks under small section labels, and each control on the right.
@@ -63,9 +64,14 @@ To see it, open Settings in the panel, in the light and the dark look. Worth kno
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 367,849
+- Elapsed since build started: 115 min
+- Changed lines: 291 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up ideas:
   - Each control in Settings is still named by its setting's key for screen readers (the Name box is read out as `speck_name`), while it shows a plain name. Saved to the inbox: `speck/ideas/2026-11-24-name-each-settings-control-by-its-setting-s-plain-name.md`.
