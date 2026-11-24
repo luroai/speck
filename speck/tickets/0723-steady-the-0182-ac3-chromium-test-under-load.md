@@ -40,6 +40,7 @@ The 0182 AC3 test passes on a busy machine and still catches Chromium left runni
 
 ## Notes
 - The test is `test/panel-0182.test.mjs`. Seen failing in full-suite records from 2026-10-23 to 2026-11-11, and twice in `speck/.cache/flaky/flaky.log` (2026-11-12 and 2026-11-15); the latest full suite on main (2c2af9f) passed. The failure is "Chromium still running 10 s after the test file finished": the cleanup is late, not missing. 0689 replaced fixed bounds with ones measured in the test.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
