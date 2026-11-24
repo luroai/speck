@@ -1,7 +1,7 @@
 ---
 id: "0752"
 title: "File fewer, unduplicated follow-up notes from builds"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T23:12:03.874Z"
+approved: "2026-11-24T23:15:46.385Z"
 
 ---
 # 0752 · File fewer, unduplicated follow-up notes from builds
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 On 2026-11-24, 31 tickets left 15 inbox notes, five of them the same problem, because builds running side by side can't see each other's notes until they ship, and builds save a note for every small thing they notice. The user had cleared Capture down to 8 and it went back to 23.
@@ -55,9 +56,14 @@ To see it, run several builds at once and watch the Capture list: notes should b
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 144,450
+- Elapsed since build started: 4 min
+- Changed lines: 11 (limit 5000)
 Follow-ups (Delivery log only, no inbox note):
 - 0161's light-look browser test once failed with "panel didn't start" during `speck test --related`, while three other builds were running, and passed on a rerun. It passed in the recorded full-suite run on main, so it isn't shown to be unsteady there. Checked against notes and open tickets on main and in other builds' worktrees: none names it.
 
