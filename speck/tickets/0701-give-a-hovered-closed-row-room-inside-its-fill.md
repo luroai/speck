@@ -43,8 +43,13 @@ A hovered closed row's fill reaches 12 px past its text on each side, as an open
 ## Notes
 - The fill comes from `.item:hover` in `templates/panel-cards.css`. 0614 gave `.item.row.open` a pair of side shadows, and an `::after` ring because `.item.hl`'s box-shadow replaces any side shadows.
 
+- Failing before this build: none
+- Self-check: no changes
+- Pictures: none, because the change is a hover fill and the pictures are skipped for this quick build
+
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+On a computer, a closed Plan or Capture row under the pointer now has its raised background reach a little past its text on each side, as an open row's does. Hover over a closed row to see it. Touch screens look as before.
+
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

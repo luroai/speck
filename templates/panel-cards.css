@@ -250,7 +250,7 @@
   .ready div { overflow-wrap: anywhere; }
 
   /* 0164: only where the main pointer can hover, as a phone keeps a tapped card's :hover until the next tap */
-  @media (hover: hover) { .item:hover { background: var(--raise); } }
+  @media (hover: hover) { .item:hover { background: var(--raise); } .item.row:not(.open):not(.hl):hover { box-shadow: -12px 0 0 var(--raise), 12px 0 0 var(--raise); } } /* 0701: a closed row's fill reaches 12px past its text, as an open row's does (0614) */
   .note { margin: 0; color: var(--text); }
   .empty { padding: 10px 14px; color: var(--faint); font-size: 12px; }
 
