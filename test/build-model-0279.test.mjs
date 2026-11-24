@@ -6,7 +6,7 @@ import path from 'node:path';
 import { ROOT, runRepo, startRun, until, stopRun, env } from './support/run.mjs';
 import { panelRepo } from './support/panel.mjs';
 import { speck } from './support/cli.mjs';
-import { settingsPage, openSettings, controlOf, saveButton, changeTo, posted } from './support/settings.mjs';
+import { settingsPage, openSettings, controlOf, changeTo, posted } from './support/settings.mjs';
 import { parseYaml, loadConfig } from '../scripts/core.mjs';
 import { withBuilderModel, builderModelNote } from '../scripts/build-model.mjs';
 import { resumeArgv } from '../scripts/hand-back.mjs';
@@ -130,7 +130,6 @@ test('0279 AC3: with builder claude, builder_model offers (default) and Claude\'
   for (const [slug, name] of [['fable', 'Fable'], ['opus', 'Opus'], ['sonnet', 'Sonnet'], ['haiku', 'Haiku']])
     assert.match(text[slug], new RegExp(`^${slug}\\b.*the newest ${name}`));
   changeTo(p, 'builder_model', 'opus');
-  saveButton(p).listeners.click();
   await p.settle();
   assert.deepEqual(posted(p), ['/api/settings/save?repo%3Abuilder_model=opus']);
 });
@@ -154,10 +153,9 @@ test('0279 AC4: a saved builder_model that isn\'t in the list still shows, marke
   await openSettings(p);
   assert.equal(controlOf(p, 'builder_model').value, 'claude-opus-5-5');
   assert.deepEqual(options(p, 'builder_model')[0], { value: 'claude-opus-5-5', text: 'claude-opus-5-5 (not offered)', disabled: true });
-  assert.equal(saveButton(p).disabled, true, 'nothing changes unless you change it');
+  assert.deepEqual(posted(p), [], 'nothing is saved unless you change it'); // 0731
   changeTo(p, 'reviewer', 'claude-subagent');
   assert.equal(controlOf(p, 'builder_model').value, 'claude-opus-5-5');
-  saveButton(p).listeners.click();
   await p.settle();
   assert.deepEqual(posted(p), ['/api/settings/save?repo%3Areviewer=claude-subagent']);
 });

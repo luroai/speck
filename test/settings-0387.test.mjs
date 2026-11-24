@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { panelRepo, headOf, gitEnv } from './support/panel.mjs';
-import { settingsPage, openSettings, rowOf, saveButton, changeTo, posted } from './support/settings.mjs';
+import { settingsPage, openSettings, rowOf, changeTo, posted } from './support/settings.mjs';
 import { panelSettings, panelSaveSettings, panelSaveRequest, SETTING_GROUPS } from '../scripts/settings.mjs';
 import { MACHINE_SETTINGS, machineConfig } from '../scripts/machine.mjs';
 import { DEFAULT_BUILD_COMMAND } from '../scripts/build-model.mjs';
@@ -60,8 +60,6 @@ test('0387 AC1: the view sends a change to your own setting for this machine, wi
   await openSettings(p);
   changeTo(p, 'reviewer_effort', 'high');
   assert.equal(asksWhere(p), false);
-  assert.equal(saveButton(p).disabled, false);
-  p.press(saveButton(p));
   await p.settle();
   assert.deepEqual(posted(p).map(asked), [[['machine:reviewer_effort', 'high']]]);
   assert.equal(asksWhere(p), false);
@@ -72,7 +70,6 @@ test('0387 AC1: a blank value is saved for this machine as blank, not taken as c
   await p.settle();
   await openSettings(p);
   changeTo(p, 'reviewer_model', '');
-  p.press(saveButton(p));
   await p.settle();
   assert.deepEqual(posted(p).map(asked), [[['blank:reviewer_model', '']]]);
 
@@ -179,7 +176,6 @@ test('0387 AC4: the view says whose each value is and offers to clear this machi
   assert.ok(!p.all(p.byId('settings')).some(n => n.tagName === 'p' && /commits speck\/config\.yml/.test(n.textContent)), 'no top line');
   const clear = p.all(rowOf(p, 'reviewer_model')).find(n => n.tagName === 'button' && n.textContent === 'Clear this machine\'s value');
   p.press(clear);
-  p.press(saveButton(p));
   await p.settle();
   assert.deepEqual(posted(p).map(asked), [[['machine:reviewer_model', '']]]);
   assert.doesNotMatch(rowOf(p, 'reviewer_model').textContent, /this machine/);
@@ -198,7 +194,6 @@ test('0387 AC4: clearing this machine\'s auto_ship_risk saves, without asking to
   await p.settle();
   await openSettings(p);
   p.press(clearOf(p, 'auto_ship_risk'));
-  p.press(saveButton(p));
   await p.settle();
   assert.deepEqual(posted(p).map(asked), [[['machine:auto_ship_risk', '']]]);
   assert.doesNotMatch(rowOf(p, 'auto_ship_risk').textContent, /Tick at least one risk/);
@@ -212,12 +207,11 @@ test('0387 AC4: clearing this machine\'s value asks first when speck/config.yml\
     await p.settle();
     await openSettings(p);
     p.press(clearOf(p, 'auto_ship'));
-    p.press(saveButton(p));
     await p.settle();
     assert.equal(said.length, 1, 'asked');
     assert.match(said[0], /low-risk and high-risk/);
     assert.deepEqual(posted(p).map(asked), answer ? [[['machine:auto_ship', ''], ['confirm', 'low,high']]] : []);
-    if (!answer) assert.equal(saveButton(p).disabled, true, 'the clear is undone');
+    if (!answer) assert.ok(clearOf(p, 'auto_ship'), 'the clear is undone');
   }
   // Server side too: the confirmation is the one speck/config.yml's values call for.
   const r = panelRepo();

@@ -93,9 +93,9 @@
   /* 0603: it and the panel's other secondary buttons in the redesign's secondary style: a 1 px border in the line colour,
      10 px corners, the text colour, 44 px tall for every pointer, as 0602's Full log and Stop build */
   .q .stop-build { margin: 6px 0 2px; box-sizing: border-box; min-height: 44px; padding: 0 16px; font: inherit; font-family: var(--font-ui); font-size: 14px; font-weight: 500; line-height: 20px; color: var(--text); background: none; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; }
-  .foreman .reload, #doc-view .close, #settings .close, #settings-unsaved button.secondary { min-height: 44px; } /* 0603: their height here, as every control's for every pointer is (0469); the rest of their style in their own files */
+  .foreman .reload, #doc-view .close, #settings .close { min-height: 44px; } /* 0603: their height here, as every control's for every pointer is (0469); the rest of their style in their own files */
   #foreman.log-view .log-filter, #full-ticket .ship, #doc-view .ship, #full-ticket .ask-changes, #doc-view .ask-changes, #full-ticket .pack-document, #full-ticket .pack-folder,
-    #settings .setting .save, #settings .arow .save, #settings .save-all, #settings-unsaved button { min-height: 44px; } /* 0612: the same, for the last small buttons */
+    #settings .setting .save, #settings .arow .save { min-height: 44px; } /* 0612: the same, for the last small buttons */
   /* 0729: every other control in Settings a 44 px target too, for every pointer: a setting's name with its short line,
      the whole of which its button reaches over, the switches, lists and boxes, a risk's box with its word, and a level's
      Remove are at least 44 px; and Appearance's buttons, which keep their size, reach 44 px from their middle, above and

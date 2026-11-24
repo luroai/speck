@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { panelRepo, gitEnv, fm, good } from './support/panel.mjs';
-import { settingsPage, openSettings, rowOf, controlOf, saveButton, changeTo, posted } from './support/settings.mjs';
+import { settingsPage, openSettings, rowOf, controlOf, changeTo, posted } from './support/settings.mjs';
 import { parseCodexModels, codexModels, codexModelsAsync, knownEffort, CODEX_MODELS_TIMEOUT_MS } from '../scripts/codex-models.mjs';
 import { panelSettings, panelSaveSettings, reviewerModels } from '../scripts/settings.mjs';
 import { machineConfig } from '../scripts/machine.mjs';
@@ -68,22 +68,23 @@ test('0276 AC1: with reviewer codex, reviewer_model is a list of its models and 
   assert.equal(controlOf(p, 'reviewer_model').tagName, 'select');
   assert.deepEqual(options(p, 'reviewer_model').map(o => [o.value, o.text]), [['', '(default)'], ['gpt-new', 'gpt-new'], ['gpt-small', 'gpt-small']]);
   changeTo(p, 'reviewer_model', 'gpt-small');
-  saveButton(p).listeners.click();
   await p.settle();
   assert.deepEqual(posted(p), ['/api/settings/save?repo%3Areviewer_model=gpt-small']);
 });
 
 test('0276 AC2: reviewer_effort offers the efforts the chosen model supports, and follows a new pick', async () => {
-  const p = settingsPage([view({ reviewer_model: 'gpt-small' }, LISTED)]);
+  const ok = { ok: true, changed: ['x'] };
+  const p = settingsPage([view({ reviewer_model: 'gpt-small' }, LISTED), view({ reviewer_model: 'gpt-new' }, LISTED), view({ reviewer_model: 'gpt-new', reviewer_effort: 'ultra' }, LISTED)], [ok, ok]);
   await openSettings(p);
   assert.deepEqual(offered(p, 'reviewer_effort'), ['', 'low', 'medium', 'high']);
   changeTo(p, 'reviewer_model', 'gpt-new');
   assert.deepEqual(offered(p, 'reviewer_effort'), ['', 'low', 'medium', 'high', 'xhigh', 'max', 'ultra']);
   assert.equal(controlOf(p, 'reviewer_model').value, 'gpt-new', 'the pick is kept when the view is drawn again');
-  changeTo(p, 'reviewer_effort', 'ultra');
-  saveButton(p).listeners.click();
   await p.settle();
-  assert.deepEqual(posted(p), ['/api/settings/save?repo%3Areviewer_model=gpt-new&repo%3Areviewer_effort=ultra']);
+  changeTo(p, 'reviewer_effort', 'ultra');
+  await p.settle();
+  // 0731: each saved as it's picked, by itself
+  assert.deepEqual(posted(p), ['/api/settings/save?repo%3Areviewer_model=gpt-new', '/api/settings/save?repo%3Areviewer_effort=ultra']);
   // The default model: what any of them supports.
   const d = settingsPage([view({}, LISTED)]);
   await openSettings(d);
@@ -122,11 +123,10 @@ test('0276 AC3: a saved model or effort the list doesn\'t include still shows, m
   assert.deepEqual(options(p, 'reviewer_model')[0], { value: 'gpt-gone', text: 'gpt-gone (not offered)', disabled: true });
   assert.equal(effort.value, 'ultra');
   assert.deepEqual(options(p, 'reviewer_effort')[0], { value: 'ultra', text: 'ultra (not offered)', disabled: true });
-  assert.equal(saveButton(p).disabled, true, 'nothing changes unless you change it');
+  assert.deepEqual(posted(p), [], 'nothing is saved unless you change it'); // 0731
   // Changing only the effort leaves the model as saved.
   changeTo(p, 'reviewer_effort', 'high');
   assert.equal(controlOf(p, 'reviewer_model').value, 'gpt-gone');
-  saveButton(p).listeners.click();
   await p.settle();
   assert.deepEqual(posted(p), ['/api/settings/save?repo%3Areviewer_effort=high']);
 });

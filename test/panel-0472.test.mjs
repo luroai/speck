@@ -143,10 +143,10 @@ const VIEWS = [
   ['the full ticket, open', `document.querySelector('#shaping .item.open .full-open').click(), true`, `!document.getElementById('full-ticket').hidden && !!document.querySelector('#full-ticket .close')`],
   ['a review pack with a document', `closeFull(), packOf = ${PACK}, fullId = '0002', fullFrom = null, render(), true`, `!!document.querySelector('#full-ticket .pack-document')`],
   ['a document', `docOpen = { id: '0002', path: 'outputs/0002/plan.md', state: 'ok', text: '# Plan\\n\\nWords.\\n\\n| A | B |\\n|---|---|\\n| 1 | 2 |' }, drawDoc(), true`, `!document.getElementById('doc-view').hidden && !!document.querySelector('#doc-view .close')`],
-  ['Settings', `closeDoc(), closeFull(), document.getElementById('settings-open').click(), true`, `document.querySelectorAll('#settings .setting').length >= 10 && !!document.querySelector('#settings .save-all') && settingsView.catalogues !== 'loading'`, false, AGENTS_MS], // once its agents' models have come (0407)
-  ['Settings, an explanation open, and its question about unsaved changes', `document.querySelector('#settings .setting .label button.name').click(), settingsLeaving = { saving: false }, renderLeaving(), true` /* 0729: a setting's name shows its explanation */,
-    `!!document.querySelector('#settings .setting p.explain:not([hidden])') && !document.getElementById('settings-unsaved').hidden && document.querySelectorAll('#settings-unsaved button').length === 3`],
-  ['the Pipeline log', `keepEditing(), closeSettings(), document.getElementById('run').click(), true`, `!document.getElementById('foreman').hidden && !!document.querySelector('#foreman .back')`],
+  ['Settings', `closeDoc(), closeFull(), document.getElementById('settings-open').click(), true`, `document.querySelectorAll('#settings .setting').length >= 10 && settingsView.catalogues !== 'loading'`, false, AGENTS_MS], // once its agents' models have come (0407)
+  ['Settings, an explanation open', `document.querySelector('#settings .setting .label button.name').click(), true` /* 0729: a setting's name shows its explanation. 0731: its question on closing is gone */,
+    `!!document.querySelector('#settings .setting p.explain:not([hidden])')`],
+  ['the Pipeline log', `closeSettings(), document.getElementById('run').click(), true`, `!document.getElementById('foreman').hidden && !!document.querySelector('#foreman .back')`],
 ];
 const frames = `new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(true))))`;
 const skip = !findChrome() ? 'needs Chrome or Chromium' : noGit;

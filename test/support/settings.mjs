@@ -4,11 +4,14 @@ import { fakePage } from './panel.mjs';
 
 // A page whose fetch answers the board with an empty one, GET /api/settings with each of `views` in turn and a POST
 // with each of `saves` in turn, or once a promise among them resolves. `globals` replaces what the page sees, for example its `confirm`.
+// 0731: each setting saves as it changes, so a POST to /api/settings/save the test gives no answer for stays on its way,
+// leaving the view as picked, as it is until a save comes back.
 export function settingsPage(views, saves = [], globals = {}) {
   const calls = [];
   const fetch = async (url, opts = {}) => {
     const method = (opts.method || 'GET').toUpperCase();
     calls.push({ url: String(url), method, headers: opts.headers || {} });
+    if (method === 'POST' && !saves.length && String(url).startsWith('/api/settings/save')) return new Promise(() => {});
     let body = method === 'POST' ? saves.shift() : String(url).startsWith('/api/settings') ? views.shift() : { tickets: [], ideas: [], resume_command: '' };
     if (body && body.then) body = await body; // 0274: an answer the test gives later
     if (body && body.status) return { ok: false, status: body.status, json: async () => body.body };
@@ -25,8 +28,6 @@ export const rowOf = (p, key) => p.all(p.byId('settings')).filter(n => /\bsettin
 // 0730: an on/off setting is a switch button; others stay a list or a box.
 export const controlOf = (p, key) => p.all(rowOf(p, key)).find(n => n.tagName === 'select' || n.tagName === 'input'
   || (n.tagName === 'button' && n.attrs?.role === 'switch'));
-// 0274: the view's one Save button.
-export const saveButton = p => p.all(p.byId('settings')).find(n => n.tagName === 'button' && /\bsave-all\b/.test(n.className || ''));
 // A value typed or picked in a setting's control, as the browser tells the page. 0730: a switch is pressed to the value.
 export function changeTo(p, key, value) {
   const c = controlOf(p, key);
@@ -47,3 +48,26 @@ export function tick(p, key, risk, on) {
 }
 // The page's POSTs, by address.
 export const posted = p => p.settingsCalls.filter(c => c.method === 'POST').map(c => c.url);
+// 0731: a box typed in, as the browser tells the page while you type, before you press Enter or leave it.
+export function typeIn(p, key, value) {
+  const c = controlOf(p, key);
+  c.value = String(value);
+  if (c.listeners.input) c.listeners.input({ target: c });
+}
+// Leaving a box: the browser sends change only when its value changed since it was focused, which the page checks itself.
+export function leaveBox(p, key) {
+  const c = controlOf(p, key);
+  if (c.listeners.change) c.listeners.change({ target: c });
+}
+// Leaving a box as the browser tells the page when nothing changed since it got the focus: blur alone.
+export function blurBox(p, key) {
+  const c = controlOf(p, key);
+  if (c.listeners.blur) c.listeners.blur({ target: c });
+}
+export function pressEnter(p, key) {
+  const c = controlOf(p, key);
+  if (c.listeners.keydown) c.listeners.keydown({ key: 'Enter', target: c });
+}
+// 0731: the line in a setting's row saying it saved, and the one saying why it was refused.
+export const savedLine = (p, key) => p.all(rowOf(p, key)).find(n => n.tagName === 'p' && /\bsaved\b/.test(n.className || ''));
+export const refusedLine = (p, key) => p.all(rowOf(p, key)).find(n => n.tagName === 'p' && /\bbad\b/.test(n.className || ''));

@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { panelRepo, freePort, startPanel, stop, request, post, tokenOf, headOf, gitEnv } from './support/panel.mjs';
-import { settingsPage, openSettings, rowOf, controlOf, saveButton, changeTo } from './support/settings.mjs';
+import { settingsPage, openSettings, rowOf, controlOf, changeTo } from './support/settings.mjs';
 import { panelSettings, panelSetSetting, panelSettingRequest } from '../scripts/settings.mjs';
 import { machineConfig, machineConfigFile } from '../scripts/machine.mjs';
 
@@ -64,14 +64,13 @@ test('0261 AC1: the view says whose value each is, with the repo\'s value beside
 });
 
 test('0261 AC2: a change is saved for this machine, without asking where it goes (0387)', async () => {
-  // 0274: sent with the view's one Save.
+  // 0731: sent as it changes.
   const p = settingsPage([view(undefined, 2), view(4, 2)], [{ ok: true, changed: ['max_parallel_builds'] }]);
   await p.settle();
   await openSettings(p);
   changeTo(p, 'max_parallel_builds', '4');
   assert.equal(buttonOf(p, 'max_parallel_builds', 'This machine only'), undefined, '0387: not asked');
   assert.equal(buttonOf(p, 'max_parallel_builds', 'The repo, for everyone'), undefined);
-  p.press(saveButton(p));
   await p.settle();
   assert.deepEqual(posts(p).map(c => c.url), ['/api/settings/save?machine%3Amax_parallel_builds=4']);
   assert.ok(posts(p)[0].headers['X-Speck-Token']);
@@ -79,15 +78,11 @@ test('0261 AC2: a change is saved for this machine, without asking where it goes
   assert.deepEqual(tagsOf(p, 'max_parallel_builds'), []);
   assert.ok(ownValue(p, 'max_parallel_builds'));
 
-  // Putting the value back leaves nothing to save; a setting no machine can hold is sent for the repo.
+  // A setting no machine can hold is sent for the repo.
   const c = settingsPage([view(undefined, 2), view(undefined, 2)], [{ ok: true, changed: ['reviewer_model'] }]);
   await c.settle();
   await openSettings(c);
-  changeTo(c, 'max_parallel_builds', '7');
-  changeTo(c, 'max_parallel_builds', '2');
-  assert.equal(saveButton(c).disabled, true);
   changeTo(c, 'reviewer_model', 'm1');
-  c.press(saveButton(c));
   await c.settle();
   assert.deepEqual(posts(c).map(x => x.url), ['/api/settings/save?repo%3Areviewer_model=m1']);
 });
@@ -130,8 +125,7 @@ test('0261 AC3: clearing this machine\'s value goes back to the repo\'s, and the
   const clear = buttonOf(p, 'max_parallel_builds', 'Clear this machine\'s value');
   assert.ok(clear);
   p.press(clear);
-  assert.deepEqual(posts(p), [], '0274: cleared on Save');
-  p.press(saveButton(p));
+  // 0731: saved at once
   await p.settle();
   assert.deepEqual(posts(p).map(c => c.url), ['/api/settings/save?machine%3Amax_parallel_builds=']);
   assert.equal(controlOf(p, 'max_parallel_builds').value, '2');

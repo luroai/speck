@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { panelRepo, freePort, startPanel, stop, request, post, tokenOf, headOf, gitEnv } from './support/panel.mjs';
-import { settingsPage, openSettings, rowOf, controlOf, saveButton, changeTo, boxesOf, tick } from './support/settings.mjs';
+import { settingsPage, openSettings, rowOf, controlOf, changeTo, boxesOf, tick } from './support/settings.mjs';
 import { panelSettings, panelSetSetting, panelSettingRequest, panelSaveSettings } from '../scripts/settings.mjs';
 import { machineConfig } from '../scripts/machine.mjs';
 
@@ -105,7 +105,6 @@ test('0259 AC1: in the view, auto_ship is picked on or off, and auto_ship_risk t
   assert.deepEqual(boxesOf(p, 'auto_ship_risk').map(b => b.value), ['low', 'high']);
   assert.deepEqual(ticked(p, 'auto_ship_risk'), ['low']);
   tick(p, 'auto_ship_risk', 'high', true);
-  p.press(saveButton(p));
   await p.settle();
   assert.deepEqual(p.asked, [], 'auto_ship is off: nothing more ships, so no dialog');
   assert.deepEqual(posts(p), ['/api/settings/save?repo%3Aauto_ship_risk=low%2Chigh']);
@@ -117,7 +116,6 @@ test('0259 AC2: turning auto_ship on asks first, naming the tickets that would s
   await p.settle();
   await openSettings(p);
   changeTo(p, 'auto_ship', 'true');
-  p.press(saveButton(p));
   await p.settle();
   assert.equal(p.asked.length, 1);
   assert.match(p.asked[0], /approved low-risk tickets/);
@@ -133,7 +131,6 @@ test('0259 AC2: turning auto_ship on asks first, naming the tickets that would s
   await q.settle();
   await openSettings(q);
   changeTo(q, 'auto_ship', 'true');
-  q.press(saveButton(q));
   await q.settle();
   assert.match(q.asked[0], /approved low-risk and high-risk tickets/);
   assert.deepEqual(posts(q), ['/api/settings/save?repo%3Aauto_ship=true&confirm=low%2Chigh'], 'confirmed: sent, naming the risks it asked about');
@@ -145,7 +142,6 @@ test('0259 AC2: adding a risk while auto_ship is on asks first, and cancelling l
   await p.settle();
   await openSettings(p);
   tick(p, 'auto_ship_risk', 'high', true);
-  p.press(saveButton(p));
   await p.settle();
   assert.equal(p.asked.length, 1);
   assert.match(p.asked[0], /approved low-risk and high-risk tickets/);
@@ -156,7 +152,6 @@ test('0259 AC2: adding a risk while auto_ship is on asks first, and cancelling l
   await q.settle();
   await openSettings(q);
   tick(q, 'auto_ship_risk', 'low', true);
-  q.press(saveButton(q));
   await q.settle();
   assert.equal(q.asked.length, 1, 'adding low lets more ship too');
   assert.deepEqual(posts(q), ['/api/settings/save?repo%3Aauto_ship_risk=low%2Chigh&confirm=low%2Chigh']);
@@ -198,7 +193,6 @@ test('0259 AC2: a confirmation that names fewer risks than would now ship is ref
   await p.settle();
   await openSettings(p);
   changeTo(p, 'auto_ship', 'true');
-  p.press(saveButton(p));
   await p.settle();
   assert.deepEqual(posts(p), ['/api/settings/save?repo%3Aauto_ship=true&confirm=low']);
   assert.equal(controlOf(p, 'auto_ship').value, 'false', 'as it is now');
@@ -206,7 +200,6 @@ test('0259 AC2: a confirmation that names fewer risks than would now ship is ref
   assert.match(rowOf(p, 'auto_ship').textContent, /low-risk and high-risk.*hasn't been confirmed/);
   // Saving again asks about what would ship now.
   changeTo(p, 'auto_ship', 'true');
-  p.press(saveButton(p));
   await p.settle();
   assert.equal(p.asked.length, 2);
   assert.match(p.asked[1], /approved low-risk and high-risk tickets/);
@@ -227,10 +220,8 @@ test('0259 AC3: turning auto_ship off, or removing a risk, is saved without a di
   await p.settle();
   await openSettings(p);
   tick(p, 'auto_ship_risk', 'high', false);
-  p.press(saveButton(p));
   await p.settle();
   changeTo(p, 'auto_ship', 'false');
-  p.press(saveButton(p));
   await p.settle();
   assert.deepEqual(p.asked, []);
   assert.deepEqual(posts(p), ['/api/settings/save?repo%3Aauto_ship_risk=low', '/api/settings/save?repo%3Aauto_ship=false']);
@@ -250,7 +241,6 @@ test('0259 AC4: auto_ship_risk with no risk ticked is refused, saying to turn au
   await p.settle();
   await openSettings(p);
   tick(p, 'auto_ship_risk', 'low', false);
-  p.press(saveButton(p));
   await p.settle();
   assert.deepEqual(posts(p), [], 'nothing is sent');
   assert.deepEqual(p.asked, []);

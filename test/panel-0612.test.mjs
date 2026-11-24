@@ -10,18 +10,13 @@ import { rules, selectors } from './support/css.mjs';
 const cascaded = (sels, rs = rules()) => Object.fromEntries(rs.filter(r => !r.at.length && selectors(r).some(s => sels.includes(s))).flatMap(r => r.decls));
 
 const SIZE = { 'border-radius': '10px', 'min-height': '44px', 'font-family': 'var(--font-ui)', 'font-size': '14px', 'font-weight': '500' };
-const PRIMARY = { ...SIZE, color: 'var(--bg)', background: 'var(--blue)' };
 const SECONDARY = { ...SIZE, color: 'var(--text)', border: '1px solid var(--line)' };
 const check = (sels, want, what) => {
   const d = cascaded(sels);
   for (const [k, v] of Object.entries(want)) assert.equal(d[k], v, `${what}: ${k}`);
 };
 
-test("0612 AC1: the Save in Settings' unsaved-changes question is a primary button of the redesign's size, as Discard and Keep editing are secondary ones", () => {
-  check(['button', '#settings-unsaved button', '#settings-unsaved button.save-all'], PRIMARY, 'Save');
-  check(['button', '#settings-unsaved button', '#settings-unsaved button.secondary'], SECONDARY, 'Discard and Keep editing');
-  assert.match(settingsScript(), /choice\(settingsLeaving\.saving \? 'Saving…' : 'Save', 'save-all', saveAndLeave\), choice\('Discard', 'secondary'/, 'beside Discard and Keep editing');
-});
+// 0731: AC1's Save in Settings' unsaved-changes question is gone, with the question.
 
 test("0612 AC2: a setting's own Save, the pack's file and folder buttons and its Ask for changes are secondary buttons of the redesign's size", () => {
   check(['button', '#settings .setting .save', '#settings .arow .save'], SECONDARY, "a setting's Save");
@@ -36,7 +31,7 @@ const words = (a, b) => (a ?? b).replace(/\$\{[^}]*\}/g, ' ').split(/\s+/).filte
 // The classes of every <button> the panel draws, and of what's drawn inside one, from its page and scripts, and the
 // classes the scripts pass in from a variable.
 function buttonClasses() {
-  const out = new Set(['secondary', 'save-all', 'bridge-card', 'bridge-row', 'run-switch', 'run-on', 'run-off']);
+  const out = new Set(['secondary', 'bridge-card', 'bridge-row', 'run-switch', 'run-on', 'run-off']);
   const scripts = [pageScript(), popupsScript(), settingsScript(), headerScript()].join('\n');
   for (const m of scripts.matchAll(/el\('button',\s*(?:'([^']*)'|`([^`]*)`)/g)) for (const w of words(m[1], m[2])) out.add(w);
   // what's inside: every el() in the button's call, or in a call of bridgeButton, which makes one from its arguments
@@ -59,7 +54,7 @@ const small = ([k, v]) => ((k === 'font-size' || k === 'font') && /(^|\s)12px\b/
 
 test('0612 AC3: no style gives a button, or anything drawn inside one, 8 px corners or 12 px text', () => {
   const classes = buttonClasses();
-  for (const c of ['save', 'save-all', 'pack-document', 'pack-folder', 'ask-changes', 'ship', 'name', 'log-filter', 'set-ready', 'dep-chip', 'tab', // 0729: a setting's name, in place of its info button
+  for (const c of ['save', 'pack-document', 'pack-folder', 'ask-changes', 'ship', 'name', 'log-filter', 'set-ready', 'dep-chip', 'tab', // 0729: a setting's name, in place of its info button
     'tab-n', 'dep-pill', 'bridge-where', 'bridge-line'])
     assert.ok(classes.has(c), `${c} is found as a button's class`);
   const left = [];

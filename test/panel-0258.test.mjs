@@ -7,7 +7,7 @@ import { panelRepo, freePort, startPanel, stop, request, post, tokenOf, headOf, 
 import { panelSettings, panelSetSetting, EDITABLE } from '../scripts/settings.mjs';
 import { machineConfig } from '../scripts/machine.mjs';
 import { TEAM_KEYS } from '../scripts/team.mjs';
-import { settingsPage, openSettings, rowOf, controlOf, saveButton, changeTo } from './support/settings.mjs';
+import { settingsPage, openSettings, rowOf, controlOf, changeTo } from './support/settings.mjs';
 
 // ---------- 0258: change a setting from the panel ----------
 
@@ -85,13 +85,12 @@ test('0258 AC2: saving the value a setting already has writes and commits nothin
   assert.deepEqual(snapshot(r), was);
 });
 
-test('0258 AC2: Save sends the change with the token, then the view shows the new value', async () => {
-  // 0274: one Save for every change, sent to /api/settings/save.
+test('0258 AC2: a change is sent with the token as it\'s made, then the view shows the new value', async () => {
+  // 0274: sent to /api/settings/save. 0731: each by itself, as it changes.
   const p = settingsPage([view({ max_parallel_builds: 1 }), view({ max_parallel_builds: 2 })], [{ ok: true, changed: ['max_parallel_builds'] }]);
   await p.settle();
   await open(p);
   changeTo(p, 'max_parallel_builds', '2');
-  p.press(saveButton(p));
   await p.settle();
   const sent = p.settingsCalls.filter(c => c.method === 'POST');
   assert.equal(sent.length, 1);
@@ -101,15 +100,15 @@ test('0258 AC2: Save sends the change with the token, then the view shows the ne
   assert.equal(p.settingsCalls.filter(c => c.method === 'GET' && c.url.startsWith('/api/settings')).length, 2);
 
   // A blank and a value with a slash go whole.
-  const q = settingsPage([view({ reviewer_effort: 'high' }), view()], [{ ok: true, changed: [] }]);
+  const q = settingsPage([view({ reviewer_effort: 'high' }), view(), view()], [{ ok: true, changed: [] }, { ok: true, changed: [] }]);
   await q.settle();
   await open(q);
   changeTo(q, 'reviewer_effort', '');
+  await q.settle();
   changeTo(q, 'reviewer_model', 'openai/gpt x');
-  q.press(saveButton(q));
   await q.settle();
   assert.deepEqual(q.settingsCalls.filter(c => c.method === 'POST').map(c => c.url),
-    ['/api/settings/save?repo%3Areviewer_model=openai%2Fgpt%20x&repo%3Areviewer_effort='], 'in the view\'s order');
+    ['/api/settings/save?repo%3Areviewer_effort=', '/api/settings/save?repo%3Areviewer_model=openai%2Fgpt%20x'], 'in the order made');
 });
 
 test('0258 AC3: a value speck wouldn\'t accept is refused, saying what\'s allowed, and changes nothing', () => {
@@ -130,16 +129,15 @@ test('0258 AC3: a value speck wouldn\'t accept is refused, saying what\'s allowe
   assert.deepEqual(snapshot(r), was);
 });
 
-test('0258 AC3: the view shows a refusal beside the setting, keeping what was typed', async () => {
+test('0258 AC3: the view shows a refusal beside the setting, which goes back to its saved value (0731)', async () => {
   const error = 'max_parallel_builds must be a whole number of 1 or more (got "0").';
   const p = settingsPage([view()], [{ status: 422, body: { error, refused: { max_parallel_builds: error } } }]);
   await p.settle();
   await open(p);
   changeTo(p, 'max_parallel_builds', '0');
-  p.press(saveButton(p));
   await p.settle();
   assert.match(rowOf(p, 'max_parallel_builds').textContent, /must be a whole number of 1 or more/);
-  assert.equal(controlOf(p, 'max_parallel_builds').value, '0');
+  assert.equal(controlOf(p, 'max_parallel_builds').value, '1');
   assert.doesNotMatch(rowOf(p, 'max_parallel_tests').textContent, /whole number/);
 });
 
