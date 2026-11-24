@@ -18,6 +18,7 @@ source: "speck/ideas/done/2026-11-11-read-claude-s-usage-after-a-claude-review-r
 after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T14:27:38.321Z"
+waited_seconds: 13
 
 ---
 # 0719 · Read Claude's usage after a Claude review round
