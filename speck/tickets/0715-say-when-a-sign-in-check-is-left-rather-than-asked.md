@@ -1,7 +1,7 @@
 ---
 id: "0715"
 title: "Say when a sign-in check is left rather than asked"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: "speck/ideas/done/2026-11-15-say-when-a-sign-in-check-is-left-rather-tha
 after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T13:52:52.125Z"
+approved: "2026-11-24T14:03:55.511Z"
 
 ---
 # 0715 · Say when a sign-in check is left rather than asked
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The speck-watch skill says to ask the user when the agent can't sign in, while its leave action covers a check needing an account the agent can't use. The two overlap, so the agent may stop a build with a question where 0679 meant it to carry on, or the reverse.
@@ -53,9 +54,14 @@ When a check in the app needs an account, the watching agent now knows what to d
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 129,930
+- Elapsed since build started: 11 min
+- Changed lines: 6 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups: none. Review F1 (minor) was about my test run passing non-test files; the real tests passed.
 
