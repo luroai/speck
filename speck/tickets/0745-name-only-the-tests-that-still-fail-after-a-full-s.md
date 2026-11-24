@@ -1,7 +1,7 @@
 ---
 id: "0745"
 title: "Name only the tests that still fail after a full-suite retry"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: "speck/ideas/done/2026-11-24-name-only-the-tests-that-still-fail-after-a
 after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T23:16:24.266Z"
+approved: "2026-11-24T23:40:10.826Z"
 
 ---
 # 0745 · Name only the tests that still fail after a full-suite retry
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When the full suite's retry clears some of the first run's failures, `latest.json` and the fix ticket still name every first-run failure. On a busy machine that makes oversized fix tickets: 0736 named 22 tests when only 0159 AC3 still failed.
@@ -50,9 +51,14 @@ When the full suite fails on the main branch and some of its failing tests pass 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 89,916
+- Elapsed since build started: 24 min
+- Changed lines: 5 (limit 5000)
 Follow-ups: none.
 
 ## Review rounds
