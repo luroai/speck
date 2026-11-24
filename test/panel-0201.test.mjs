@@ -56,7 +56,7 @@ test('0201 AC1: no ship\'s time counts up with the clock between polls (0434)', 
   await p.settle();
   assert.equal(lineOf(p, rowOf(p, '0801')), 'Shipping');
   now += 60000;
-  for (const { fn, ms } of p.intervals.values()) if (ms === 1000) fn();
+  for (const { fn, ms } of p.intervals.values()) if (ms === 250) fn();
   assert.equal(lineOf(p, rowOf(p, '0801')), 'Shipping');
   assert.ok(!p.all(rowOf(p, '0801')).some(n => /^ship-(at|time)\b/.test(n.className || '')), 'no ship\'s time');
   assert.equal(count(rowOf(p, '0801').textContent, /Shipping/g), 1, rowOf(p, '0801').textContent);
