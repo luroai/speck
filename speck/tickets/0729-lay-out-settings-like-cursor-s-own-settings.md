@@ -47,6 +47,7 @@ Settings reads like a page of Cursor's settings: plain names, a muted line each,
 - Cursor's look in that screenshot: the page heading ("General"); each group a rounded block a shade off the page with no border; small muted labels above groups; a row is a name (about 13 px, regular) over a muted description, with the control right-aligned; generous padding, no dividers.
 - The view is `templates/panel-settings.js` and `templates/panel-settings.css`; explanations come from `explainFully` in `scripts/settings.mjs`. The short muted line can be each explanation's first sentence, or a new short line per setting.
 - Keep to the panel's own colour tokens in both looks, so the dark look matches Cursor's dark theme the same way.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
