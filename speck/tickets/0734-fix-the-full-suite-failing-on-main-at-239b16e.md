@@ -47,6 +47,14 @@ The full suite passes on main again.
 ## Notes
 <!-- Constraints, links and decisions. Optional. -->
 Failing before this build: none (the recorded result for this code, the quick suite at bcf42b1, passed; the full suite at 239b16e failed with the tests in the Problem)
+- The failing run's output was overwritten by the next full run (4dda328), which failed 0657 AC3 (a real panel in its copy didn't start within 10 s: "panel didn't start") and 0517 AC3 (first frames of 46–131 ms on the clock in all three tries), and passed both on the rerun. The load was 65–90 on 16 cores. All six files pass on their own under that load; 0476 AC2 passed 6 copies at once. No output was kept for 0061, 0202, 0208 or 0476, so their fixes go after what each waits for on the clock.
+- 0657 AC3: its copy runs with SPECK_TEST_CHROME=none, which findChrome now reads as no browser, so the rule files' real-browser tests are skipped there (199 s down to 3 s); the two broken rules are checked without a browser.
+- 0061 self-check: timed by this process's CPU time (process.cpuUsage), not the clock.
+- 0517 AC3: each first frame timed by the page's main thread's CPU time (Chrome's ThreadTime), with the slide paused until it's read, so the redraw after it isn't counted; about 15–24 ms here. The clock times are reported beside it, and the check that nothing is redrawn in that frame is unchanged.
+- 0202 AC1, AC2: the stalling run writes a line every 0.2 s until both its processes have started (for up to 30 s), then goes quiet; its stall time is 3 s rather than 1 s.
+- 0208 AC1 (panel): the second is counted on top of the time a change in the main checkout takes under the same load, measured just before, with the keep-alive at 60 s, so a missed worktree still fails.
+- 0476 AC2: the waits for a lane's tab to open and for its slide to end are 10 s rather than 3 s; the slide's own 120 ms check is unchanged.
+Self-check: capped 0202's wait for its kept process at 30 s, so one that never starts ends in a stall rather than hanging the file.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

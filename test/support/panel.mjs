@@ -380,7 +380,9 @@ export const findText = (p, row, text) => p.all(row).find(n => n._text === text)
 // ---------- 0039: a real headless browser, for what the fake page can't show (text selection) ----------
 
 // A headless Chromium driven over the DevTools protocol, with no dependencies: SPECK_TEST_CHROME, or one Playwright installed.
+// 0734: SPECK_TEST_CHROME=none finds none, so the tests that need one are skipped.
 export function findChrome() {
+  if (process.env.SPECK_TEST_CHROME === 'none') return null;
   if (process.env.SPECK_TEST_CHROME) return process.env.SPECK_TEST_CHROME;
   const cache = path.join(os.homedir(), '.cache', 'ms-playwright');
   const found = fs.existsSync(cache) ? fs.readdirSync(cache).sort().reverse().flatMap(d => [

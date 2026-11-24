@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
-import { panelRepo, startPanel, stop, freePort, env } from './support/panel.mjs';
+import { panelRepo, startPanel, stop, freePort, env, fm } from './support/panel.mjs';
 import { openStream, stateFor, wait } from './support/stream.mjs';
 import { boardWatcher } from '../scripts/board-feed.mjs';
 
@@ -132,28 +132,38 @@ test('0208 AC1: a worktree\'s tickets folder that appears while the panel is sta
   } finally { files.close(); fs.rmSync(wt, { recursive: true, force: true }); }
 });
 
+// 0734: on a busy machine (a load of 90 on 16 cores) the panel itself can take most of a second to read the board and
+// tell the pages, so the second is counted on top of the time a change in the main checkout, watched from the start,
+// takes to reach them, measured just before. With no keep-alive look for a minute, a worktree the panel didn't watch
+// would take that minute.
 test('0208 AC1: in the panel, a ticket changed as soon as its new worktree is checked out reaches every open page within 1 second', async () => {
   const r = panelRepo({ worktrees: 'true' });
-  const p = await startPanel(r.dir, ['--port', String(await freePort())]);
+  const p = await startPanel(r.dir, ['--port', String(await freePort())], undefined, { SPECK_PANEL_PING_MS: '60000' });
   const streams = [openStream(p.port), openStream(p.port)];
   const wt = `${r.dir}-wt-0001`, file = ticketIn(r, wt);
+  // Resolves once every page has been told of a board with ticket `id` at `status`, failing `ms` after `t0`.
+  const reaches = (from, t0, ms, id, status, what) => Promise.all(streams.map(async (s, i) => {
+    for (let at = from[i]; ;) {
+      const e = await s.until(e => e.event === 'message', Math.max(ms - (Date.now() - t0), 1), at, what);
+      at = s.events.indexOf(e) + 1;
+      const board = (await stateFor(p.port, e.data)).body;
+      if (board.tickets.find(t => t.id === id)?.status === status) return;
+    }
+  }));
   try {
-    await Promise.all(streams.map(s => s.until(e => e.event === 'message', 5000)));
-    const from = streams.map(s => s.events.length);
+    await Promise.all(streams.map(s => s.until(e => e.event === 'message', 20000)));
+    let from = streams.map(s => s.events.length), t0 = Date.now();
+    r.write('0002-other.md', fm({ id: '"0002"', title: 'Another ticket', status: 'ready' }));
+    await reaches(from, t0, 30000, '0002', 'ready', 'a ticket in the main checkout');
+    const base = Date.now() - t0;
+    from = streams.map(s => s.events.length);
     const git = spawn('git', ['worktree', 'add', '-q', '-b', 'speck/0001-export-bookings', wt], { cwd: r.dir, env, stdio: 'ignore' });
     const done = new Promise(resolve => git.on('exit', resolve));
-    for (const t0 = Date.now(); !fs.existsSync(file); await wait(2)) if (Date.now() - t0 > 5000) assert.fail('the worktree was never checked out');
+    for (const t0 = Date.now(); !fs.existsSync(file); await wait(2)) if (Date.now() - t0 > 30000) assert.fail('the worktree was never checked out');
     await wait(5); // the ticket is there, as `speck start` finds it, and is written straight away
     setStatus(file, 'building');
-    const t0 = Date.now();
-    await Promise.all(streams.map(async (s, i) => {
-      for (let at = from[i]; ;) {
-        const e = await s.until(e => e.event === 'message', Math.max(1000 - (Date.now() - t0), 1), at, 'the status in the new worktree');
-        at = s.events.indexOf(e) + 1;
-        const board = (await stateFor(p.port, e.data)).body;
-        if (board.tickets.find(t => t.id === '0001').status === 'building') return;
-      }
-    }));
+    t0 = Date.now();
+    await reaches(from, t0, 1000 + base, '0001', 'building', `the status in the new worktree, within 1 s more than the ${base} ms a change in the main checkout took`);
     assert.equal(await done, 0);
   } finally { for (const s of streams) s.close(); await stop(p); fs.rmSync(wt, { recursive: true, force: true }); }
 });
