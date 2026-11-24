@@ -1,6 +1,6 @@
 # Accept Node's fail-count line in tmp-cleanup
 
-Captured: 2026-11-24 15:20 · Status: inbox
+Captured: 2026-11-24 15:20 · Status: dropped
 From ticket: 0724
 Raised by: agent
 

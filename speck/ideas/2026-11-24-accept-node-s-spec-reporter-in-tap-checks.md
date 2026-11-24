@@ -1,6 +1,6 @@
 # Accept Node's spec reporter in TAP checks
 
-Captured: 2026-11-24 15:07 · Status: inbox
+Captured: 2026-11-24 15:07 · Status: dropped
 From ticket: 0720
 Raised by: agent
 
