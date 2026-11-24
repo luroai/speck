@@ -32,12 +32,12 @@ A hovered closed row's fill reaches 12 px past its text on each side, as an open
 ## Acceptance criteria
 1. On a device with hover, a closed Plan or Capture row under the pointer shows its raised fill reaching 12 px beyond the left and right edges of its text, as an open row's does.
 2. Hovering a closed row doesn't move its title or any of its text: their positions are the same with and without the pointer over it.
-3. A hovered closed row that is also highlighted as linked draws its ring at the fill's outer edge, not at the text's edge.
-4. On a touch screen (no hover), closed rows look as they do today.
-5. No test that passed before this change fails.
+3. On a touch screen (no hover), closed rows look as they do today.
+4. No test that passed before this change fails.
 
 ## Out of scope
 - Open rows, which 0614 already changed.
+- How linked tickets are lit: 0728 replaces the ring with this fill.
 
 ## Notes
 - The fill comes from `.item:hover` in `templates/panel-cards.css`. 0614 gave `.item.row.open` a pair of side shadows, and an `::after` ring because `.item.hl`'s box-shadow replaces any side shadows.
