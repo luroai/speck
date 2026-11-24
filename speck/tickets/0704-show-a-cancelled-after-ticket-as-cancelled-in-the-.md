@@ -50,7 +50,9 @@ The panel says an `after:` ticket was cancelled and should be taken out of `afte
 - speck (2026-11-24 13:18 UTC) told you: Nothing is stuck: the build is in review, making round 1's one fix. The time went on a heavily loaded machine and on a lot of work: tests, several test reruns, six light and dark pictures in a real panel, then the review. Separately, three layout tests (0469 at 390 and 600 px, and 0613 AC3's 44 px link height) already fail on 0703's approved work, which this build starts from. The builder checked that they fail at the starting point too, and 0703's review should catch them before it ships. Why: The log shows steady steps with no test hanging, the load average is 82, and the builder's base check (log line 163) found those three failures before its own change.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When a ticket is set to wait for another ticket that was later cancelled, the panel now says so instead of showing it as waiting. Its Plan card, its Build row and its full view say, in the warning colour, that the other ticket was cancelled and should be taken out of the ticket's after: list. The list of tickets it waits for marks that one as cancelled. If it also waits for a ticket that isn't finished yet, it still says it waits for that one.
+
+To see it, cancel a ticket that another ticket names in after:, then look at the waiting ticket in Plan or Build. One thing to watch: the cancelled ticket shows its id but not its title in the Waits on list.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -60,6 +62,9 @@ The panel says an `after:` ticket was cancelled and should be taken out of `afte
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- Known limit: in the real panel a cancelled ticket's title doesn't show in Waits on (only its id), as the page doesn't get cancelled tickets' titles. The model would use one if it had it.
+- 0469 AC1, AC2 (at 390 and 600 px) and 0613 AC3 fail with 0703's approved work, which this build started on, before any change of this one: an open Plan card's chain facts are laid out differently on a touch screen. They need fixing before 0703 (and so this ticket) can ship. Not saved as an idea: 0703 is still open and its ship runs those tests.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -141,6 +146,89 @@ The panel says an `after:` ticket was cancelled and should be taken out of `afte
     ],
     "escalation_question": "",
     "summary": "Draft and ready tickets correctly identify cancelled dependencies and preserve other waiting relationships. One gap remains: blocked, building, reviewing and approved tickets hide the cancellation instruction on their Build cards."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "fb3c87f8e92437ff5ebef7a16cf09cce30a8b4e6",
+    "session": "continued",
+    "thread_id": "01a20dad-ae80-71f0-8eb3-c63bb2ee6658",
+    "builder_response": "- Tests run: test/panel-0704.test.mjs test/panel-0467.test.mjs test/panel-0469.test.mjs test/panel-0613.test.mjs (with commands.checks). The three failures are the same ones present at cfb4a32f before this build.\n- F1: fixed. whereLine (templates/panel.js) now shows goneSay(t) whatever the ticket's state, after the stage sentence, so an in-flight ticket keeps where it is. New test \"0704 AC1 (round 1 F1)\" covers a blocked and an approved ticket naming a cancelled after: ticket.\n",
+    "seconds": 20,
+    "usage": {
+      "input_tokens": 743617,
+      "cached_input_tokens": 595328,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1701,
+      "reasoning_output_tokens": 94
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 52415,
+      "cached": 241280,
+      "write": 0,
+      "output": 612
+    },
+    "cost_usd": 0.135078,
+    "tests": {
+      "failing": 3,
+      "second_try": []
+    },
+    "saved_at": "2026-11-24T13:26:40.968Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "goneNote appears in ticketHead and paneSteps; whereLine now calls goneSay regardless of state. The three AC1 tests in test/panel-0704.test.mjs passed, covering Plan cards, Build rows, full views, and blocked and approved tickets."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "panel-model.js depsOf assigns cancelled dependencies the cancelled state, rendered through DEP_WORDS. Both 0704 AC2 tests passed for chain and Waits on facts."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "0704 AC3 passed: mixed dependencies retain 'after 0691' and 'Waiting on 0691' while identifying 0690 as cancelled."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "0704 AC4 passed, checking unchanged ready-row wording, Plan lock and full-view facts when no dependency is cancelled."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The reported run passed 167 tests, including all seven 0704 tests. The three remaining failures are unchanged failures documented at the approved 0703 starting point; this round changes no relevant CSS or existing tests."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.js",
+        "issue": "The cancellation instruction was hidden on Build rows for in-flight tickets.",
+        "suggested_fix": "Completed: whereLine now shows goneSay(t) for every state, with a passing regression test covering blocked and approved tickets.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The panel now identifies cancelled dependencies and tells users to remove them from after:, while preserving other waiting relationships. The previous gap for tickets already in progress is fixed. All ticket tests pass; three pre-existing test failures remain unchanged."
   }
 }
 ```
