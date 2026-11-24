@@ -40,6 +40,7 @@ Settings shows `machine_parallel_builds` after Builds at once, and it can be cha
 - Other settings.
 
 ## Notes
+Failing before this build: none
 - 0707 did the same for `machine_parallel_tests`: add it to `PANEL_HOME_SETTINGS` and give it a row like `homeRow`'s.
 
 ## In plain words
