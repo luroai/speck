@@ -60,7 +60,7 @@ Round 1 (codex): approve.
 - Elapsed since build started: 18 min
 - Changed lines: 1 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
-- Follow-ups (Delivery log only): `speck test --related` on a change to a panel stylesheet picks nearly every test file through test/support/panel.mjs and can't finish within a 10-minute shell limit; house-rules-full-0657 AC3 timed out starting a panel under load in a 25-file run and passed alone.
+- Follow-ups (Delivery log only): `speck test --related` on a change to a panel stylesheet picks nearly every test file through test/support/panel.mjs and can't finish within a 10-minute shell limit; house-rules-full-0657 AC3 timed out starting a panel under load in a 25-file run and passed alone. No inbox note: the --related one matches speck/ideas/done/2026-10-23-keep-related-tests-from-picking-the-whole-suite.md, and the timeout under load matches speck/ideas/done/2026-10-26-steady-two-browser-tests-under-a-busy-run.md.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
