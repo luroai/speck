@@ -1,7 +1,7 @@
 ---
 id: "0709"
 title: "Keep a ticket waiting on its base ticket out of Needs you"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-11-15-don-t-say-ready-to-ship-while-the-base-ticket-hasn-t-shipped.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-24
+started: "2026-11-24T11:55:03.915Z"
 
 ---
 # 0709 · Keep a ticket waiting on its base ticket out of Needs you
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 An approved ticket built on another ticket that hasn't shipped has auto-ship turned off until that ticket ships, so the panel puts it under Needs you as Ready to ship. You're asked to act when shipping it now would only have to wait.
