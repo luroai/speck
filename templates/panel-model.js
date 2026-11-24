@@ -39,7 +39,7 @@ const SHORT = {
 // 0576: `name` is what you call speck, which a ticket's sentence and short words say when it will answer.
 function doing(t, shipping, name = 'speck') {
   const d = doingNow(t, shipping, name);
-  const short = d.sentence === willTake(name) ? `${name} will answer` : Object.prototype.hasOwnProperty.call(SHORT, d.sentence) ? SHORT[d.sentence] : null;
+  const short = d.sentence === willTake(name) ? `${name} will answer` : d.after ? 'Approved' : Object.prototype.hasOwnProperty.call(SHORT, d.sentence) ? SHORT[d.sentence] : null;
   return { ...d, short, word: wordOf(t, d, short) };
 }
 // 0462: what it's doing in a word or two, for an open card's Now cell: reviewing, fixing, checking or writing while an
@@ -60,6 +60,8 @@ function workerOf(t, d) {
   return { label: 'Builder', value: name ? `${name[0].toUpperCase()}${name.slice(1)}${model ? ` · ${model}` : ''}` : '–' };
 }
 const willTake = name => `Blocked · ${name} will take its recommendation`;
+// 0709: the ticket an approved one was built on and waits to ship after (speck status --json's ships_after), or null.
+const waitsToShipAfter = t => (t.status === 'approved' && typeof t.ships_after === 'string' && t.ships_after ? t.ships_after : null);
 function doingNow(t, shipping, called) {
   if (shipping) return { sentence: 'Shipping', tone: '', moving: true };
   if (t.ship_waiting) return { sentence: 'Approved · waiting to ship', tone: '', moving: true };
@@ -71,6 +73,8 @@ function doingNow(t, shipping, called) {
   if (t.red && (t.status === 'building' || t.status === 'reviewing')) return at('The build stopped');
   if (t.paused) return at('Paused');
   if (t.run_waiting) return at('Approved · turn on Auto-build to ship it');
+  // 0709: one built on a ticket that hasn't shipped waits for it, not for you, in the normal text colour.
+  if (waitsToShipAfter(t) && !t.red && !t.to_ship) return { sentence: `Approved · ships after ${waitsToShipAfter(t)}`, tone: '', moving: false, after: true };
   if (t.status === 'approved' && t.criteria_changed === true) return at('Approved · waiting for you because a criterion changed'); // 0565
   if (t.doc_finished) return at('Finished · read the result'); // 0361, 0492
   if (approved) return at(autoShips ? 'Approved · waiting to ship' : 'Approved · waiting for you to ship it');
@@ -397,11 +401,13 @@ function panelModel(state) {
       const others = tickets.some(o => String(o.id) !== String(t.id) && ['ready', 'building', 'reviewing', 'approved'].includes(o.status));
       const carried_by = !handed || !runOn ? null : t.build_running === true ? 'Handed back to its build, which is working on it'
         : others ? 'It will be shipped again when main or its branch has a new commit' : null;
-      const exit_label = shipping || ship_waiting || run_waiting ? null : auto_failed || blocked_failed ? "Auto-ship didn't finish" : stopped ? 'Build stopped unexpectedly' : !exited ? null : t.status === 'approved' ? 'Build finished without shipping'
+      // 0709: one built on a ticket that hasn't shipped waits for that one, so its build ending at approved isn't news.
+      const after = waitsToShipAfter(t) !== null && !auto_failed;
+      const exit_label = shipping || after || ship_waiting || run_waiting ? null : auto_failed || blocked_failed ? "Auto-ship didn't finish" : stopped ? 'Build stopped unexpectedly' : !exited ? null : t.status === 'approved' ? 'Build finished without shipping'
         : t.status === 'building' || t.status === 'reviewing' ? 'Build stopped before finishing' : null;
       // An approved ticket whose build has exited is waiting for you to ship it, so it's green (purple until 0440) rather than red (0138),
       // unless its auto-ship failed. 0167: so is one auto-ship doesn't cover, whatever its build is doing, unless it's shipping.
-      const to_ship = t.status === 'approved' && !auto_failed && (exit_label !== null || run_waiting || (t.auto_ship === false && !shipping));
+      const to_ship = t.status === 'approved' && !auto_failed && !after && (exit_label !== null || run_waiting || (t.auto_ship === false && !shipping));
       // 0361: a task whose build has finished is done, and its result waits in its review pack: its row
       // says so, with no exit line or log box.
       const doc_finished = t.kind === 'task' && exit_label === 'Build finished without shipping';
