@@ -1,7 +1,7 @@
 ---
 id: "0734"
 title: "Fix the full suite failing on main at 239b16e"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -20,11 +20,12 @@ created: 2026-11-24
 started: "2026-11-24T13:27:45.922Z"
 blocked_at: ""
 waited_seconds: 41
+approved: "2026-11-24T14:40:00.420Z"
 
 ---
 # 0734 · Fix the full suite failing on main at 239b16e
 
-**Status:** 🔨 building
+**Status:** 👍 approved
 
 ## Problem
 The full suite fails on main at commit 239b16e (239b16e6fde6e470eed2ae32434e151fef98fed1). Failing tests:
@@ -71,9 +72,16 @@ Changes what you'd notice: no
 Clear winner: yes
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 CPU time does not establish that a visible frame arrives within 50 ms.; F2 Adding the measured baseline permits updates taking more than one second to pass, potentially by many seconds.; F3 Most new checks match implementation text in other tests rather than exercise behaviour.
+Round 2 (codex): changes requested.
+Round 3 (codex): approve.
 
 ## Delivery log
+- Review rounds: 3
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 326,619
+- Elapsed since build started: 72 min
+- Changed lines: 0 (limit 5000)
 - Follow-ups: none for the inbox. Known limit (Delivery log only): 0517 AC3's unchanged "nothing redrawn before the first frame" check still fails now and then under heavy load (seen once while checking F1; already in the flaky log before this build). That is the same chance failure earlier fix tickets left, not a new product gap from this change.
 
 ## Review rounds
