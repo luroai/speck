@@ -1,7 +1,7 @@
 ---
 id: "0717"
 title: "Warn when a saved test password is a common word"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-11-11-warn-when-a-saved-test-password-is-a-common-word.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-24
+started: "2026-11-24T14:23:11.729Z"
 
 ---
 # 0717 · Warn when a saved test password is a common word
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Every saved test password counts as a private word in every commit, in any case. A simple password like `test` would then refuse almost every commit that touches a test file, and you wouldn't know why until a commit fails.
