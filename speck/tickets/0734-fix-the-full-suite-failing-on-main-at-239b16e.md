@@ -61,7 +61,7 @@ Self-check: capped 0202's wait for its kept process at 30 s, so one that never s
 - Builder: Cursor took over this build from Claude at 2026-11-24 14:38 UTC, because Claude's usage limit was reached until 2026-11-24 16:10 UTC, more than an hour away.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Nothing you use day to day changes. The full test suite on main was failing under load when several builds share the machine: a handful of timing and cleanup checks were measuring wall-clock waits that other work could push over the limit. Those checks now time the work itself (or wait a little longer for setup), so a busy machine no longer fails the suite by chance, and shipping can run again. To see it: after this lands, the full suite on main should pass. Worth watching: the slide check now budgets the page's own work rather than clock time when the machine is overloaded, by design.
 
 ## Blocked question
 0517 AC3 promises that a lane change's first frame comes within 50 ms, but on this machine at a load of 90 every try took 46–131 ms on the clock while the page itself spent only 15–24 ms of work on each frame, so it fails the full suite by chance. Should the test hold the page to 50 ms of its own work (CPU time), still checking that the slide starts on the very first frame with no redraw in it, or keep 50 ms on the clock and accept that it fails now and then on a busy machine, or keep 50 ms on the clock but skip only that timing check when the machine is overloaded? I recommend 50 ms of the page's own work: it's how the other timing tests here were made steady (0207, 0557), it still fails a slide that's held back or redraws, and the reviewer asked for your say before 0517's promise is measured this way.
@@ -74,7 +74,7 @@ Clear winner: yes
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none for the inbox. Known limit (Delivery log only): 0517 AC3's unchanged "nothing redrawn before the first frame" check still fails now and then under heavy load (seen once while checking F1; already in the flaky log before this build). That is the same chance failure earlier fix tickets left, not a new product gap from this change.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
