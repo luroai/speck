@@ -1,7 +1,7 @@
 ---
 id: "0721"
 title: "Keep speck run's checks from re-reading done tickets' logs"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -22,7 +22,7 @@ started: "2026-11-24T14:39:13.738Z"
 ---
 # 0721 · Keep speck run's checks from re-reading done tickets' logs
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 An idle speck run still spends about 1.7 s of processor time per check on this repo, mostly reading every ticket's build log and run records and running git, done tickets included. The cost grows with the project's history, on a machine where tests already fail under load.
@@ -44,7 +44,7 @@ An idle check costs about the same however many done tickets there are.
 - `statusData` (`scripts/speck.mjs`) works out, for every ticket: spend (`earlierBuilds` in `scripts/spend.mjs` reads the whole log when the run record has no `builder`; `watchSpent`/`delegatedSpent` read jsonl files per ticket) and `shipState`, `prShown`, `buildSession`, `handedBack`. `logTail` is already cached by stat.
 - Test by counting file reads and process starts, not by timing, as `test/run-reads-0682.test.mjs` does.
 - Failing before this build: none
-- Self-check: no changes. Checked a done ticket with no run record or log, a log without a record, and a record that has not exited; each caches and gives the same board on the next check.
+- Self-check: after round 1, cache only buildExit and shippedCriteriaChanged (not the whole entry), so spend and settings still update; checked missing records/logs and that a warmed board takes up spend and reviewer setting changes.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
@@ -57,3 +57,93 @@ An idle check costs about the same however many done tickets there are.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "bc139b4854b5d4efc53dac384159b2ce261919ac",
+    "session": "fresh",
+    "thread_id": "01a20e1a-9c87-7df2-8b5b-3331ea21c81a",
+    "builder_response": "- Tests run: test/run-reads-0721.test.mjs test/split-0078.test.mjs (and before the first round, `speck test --related test/run-reads-0721.test.mjs`: 1932 passed; the only failure is test/tmp-cleanup.test.mjs AC1 AC2, which also fails on main on this machine — Node's default reporter prints `ℹ fail 2` where the check expects TAP `# fail 2`. Not caused by this change.)\n- Round 1: caches each done/cancelled ticket's board entry by its ticket file and run records (scripts/closed-board.mjs), so a second idle check opens no done ticket's build log and starts no git for it; caches spend jsonl parses in scripts/spend.mjs so each file is read once per check; moves buildExit/buildPaused/buildRunning into scripts/build-records.mjs so scripts/speck.mjs stays under 600 lines.\n",
+    "seconds": 37,
+    "usage": {
+      "input_tokens": 185230,
+      "cached_input_tokens": 129024,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1216,
+      "reasoning_output_tokens": 120
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 56206,
+      "cached": 129024,
+      "write": 0,
+      "output": 1216
+    },
+    "cost_usd": 0.1374744,
+    "saved_at": "2026-11-24T15:09:51.429Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "statusData returns closedHit entries before log reads or ticket-specific git calls. The passing 0721 AC1 test counts both for done and cancelled tickets."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "spend.mjs jsonLines caches parsed files by stat. The passing 0721 AC2 test counts one read of each shared spend file across multiple tickets."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "closedDeps includes build log and run record stats. The passing 0721 AC3 test changes each and verifies renewed reads and the updated exit code."
+      },
+      {
+        "id": 4,
+        "status": "fail",
+        "evidence": "The cached whole entry omits dependencies on settings, shared spend files, other tickets and time. Its output can therefore differ from the previous implementation on the same current repo. The AC4 test compares cold and warm calls only, without changing these dependencies or comparing against previous behaviour."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The supplied results pass the ticket tests and split compatibility checks. The reported tmp-cleanup failure concerns reporter formatting in unchanged code; the reviewed change provides no evidence of causing it."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/closed-board.mjs",
+        "issue": "closedDeps tracks only the ticket and five run files, but caches the entire board entry. Appending watch, delegated or backfilled spend leaves closed tickets' spend totals stale. Changing configuration leaves builder, reviewer and auto-ship fields stale; another ticket finishing leaves waiting_on stale. statusData returns the cached entry before recomputing any of these.",
+        "suggested_fix": "Cache the expensive log and git results separately and recompute fields with other dependencies, or include all relevant dependencies in invalidation. Add regression tests that warm the cache, change shared spend, settings and a dependency ticket, then compare the board with a fresh calculation.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "recent_spend is frozen inside each cached closed entry. When spend crosses the seven-day boundary, subsequent checks continue reporting it indefinitely unless a tracked file changes. Previously totalSpent recalculated that window on every check.",
+        "suggested_fix": "Recalculate recent_spend from cached spend parts using the current check time. Add a controlled-clock test that warms the cache before the seven-day boundary and checks again after it without changing files.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The change avoids repeated log reads and git calls, and the counting tests support that improvement. However, it also freezes information that must keep updating, including costs, settings and recent spending. Those stale board results need fixing before merge."
+  }
+}
+```
+
+</details>
