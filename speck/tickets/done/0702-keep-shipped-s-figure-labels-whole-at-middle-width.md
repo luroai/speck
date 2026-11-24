@@ -1,7 +1,7 @@
 ---
 id: "0702"
 title: "Keep Shipped's figure labels whole at middle widths"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T11:55:03.414Z"
 approved: "2026-11-24T12:29:11.594Z"
+finished: "2026-11-24T12:40:37.858Z"
 
 ---
 # 0702 · Keep Shipped's figure labels whole at middle widths
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Between about 480 and 760 px wide, Shipped's figures switch to four columns that are too narrow for the longer labels ("median review rounds", "median builder tokens"), so they end in an ellipsis. A side-panel column or a small tablet often sits in that range.
