@@ -40,6 +40,11 @@ The 0289 test never reads a half-written call file.
 
 ## Notes
 - `calls()` and `read()` in `test/run-codex-0289.test.mjs`, about line 45; `until()` about line 174.
+- Failing before this build: none
+- AC1: 10 of 10 runs of the 0289 killed-build test passed with 48 busy loops on 16 CPUs (load average 55).
+- AC2: with the session id taken out of `codexResumeArgv`, the 0289 killed-build test failed; the code was then put back.
+- AC3: no test of its own; the related run and ship's suite check it.
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

@@ -9,6 +9,7 @@ import { ROOT, runRepo, startRun, until, stopRun, killAll, ownSession, assertFou
 import { panelSettings } from '../scripts/settings.mjs';
 import { shipRepo } from './support/ship.mjs';
 import { panelModel, T } from './support/panel.mjs';
+import { fakeCodex } from './support/fake-codex.mjs';
 import { statusData } from '../scripts/speck.mjs';
 import { shipQueue } from '../scripts/ship-queue.mjs';
 import { codexBuilds, codexStartWords, codexResumeArgv, threadId, fillSession, CODEX_RESUME_COMMAND } from '../scripts/codex-build.mjs';
@@ -26,25 +27,6 @@ const save = (f, v) => fs.writeFileSync(f, `${JSON.stringify(v, null, 2)}\n`);
 const read = f => JSON.parse(fs.readFileSync(f, 'utf8'));
 const tmpRuns = () => fs.mkdtempSync(path.join(os.tmpdir(), 'runs-'));
 const started = id => JSON.stringify({ type: 'thread.started', thread_id: id });
-
-// A fake `codex` on a PATH of its own: records its arguments, folder, pid and build session in <out>/<n>.json, writes
-// a thread.started line (FAKE_THREAD, none when it's blank) as Codex's --json output starts, then exits after FAKE_MS.
-const FAKE = `
-const fs = require('fs'), path = require('path');
-const out = process.env.FAKE_OUT;
-let n = 0; while (fs.existsSync(path.join(out, n + '.json'))) n++;
-fs.writeFileSync(path.join(out, n + '.json'), JSON.stringify({ at: Date.now(), args: process.argv.slice(2), cwd: process.cwd(), pid: process.pid, build: process.env.SPECK_BUILD_SESSION }));
-if (process.env.FAKE_THREAD) console.log(JSON.stringify({ type: 'thread.started', thread_id: process.env.FAKE_THREAD }));
-console.log(JSON.stringify({ type: 'turn.started' }));
-setTimeout(() => process.exit(0), +(process.env.FAKE_MS || 0));
-`;
-function fakeCodex() {
-  const bin = fs.mkdtempSync(path.join(os.tmpdir(), 'codex-bin-')), out = fs.mkdtempSync(path.join(os.tmpdir(), 'codex-out-'));
-  fs.writeFileSync(path.join(bin, 'fake.cjs'), FAKE);
-  fs.writeFileSync(path.join(bin, 'codex'), `#!/bin/sh\nexec "${process.execPath}" "${path.join(bin, 'fake.cjs')}" "$@"\n`, { mode: 0o755 });
-  const calls = () => fs.readdirSync(out).filter(f => f.endsWith('.json')).map(f => read(path.join(out, f))).sort((a, b) => a.at - b.at);
-  return { env: o => ({ PATH: `${bin}${path.delimiter}${process.env.PATH}`, FAKE_OUT: out, ...o }), calls };
-}
 
 // A speck run repo with builder codex, build_command blank and builder_model as given, its ticket 0001 in `status`.
 function codexRepo({ model = '', status = 'ready' } = {}) {
