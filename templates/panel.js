@@ -213,9 +213,11 @@ function ticketItem(t) {
 // details stay on the page.
 // 0586: its second row is one line of its priority, size and risk, then its bug, fix or task tag (0468: the tickets it
 // waits on or unlocks are in its chip). 0463: only while it's closed; open, its steps and facts are in a track and a
-// table, as an open one in flight's are, and its criteria and lint result in its readiness. Set ready is on the row.
+// table, as an open one in flight's are, and its criteria and lint result in its readiness. 0727: Set ready is only on
+// an open draft's row (and in its full view), so a closed row gives its title the room.
 function ticketHead(t) {
-  const head = el('div', 'head', null, titleLine(t, true, !open.has(t.id)), goneNote(t), ...open.has(t.id) ? [trackOf({ steps: NOT_STARTED }), waitingFacts(t, 'Draft', 'After', true)] : [wholeTip(detailsLine('checks', tagsOf(t, true)))], setReadyButton(t, lintErrorsOf(t)));
+  const isOpen = open.has(t.id);
+  const head = el('div', 'head', null, titleLine(t, true, !isOpen), goneNote(t), ...isOpen ? [trackOf({ steps: NOT_STARTED }), waitingFacts(t, 'Draft', 'After', true), setReadyButton(t, lintErrorsOf(t))] : [wholeTip(detailsLine('checks', tagsOf(t, true)))]);
   // Only the top row opens and closes it, so clicking or selecting text in the details leaves it open.
   head.addEventListener('click', () => flip(open, t.id));
   return head;

@@ -110,7 +110,7 @@ test('0463 AC2: a queued Build ticket\'s full view shows its Ready check and its
 test('0463 AC3: the dotted line is gone from an open Plan ticket, closed ones keep theirs, and what\'s under it stays', async () => {
   const p = page();
   await p.settle();
-  for (const id of PLAN) assert.deepEqual(topOf(card(p, id)).children.map(c => c.className), ['line', 'checks', 'set-ready'], `${id}: closed, its line, then Set ready (0586)`);
+  for (const id of PLAN) assert.deepEqual(topOf(card(p, id)).children.map(c => c.className), ['line', 'checks'], `${id}: closed, its line (0727: Set ready only when open)`);
   for (const id of QUEUED) assert.deepEqual(topOf(card(p, id)).children.map(c => c.className.split(' ')[0]), ['line', 'where'], `${id}: its line, then where it is (0585)`);
   assert.equal(p.all(card(p, '0812')).find(n => /^where\b/.test(n.className)).textContent, 'Ready · after 0811'); // 0585: its ids in its line
   await openAll(p);

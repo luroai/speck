@@ -133,7 +133,7 @@
   .item.ticket .line .title, .q .top .line .title { line-height: 20px; }
   .item.ticket .line .id, .q .top .line .id { line-height: 14px; } /* inside the title's line, which it then doesn't make taller */
   /* 0586: Capture's and Plan's rows, as Build's: a hairline under each, its title (one line closed, since 0599), then one line of smaller
-     type, with its star or Set ready at its right */
+     type, with Capture's star at its right. 0727: Plan's Set ready is only on an open draft, so a closed row's title has the room */
   #shaping:has(.item.row), #capture:has(.item.row) { gap: 0; padding: 0 16px; } /* 0600: inside the lane's side margins */
   .item.row { display: block; padding: 0; border: 0; border-bottom: 1px solid var(--line-soft); border-radius: 0; }
   .item.row .head { box-sizing: border-box; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 10px; align-items: center; min-height: 44px; margin: 0; padding: 7px 0 8px; }

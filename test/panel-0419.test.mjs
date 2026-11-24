@@ -36,7 +36,7 @@ test('0419 AC1: a closed Plan ticket is its id and title, then its priority, siz
   const p = page();
   await p.settle();
   const t = card(p, '0419');
-  assert.deepEqual(linesOf(t), ['line', 'checks', 'set-ready'], 'a title line and a details line, then Set ready (0586)');
+  assert.deepEqual(linesOf(t), ['line', 'checks'], 'a title line and a details line (0727: Set ready only when open)');
   assert.equal(topOf(t).children[0].textContent, '0419Fit a closed ticket on two lines1', 'the id, the title and its chip');
   assert.equal(chipSaid(p, t), 'Waits on 1 ticket');
   assert.equal(detailsOf(t).textContent, 'P3 · M · low');

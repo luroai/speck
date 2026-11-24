@@ -707,7 +707,7 @@ test('0042 AC1: an open draft has a Set ready button, disabled with the reason w
   ], ideas: [] };
   const p = fakePage([state, state]);
   await p.settle();
-  assert.ok(button(items(p)[0]), 'on the closed row too (0586)');
+  assert.equal(button(items(p)[0]), null, 'not on the closed row (0727)');
   click(top(items(p)[0])); click(top(items(p)[1]));
   const [a, b] = items(p).map(button);
   assert.ok(a && b);

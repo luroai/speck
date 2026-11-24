@@ -63,19 +63,17 @@ test('0586 AC2: a draft is one row: its id, title and a line with its priority, 
   assert.equal(clean(details(p, row).textContent), 'P3 · M · high');
 });
 
-test('0586 AC2: Set ready is on the closed row, and sets the ticket ready without opening it', async () => {
+test('0586 AC2: Set ready is not on the closed row (0727)', async () => {
   const p = await posting(board([T('0701', 'draft', { lint: { errors: 0, warnings: 0 } })]));
   const row = items(p)[0];
   assert.doesNotMatch(row.className, /\bopen\b/);
-  assert.equal(setReady(p, row).parentNode, top(row), 'on the row itself');
-  click(setReady(p, row));
-  await p.settle();
-  assert.ok(posts(p).some(u => /\/api\/tickets\/0701\/ready$/.test(u)));
-  assert.doesNotMatch(items(p)[0].className, /\bopen\b/);
+  assert.equal(setReady(p, row), undefined, 'not on the closed row (0727)');
 });
 
-test('0586 AC2: a draft that fails the ready check can\'t be set ready from its row, and says why on hover', async () => {
+test('0586 AC2: a draft that fails the ready check can\'t be set ready from its open row, and says why on hover', async () => {
   const p = await show(board([T('0701', 'draft', { lint: { errors: 2, warnings: 0 } })]));
+  click(top(items(p)[0]));
+  await p.settle();
   const b = setReady(p, items(p)[0]);
   assert.equal(b.disabled, true);
   assert.match(b.title, /Fix the ready check errors first/);
@@ -85,13 +83,17 @@ test('0586 AC2: an open row has one Set ready, and a refusal shows on the row, o
   const p = fakePage([board([T('0701', 'draft', { lint: { errors: 0, warnings: 0 } })]), { status: 409, body: { error: 'No, not that one.' } }]);
   await p.settle();
   const count = (re) => p.all(items(p)[0]).filter(n => re.test(n.className)).length;
-  click(setReady(p, items(p)[0]));
-  await p.settle();
-  assert.doesNotMatch(items(p)[0].className, /\bopen\b/);
-  assert.equal(byClass(p, items(p)[0], /\brefused\b/).textContent, 'No, not that one.');
   click(top(items(p)[0]));
   await p.settle();
-  assert.equal(count(/^set-ready\b/), 1, 'open, still one');
+  click(setReady(p, items(p)[0]));
+  await p.settle();
+  assert.match(items(p)[0].className, /\bopen\b/);
+  assert.equal(byClass(p, items(p)[0], /\brefused\b/).textContent, 'No, not that one.');
+  assert.equal(count(/^set-ready\b/), 1, 'open, one Set ready');
+  click(top(items(p)[0]));
+  await p.settle();
+  assert.doesNotMatch(items(p)[0].className, /\bopen\b/);
+  assert.equal(setReady(p, items(p)[0]), undefined, 'closed again: no Set ready (0727)');
   assert.equal(count(/\brefused\b/), 1, 'and one refusal');
 });
 
@@ -147,9 +149,11 @@ test('0586 AC4: at 320 px wide each row is at least 44 px tall, long titles are 
   const states = [board([T('0701', 'draft', { title: 'Short' }), T('0702', 'draft', { title: LONG })], [note('short', 'idea'), LONG_NOTE, note('raised', 'inbox', 'From ticket: 0585\nRaised by: agent\n')]), board([])];
   const stub = `(() => { const real = window.fetch.bind(window); const json = b => new Response(JSON.stringify(b), { status: 200, headers: { 'content-type': 'application/json' } });
     window.fetch = async (url, opts = {}) => String(url) === '/api/state' ? json(window.__state) : real(url, opts); const states = ${JSON.stringify(states)}; window.__state = states[sessionStorage.getItem('emptied') ? 1 : 0]; })();`;
+  // 0727: Plan's closed row has no Set ready, so its title runs to the row's right; Capture still measures its star.
   const measure = (box, tab, section) => `(() => { document.getElementById('${tab}').click(); return !document.getElementById('${section}').hidden ? [...document.querySelectorAll('#${box} .item')].map(c => { const t = c.querySelector('.title'), s = getComputedStyle(t), r = c.getBoundingClientRect();
-    const control = c.querySelector('.head > .star, .head > .set-ready').getBoundingClientRect(), agent = c.querySelector('.head .agent');
-    return { title: t.textContent, gapRight: r.right - control.right, agentGap: agent ? agent.getBoundingClientRect().left - agent.previousElementSibling.getBoundingClientRect().right : null, top: c.firstElementChild.getBoundingClientRect().height, right: r.right, nowrap: s.whiteSpace, overflow: t.scrollWidth > t.clientWidth + 0.5, ellipsis: s.textOverflow, titleHeight: t.getBoundingClientRect().height, line: parseFloat(s.lineHeight) }; }) : null; })()`;
+    const control = c.querySelector('.head > .star, .head > .set-ready'), agent = c.querySelector('.head .agent');
+    const edge = control || c.querySelector('.head .line');
+    return { title: t.textContent, gapRight: r.right - edge.getBoundingClientRect().right, hasControl: !!control, agentGap: agent ? agent.getBoundingClientRect().left - agent.previousElementSibling.getBoundingClientRect().right : null, top: c.firstElementChild.getBoundingClientRect().height, right: r.right, nowrap: s.whiteSpace, overflow: t.scrollWidth > t.clientWidth + 0.5, ellipsis: s.textOverflow, titleHeight: t.getBoundingClientRect().height, line: parseFloat(s.lineHeight) }; }) : null; })()`;
   try {
     await b.send('Emulation.setDeviceMetricsOverride', { width: 320, height: 700, deviceScaleFactor: 1, mobile: true });
     await b.send('Page.enable');
@@ -162,7 +166,9 @@ test('0586 AC4: at 320 px wide each row is at least 44 px tall, long titles are 
       assert.ok(rows.length >= 2, `${box}: its rows`);
       for (const row of rows) {
         assert.ok(row.top >= 44, `${box}: "${row.title}" is ${row.top} px tall`);
-        assert.ok(row.gapRight <= 14.5, `${box}: "${row.title}"'s control is ${row.gapRight} px from the row's right edge`);
+        if (box === 'shaping') assert.equal(row.hasControl, false, `${box}: no Set ready on a closed draft (0727)`);
+        else assert.equal(row.hasControl, true, `${box}: its star stays on the closed row`);
+        assert.ok(row.gapRight <= 14.5, `${box}: "${row.title}"'s ${row.hasControl ? 'control' : 'title'} is ${row.gapRight} px from the row's right edge`);
         if (row.agentGap !== null) assert.ok(row.agentGap >= 6, `${box}: only ${row.agentGap} px before its agent tag`);
       }
       const long = rows.find(x => x.title === LONG);
