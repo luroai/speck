@@ -1,7 +1,7 @@
 ---
 id: "0704"
 title: "Show a cancelled after: ticket as cancelled in the panel"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,13 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-11-15-show-a-cancelled-after-ticket-as-cancelled-in-the-panel.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0703"]                # ticket ids that must be done first
 created: 2026-11-24
+built_on: "0703"
+started: "2026-11-24T12:41:02.053Z"
 
 ---
 # 0704 · Show a cancelled after: ticket as cancelled in the panel
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 speck run and `speck start` say a cancelled ticket must come out of `after:`, but the panel still shows a ticket waiting on it with a lock and "Waiting on <id>", so someone reading only the panel waits for a ticket that will never ship.
