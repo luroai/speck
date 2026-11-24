@@ -62,9 +62,20 @@ export function askForChanges(repo, id, note, now = new Date()) {
   if (commit.status !== 0)
     throw new SpeckError(`Couldn't commit ${rel}, so nothing was changed:\n${(commit.stderr || commit.stdout || '').trim().split('\n').slice(-5).join('\n')}`);
   const head = sh('git', ['rev-parse', 'HEAD'], { cwd: at }).stdout.trim();
-  try { saveRecord(file, { ...rec, hand_back: { kind: 'changes', why: text, head, at: now.toISOString() } }); }
+  try { saveHandBack(file, rec, text, head, now); }
   catch (e) { throw new SpeckError(`Your note is in ${pad}'s Review log, so it won't ship until it's approved again, but its run record couldn't be saved (${e.message}), so speck run won't resume its build. ${resumeHint(cfg, rec)}, and tell it what to change.`); }
   return `Your note is in ${pad}'s Review log, and ${pad} won't ship until it's approved again. ${runState(runs).on ? `speck run resumes its build with it.` : `speck run is off: turn it on and it resumes ${pad}'s build with it.`}`;
+}
+
+const saveHandBack = (file, rec, why, head, now) => saveRecord(file, { ...rec, hand_back: { kind: 'changes', why, head, at: now.toISOString() } });
+
+// 0710: hands an approved ticket's build back to speck run with `note`, as speck changes does once its line is
+// committed at `head`, when its session can be resumed. What happens next, or '' when it can't be handed back.
+export function handBackChanges(repo, cfg, pad, note, head, now = new Date()) {
+  const runs = runsOf(repo), file = path.join(runs, `${pad}.json`), rec = readRecord(file);
+  if (!rec || resumeFor(runWords(cfg), cfg, pad, rec, '').why) return '';
+  try { saveHandBack(file, rec, oneLine(note), head, now); } catch { return ''; }
+  return runState(runs).on ? 'speck run resumes its build to review it again.' : 'speck run is off: turn it on and it resumes its build to review it again.';
 }
 
 export function cmdChanges(args) {
