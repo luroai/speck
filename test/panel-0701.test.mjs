@@ -19,3 +19,8 @@ test('0701 AC3: without hover, closed rows get no side fill', () => {
   const outside = css.replace(/@media \(hover: hover\) \{[^\n]*\}/, '');
   assert.doesNotMatch(outside, /\.item\.row:not\(\.open\)[^{]*:hover/);
 });
+
+test('0701 AC1: a hovered closed row that is lit by a link keeps its ring and gets the same side fill', () => {
+  assert.match(hoverBlock, /\.item\.row\.hl:not\(\.open\):hover \{ box-shadow: inset 0 0 0 1px var\(--text\), -12px 0 0 var\(--raise\), 12px 0 0 var\(--raise\); \}/);
+  assert.doesNotMatch(hoverBlock, /:not\(\.hl\)/);
+});
