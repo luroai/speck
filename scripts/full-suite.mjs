@@ -9,7 +9,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { SpeckError, sh, git, loadConfig, worktreeList, worktreePath } from './core.mjs';
 import { testRun, recordedAt } from './results.mjs';
 import { sharedCacheDir } from './turns.mjs';
-import { failingTestFiles } from './tap.mjs';
+import { failingTests } from './tap.mjs';
 import { fullFixQueue } from './full-fix.mjs';
 
 const SCRIPT = fileURLToPath(import.meta.url);
@@ -29,7 +29,8 @@ const writeJson = (file, v) => { const tmp = `${file}.${process.pid}.tmp`; fs.wr
 const pidAlive = pid => { if (!Number.isInteger(pid) || pid <= 0) return false; try { process.kill(pid, 0); return true; } catch (e) { return e.code === 'EPERM'; } };
 const headOf = (repo, branch) => { const r = sh('git', ['rev-parse', '--verify', '-q', `refs/heads/${branch}^{commit}`], { cwd: repo }); return r.status === 0 ? r.stdout.trim() : ''; };
 const when = at => (typeof at === 'string' && Number.isFinite(Date.parse(at)) ? at : null);
-const names = output => [...new Set(failingTestFiles(output).map(t => t.name).filter(Boolean))];
+// The failing tests' names, leaving out a first-run failure that passed when its file ran once more (0745).
+const names = output => failingTests(output);
 
 // The latest full run's result on the base branch: the one recorded for the code its newest commit holds, or else the
 // last one found or run (latest.json). { commit, status, tests, at }, commit being the one it ran on (tests: the failing tests' names, when its output is TAP; 0655: at, when it ran, or null), or null for none.
