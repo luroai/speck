@@ -1,7 +1,7 @@
 ---
 id: "0752"
 title: "File fewer, unduplicated follow-up notes from builds"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T23:12:03.874Z"
 approved: "2026-11-24T23:15:46.385Z"
+finished: "2026-11-24T23:27:53.151Z"
 
 ---
 # 0752 · File fewer, unduplicated follow-up notes from builds
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 On 2026-11-24, 31 tickets left 15 inbox notes, five of them the same problem, because builds running side by side can't see each other's notes until they ship, and builds save a note for every small thing they notice. The user had cleared Capture down to 8 and it went back to 23.
