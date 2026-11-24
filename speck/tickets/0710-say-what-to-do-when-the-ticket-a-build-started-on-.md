@@ -1,7 +1,7 @@
 ---
 id: "0710"
 title: "Say what to do when the ticket a build started on is cancelled"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: ["0709"]                # ticket ids that must be done first
 created: 2026-11-24
 built_on: "0709"
 started: "2026-11-24T12:56:04.886Z"
+approved: "2026-11-24T13:47:56.285Z"
 
 ---
 # 0710 · Say what to do when the ticket a build started on is cancelled
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When a ticket was started on another ticket's approved work and that ticket is then cancelled, `speck ship` tells you to ship the cancelled ticket first, which can never happen. The ticket is stuck, with no way out but editing `built_on:` by hand.
@@ -59,9 +60,15 @@ To see it, cancel a ticket that another was started on, then try to ship the sec
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 rebuild only calls markStillReady when the base ticket's text changes.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 390,370
+- Elapsed since build started: 52 min
+- Changed lines: 212 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Known limit: `speck built-on --rebuild` deletes the ticket's branch; its message prints the commit and the `git branch` command that brings it back.
 - Known limit: `--keep` on an approved ticket that speck run didn't build (no resumable run record) can't be handed back by itself; the message says to run `/speck-build <id>`.
