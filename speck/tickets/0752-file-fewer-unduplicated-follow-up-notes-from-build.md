@@ -1,7 +1,7 @@
 ---
 id: "0752"
 title: "File fewer, unduplicated follow-up notes from builds"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-24
+started: "2026-11-24T23:12:03.874Z"
 
 ---
 # 0752 · File fewer, unduplicated follow-up notes from builds
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 On 2026-11-24, 31 tickets left 15 inbox notes, five of them the same problem, because builds running side by side can't see each other's notes until they ship, and builds save a note for every small thing they notice. The user had cleared Capture down to 8 and it went back to 23.
