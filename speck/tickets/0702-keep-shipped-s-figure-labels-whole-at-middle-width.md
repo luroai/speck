@@ -42,8 +42,12 @@ Every label in Shipped's figures shows whole at every width.
 - The grid is `.stats` in `templates/panel-cards.css`, switching at 480 px through a clamp rather than a media query; `.stat .label` is `nowrap` with an ellipsis. `test/panel-0606.test.mjs` AC2 requires no media query of its own (0140), so prefer a fix that keeps to that, such as moving the clamp's width or letting labels wrap.
 - speck (2026-11-24 12:27 UTC) told you: The build is slow because the machine is overloaded, not because anything is broken. Its change is small and in place, but its test runs keep taking 8 minutes or more, and the tests that start a real panel or browser time out with a different set failing each run. Why: The load average is near 100, and every failure in the log is a panel that didn't start or a browser that didn't answer in time, never a wrong result, and they change from run to run.
 
+- Failing before this build: none
+- Self-check: no changes; a two-column grid still cut labels at 375 px, so labels wrap too (0606 and 0157 tests updated). Pictures: none, because the panel was only checked by real-browser tests.
+
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The figures at the top of Shipped now keep their full labels on narrower screens and side panels. Where a label is long, it wraps onto a second line instead of ending in dots. Four figures to a row now start at 800 px wide, rather than 480. Open Shipped in a narrow window to see it.
+
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
