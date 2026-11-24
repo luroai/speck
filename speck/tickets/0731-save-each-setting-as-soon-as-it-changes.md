@@ -164,3 +164,110 @@ Each setting saves the moment it changes, and Settings has no Save button and no
 ```
 
 </details>
+
+<details><summary>Round 2 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "5b0ed4247e84ff6e768b9fdf7d6361e5a53c2790",
+    "session": "continued",
+    "thread_id": "01a20f18-65f1-7691-a562-be91a886500e",
+    "builder_response": "- Tests run: test/settings-instant-0731.test.mjs test/build-model-0279.test.mjs test/builder-model-0311.test.mjs test/builder-switch-0293.test.mjs test/panel-0258.test.mjs test/panel-0259.test.mjs test/panel-0261.test.mjs test/panel-0274.test.mjs test/panel-0275.test.mjs test/panel-0368.test.mjs test/panel-0372.test.mjs test/panel-0426.test.mjs test/panel-0427.test.mjs test/panel-0428.test.mjs test/panel-0432.test.mjs test/panel-0453.test.mjs test/panel-0472.test.mjs test/panel-0593.test.mjs test/panel-0603.test.mjs test/panel-0612.test.mjs test/settings-0276.test.mjs test/settings-0278.test.mjs test/settings-0370.test.mjs test/settings-0381.test.mjs test/settings-0387.test.mjs test/settings-0397.test.mjs test/settings-0407.test.mjs test/settings-0409.test.mjs test/settings-0412.test.mjs test/settings-0700.test.mjs test/settings-builder-effort-0402.test.mjs test/settings-controls-0730.test.mjs test/settings-home-0707.test.mjs test/settings-info-0405.test.mjs test/settings-layout-0729.test.mjs test/settings-models-0369.test.mjs test/settings-roles-0400.test.mjs test/settings-roles-0403.test.mjs test/settings-same-model-0511.test.mjs test/settings-team-0652.test.mjs test/run-settings-0549.test.mjs\n- F1: fixed. saveSetting (templates/panel-settings.js) now settles each save when the change is made: the changes it sends, and any question it asks (auto_ship, same-model, build_command), go into a job, and the queue sends the job later. settingPending holds the value of each key's latest save that hasn't been answered yet. settingChanges compares against that value while a save is on its way, so low → medium → high sends all three in order, and putting a value back to the saved one while a save waits is sent too. When the server refuses a save, sendSettings leaves alone a key that has a later save waiting (that save runs next and shows how it went). It also keeps a value typed since the save was sent. So 0 → 5 sends 0 and then 5, and ends at 5 with no refusal. New tests: \"0731 AC1: several changes to one setting…\" and \"0731 AC2: a refused save doesn't undo a correction…\".\n- F2: fixed. A job no longer reads the view when it's sent. It carries its own changes and its session (settingsSession, one more on each close), so a save asked for before closing is still sent after Settings closes, even behind an earlier save. Only what it shows is skipped once the view has gone. Closing resets the queue and settingPending for the next view, while saves already queued carry on. New test: \"0731 AC1, AC4: a box left changed and then Settings closed at once still saves…\", with Close and with Escape behind an earlier save.\n- F3: fixed. I restored test/panel-0593.test.mjs's three AC3 tests of the engineering manager's face unchanged, and they pass as they are.\n",
+    "seconds": 36,
+    "usage": {
+      "input_tokens": 904326,
+      "cached_input_tokens": 793600,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 3117,
+      "reasoning_output_tokens": 285
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 12929,
+      "cached": 420864,
+      "write": 0,
+      "output": 1380
+    },
+    "cost_usd": 0.0817444,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-24T19:50:22.330Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "saveSetting now captures immutable jobs. Passing 0731 tests cover sequential changes to one setting, Enter/leave saves, saves after closing, saved indicators and commits of only speck/config.yml."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "sendSettings preserves later queued corrections while reverting refused changes. Passing 0731 AC2 tests cover refusals and corrections; existing settings tests cover validation, same-model review and checkout restrictions."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "shipsMore reads saved values through shippingNow, ignoring pending saves. Enabling auto_ship and adding high risk before its response produces only the initial low-risk confirmation; the queued risk request has no confirmation."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Save-bar and unsaved-dialog code remain removed. Passing 0731 AC4 and panel-0275 tests cover closing without questions."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The targeted run reports 491 passed, zero failed and three skipped. The three unrelated panel-0593 AC3 tests have been restored unchanged."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-settings.js",
+        "issue": "Previously, queued saves lost intermediate changes and refusals erased later corrections. Captured jobs and pending-value tracking fix these cases.",
+        "suggested_fix": "None; retain the new regression tests.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "templates/panel-settings.js",
+        "issue": "Previously, closing discarded saves already requested by a box's change event. Jobs now retain their values and continue after closing.",
+        "suggested_fix": "None; retain the close-after-change regression test.",
+        "state": "resolved"
+      },
+      {
+        "id": "F3",
+        "severity": "blocking",
+        "file": "test/panel-0593.test.mjs",
+        "issue": "The three unrelated tests of the engineering manager's face have been restored unchanged.",
+        "suggested_fix": "None.",
+        "state": "resolved"
+      },
+      {
+        "id": "F4",
+        "severity": "blocking",
+        "file": "templates/panel-settings.js:shippingNow",
+        "issue": "Shipping confirmations ignore queued changes. Reproduction: turn auto_ship on, confirm low-risk shipping, then tick high before the first response. No second dialog opens, and the risk request is sent without confirm. For machine settings, saveRepoSettings then refuses it because the earlier request has enabled shipping. The requested risk change therefore fails instead of opening the required confirmation.",
+        "suggested_fix": "Evaluate shipping confirmations against the state preceding each queued job, accounting for pending changes and their outcomes. Add a regression test enabling auto_ship and adding a risk while the enable request waits, checking confirmation and successful saving.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The three earlier findings are fixed. One remaining timing bug affects shipping settings: adding a risk while auto-ship is still saving skips the required confirmation and causes the change to be refused. Fix that before merge."
+  }
+}
+```
+
+</details>

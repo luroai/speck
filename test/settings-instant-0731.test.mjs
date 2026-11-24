@@ -241,6 +241,20 @@ test('0731 AC3: turning auto_ship on asks first with the approved tickets that w
   assert.deepEqual(asked(posted(q)[0]), { 'repo:auto_ship': 'true', confirm: 'low' });
 });
 
+test('0731 AC3: adding a risk while turning auto_ship on is still saving asks about it too, and sends its confirmation (review F4)', async () => {
+  const first = deferred();
+  const p = await opened(page([view(), view({ auto_ship: true }), view({ auto_ship: true, auto_ship_risk: ['low', 'high'] })], [first, OK], true));
+  changeTo(p, 'auto_ship', 'true');
+  await p.settle();
+  tick(p, 'auto_ship_risk', 'high', true);
+  await p.settle();
+  assert.equal(p.asks.length, 2, 'asked again for the risk');
+  assert.match(p.asks[1], /approved low-risk and high-risk tickets/);
+  first.resolve(OK);
+  for (let i = 0; i < 4; i++) await p.settle();
+  assert.deepEqual(posted(p).map(asked), [{ 'repo:auto_ship': 'true', confirm: 'low' }, { 'repo:auto_ship_risk': 'low,high', confirm: 'low,high' }]);
+});
+
 test('0731 AC3: adding a risk while auto_ship is on asks first, cancelling unticks it, and unticking the last risk is refused', async () => {
   const p = await opened(page([view({ auto_ship: true })], [], false));
   tick(p, 'auto_ship_risk', 'high', true);

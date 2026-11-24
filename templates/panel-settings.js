@@ -1405,9 +1405,17 @@ function settingChanges() {
   }
   return out;
 }
-// 0259: auto_ship and auto_ship_risk as the view last read them, as the ship queue reads them.
+// 0731: a setting's value as the view last read it, or as the save of it on its way will leave it.
+function valueAhead(key) {
+  const x = settingRows().find(r => r.key === key);
+  if (!x) return undefined;
+  const p = settingPending.has(key) ? settingPending.get(key) : null;
+  return p === null ? x.value : p.clear ? x.repo_value : savedAs(x, { value: p.value });
+}
+// 0259: auto_ship and auto_ship_risk as the view last read them, as the ship queue reads them. 0731: or as the saves on
+// their way will leave them, so a change made while one is on its way asks what it adds to that.
 function shippingNow() {
-  const of = key => (settingRows().find(x => x.key === key) || {}).value;
+  const of = valueAhead;
   return { on: of('auto_ship') === true, risks: [].concat(of('auto_ship_risk') ?? []).map(String) };
 }
 // When these changes let more tickets ship by themselves than now, the risks that would then ship ("low,high"), which
@@ -1426,7 +1434,7 @@ function shipsMore(changes) {
 // machine's value leaves speck/config.yml's.
 function allowsSameModel(changes) {
   const x = settingRows().find(r => r.key === 'allow_same_model_review'), c = changes.find(c => c.key === 'allow_same_model_review');
-  if (!x || !c || x.value === true) return false;
+  if (!x || !c || valueAhead(x.key) === true) return false; // 0731: or as a save on its way will leave it
   return c.clear ? x.repo_value === true : c.value === 'true';
 }
 // 0731: saves the setting `keys` name (a role's agent and model together, 0400) as it's now picked or typed, by itself.
