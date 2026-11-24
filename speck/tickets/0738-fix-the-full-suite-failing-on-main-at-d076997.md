@@ -1,7 +1,7 @@
 ---
 id: "0738"
 title: "Fix the full suite failing on main at d076997"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -22,7 +22,7 @@ started: "2026-11-24T17:20:01.222Z"
 ---
 # 0738 · Fix the full suite failing on main at d076997
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The full suite fails on main at commit d076997 (d0769975d1b676fbe16dd34f129c4d283d9cf059). Failing tests:
@@ -48,7 +48,7 @@ Self-check: bounded the 0058 loop to 3 more ticks, so a counter that never reach
 Pictures: none, because the ticket changes only tests.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Nothing you use changes: only tests were touched. The full test suite on main was failing by chance on a busy machine. One check assumed a build's minute counter would reach two digits after two ticks, which depends on how quickly it started. Others swiped between lanes in a real browser that, when starved of time, silently threw away the end of the swipe, so the panel never saw the finger lift. Those swipe checks now notice when the browser dropped a swipe and try it again, up to three times. A swipe that reaches the panel and is handled wrongly still fails. To see it, the full suite on main should pass after this lands. Worth watching: on an extremely overloaded machine the browser can drop a swipe three times running, and that check still fails, saying so plainly.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -58,3 +58,68 @@ Pictures: none, because the ticket changes only tests.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups (known limits, not inbox ideas):
+- 0476 AC3's two touch tests and AC2's first slow drag still end some gestures by hand without the touchend check; they weren't failing here, so they're unchanged. Wrap them with delivered() if they start failing the same way.
+- A touchend that arrived after the 10 s wait would land after the redone gesture and could change lane twice. In the throttled runs a dropped end never arrived, even 20 s later.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "a784d7cb6cac3b77765d198268f5eb6d5e731991",
+    "session": "fresh",
+    "thread_id": "01a20eb1-03b8-7ad1-b6dc-8d13f1e2899f",
+    "builder_response": "- Tests run: test/touch-ends-0738.test.mjs test/panel-0058.test.mjs test/panel-0476.test.mjs (with --related; the repo's checks ran too)\n- Causes are taken from the failed full run's own output at d076997 (speck/.cache/results). 0476's were reproduced with Chromium's CPU throttling at 30-60x: Chromium drops a gesture's last moves and its touchend outright, so the page never sees the finger lift. The fix redoes a gesture only when the page got no touchend for it. A gesture the page received but handled wrongly still fails as before. Details in the ticket's Notes.\n",
+    "seconds": 22,
+    "usage": {
+      "input_tokens": 127184,
+      "cached_input_tokens": 101760,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 647,
+      "reasoning_output_tokens": 24
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 25424,
+      "cached": 101760,
+      "write": 0,
+      "output": 647
+    },
+    "cost_usd": 0.067494,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-24T17:53:53.523Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "The full output in /tmp/speck-0738-tests.txt confirms all three named browser tests passed without skips. panel-0058 retains its selection and incremental-update assertions; panel-0476 retains lane, motion and layout assertions. delivered() retries only when no touchend reached the page."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The recorded run passed 163 tests with zero failures and three skips. Changes are confined to the affected tests, their touch-delivery helper and ticket records. The new helper tests verify successful delivery, retries and failure after three dropped ends; product code is unchanged."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The change fixes unreliable browser test setup while preserving the checks on counter selection, swiping and layout. All three previously failing tests passed, and the recorded run had no failures. Touch retries are bounded and do not retry a swipe whose end reached the page but was handled incorrectly."
+  }
+}
+```
+
+</details>
