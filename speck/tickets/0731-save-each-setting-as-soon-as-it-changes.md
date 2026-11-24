@@ -1,7 +1,7 @@
 ---
 id: "0731"
 title: "Save each setting as soon as it changes"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: ["0730"]                # ticket ids that must be done first
 created: 2026-11-24
 built_on: "0730"
 started: "2026-11-24T19:20:50.859Z"
+approved: "2026-11-24T19:52:06.546Z"
 
 ---
 # 0731 · Save each setting as soon as it changes
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Settings makes you press a Save button fixed to the bottom of the view, and asks what to do with unsaved changes when you close it. Cursor's settings, which the panel sits beside, save each change the moment it's made, and the user found the Save step a let-down. Build levels already save straight away (0661).
@@ -60,9 +61,16 @@ To see it, open Settings, change something like Builds at once, and click away: 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Queued saves capture only keys, then read mutable values when executed.; F2 Closing can discard a box's change even after its leave/change event requested a save.; F3 The change deletes three AC3 tests checking the engineering manager's face, its persistence after redraw and its default accessible name.
+Round 2 (codex): changes requested: F4 Shipping confirmations ignore queued changes.
+Round 3 (codex): approve.
 
 ## Delivery log
+- Review rounds: 3
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 1,139,473
+- Elapsed since build started: 31 min
+- Changed lines: 407 (limit 5000)
 - Follow-ups:
   - Idea: let Settings swap the builder's and reviewer's families, as each half of the swap is refused on its own now that each setting saves by itself (speck/ideas/2026-11-24-let-settings-swap-the-builder-and-reviewer-families.md).
   - Skipped as a duplicate: run-settings-0549 AC1 failed once under load in the related run and passed alone twice. It matches speck/ideas/done/2026-11-10-steady-the-0622-and-0549-ac1-run-tests-under-load.md.
