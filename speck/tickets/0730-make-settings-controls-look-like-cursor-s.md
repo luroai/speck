@@ -1,7 +1,7 @@
 ---
 id: "0730"
 title: "Make Settings' controls look like Cursor's"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0729"]                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T18:50:03.869Z"
+approved: "2026-11-24T19:20:37.608Z"
 
 ---
 # 0730 · Make Settings' controls look like Cursor's
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Settings uses the browser's plain select boxes and text fields and a black-and-white switch, which look unlike the controls beside them in Cursor: green switches, compact borderless menus reading "Default ⌄", and small rounded buttons.
@@ -57,9 +58,15 @@ Settings' on/off controls are now green-and-grey switches with a white knob, inc
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Menus inside settings and agent rows remain bordered and lose their chevron until hovered or focused.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 334,593
+- Elapsed since build started: 31 min
+- Changed lines: 57 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ## Review rounds
