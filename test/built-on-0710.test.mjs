@@ -180,3 +180,18 @@ test('0710 AC2: the brief and speck help name speck built-on', () => {
   for (const c of ['`speck built-on <id> --rebuild`', '`speck built-on <id> --keep`']) assert.ok(brief.includes(c), c);
   assert.match(speckIn(process.cwd(), 'help').stdout, /speck built-on <id> --rebuild\|--keep/);
 });
+
+test('0710 AC2 F1: --rebuild still lets speck run launch it again when the base branch already has it ready without the cancelled ticket in after:', () => {
+  const r = cancelledBase({ onBase: true });
+  const file = path.join(r.dir, 'speck', 'tickets', '0001-t.md');
+  fs.writeFileSync(file, fs.readFileSync(file, 'utf8').replace(/^after: .*$/m, 'after: []'));
+  gitIn(r.dir, 'commit', '-qam', 'speck(0001): no after');
+  const runs = path.join(r.dir, 'speck', '.cache', 'runs');
+  fs.mkdirSync(runs, { recursive: true });
+  fs.writeFileSync(path.join(runs, '0001.json'), JSON.stringify({ session: 's', started: new Date().toISOString() }));
+  const res = speckIn(r.dir, 'built-on', '0001', '--rebuild');
+  assert.equal(res.status, 0, res.stderr);
+  assert.equal(gitIn(r.dir, 'log', '-1', '--format=%s'), 'speck(0001): rebuild from main, as 0002 was cancelled');
+  assert.match(fs.readFileSync(file, 'utf8'), /Rebuilt from main .* as ticket 0002, which its build started on, was cancelled/);
+  assert.equal(readyAgain(r.dir, runs, { id: '0001', path: 'speck/tickets/0001-t.md' }), true);
+});

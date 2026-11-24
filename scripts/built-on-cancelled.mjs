@@ -58,15 +58,16 @@ export function rebuild(repo, cfg, pad) {
     if (sh('git', ['status', '--porcelain', '--', rel], { cwd: main }).stdout.trim())
       throw new SpeckError(`${rel} has uncommitted changes on ${cfg.base_branch}. Commit or undo them, then run this again. Nothing was changed.`);
     if (['done', 'cancelled'].includes(t.fm.status)) throw new SpeckError(`Ticket ${pad} is ${t.fm.status} on ${cfg.base_branch}, so it isn't built again. Nothing was changed.`);
-    const text = syncHeader(setField(setField(t.raw, 'after', afterWithout(t.fm, on.id)), 'status', 'ready'));
-    if (text !== t.raw) {
-      // speck run launches a ticket only once, unless it's committed since its build ended still ready (0327).
-      const then = lastOwnTicketCommit(main, rel, pad);
-      fs.writeFileSync(t.file, text);
-      const c = commitTicketOnly(main, t.file, t.raw, `speck(${pad}): rebuild from ${cfg.base_branch}, as ${on.id} was cancelled`);
-      if (c.status !== 0) throw new SpeckError(`Couldn't commit ${rel} on ${cfg.base_branch}, so nothing was changed:\n${(c.stderr || c.stdout || '').trim().split('\n').slice(-5).join('\n')}`);
-      try { if (then) markStillReady(runsOf(repo), pad, then); } catch { /* no run record: speck run never launched it */ }
-    }
+    // Always a line in its Notes, so there's always a commit: speck run launches a ticket only once, unless it's
+    // committed since its build ended still ready (0327), even when the base branch already has it ready without on.id.
+    const line = `- Rebuilt from ${cfg.base_branch} on ${new Date().toISOString().slice(0, 10)} with \`speck built-on --rebuild\`, as ticket ${on.id}, which its build started on, was cancelled.`;
+    let text = setField(setField(t.raw, 'after', afterWithout(t.fm, on.id)), 'status', 'ready');
+    text = syncHeader(/^## Notes\s*$/m.test(text) ? replaceSection(text, 'Notes', old => [old, line].filter(Boolean).join('\n'), rel) : `${text.replace(/\n*$/, '')}\n\n## Notes\n${line}\n`);
+    const then = lastOwnTicketCommit(main, rel, pad);
+    fs.writeFileSync(t.file, text);
+    const c = commitTicketOnly(main, t.file, t.raw, `speck(${pad}): rebuild from ${cfg.base_branch}, as ${on.id} was cancelled`);
+    if (c.status !== 0) throw new SpeckError(`Couldn't commit ${rel} on ${cfg.base_branch}, so nothing was changed:\n${(c.stderr || c.stdout || '').trim().split('\n').slice(-5).join('\n')}`);
+    try { if (then) markStillReady(runsOf(repo), pad, then); } catch { /* no run record: speck run never launched it */ }
   }, `set ticket ${pad} ready again, so nothing was changed`);
   if (wt) {
     const r = sh('git', ['worktree', 'remove', '--force', wt.path], { cwd: repo });
