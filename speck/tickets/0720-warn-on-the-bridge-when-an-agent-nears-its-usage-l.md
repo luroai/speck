@@ -1,7 +1,7 @@
 ---
 id: "0720"
 title: "Warn on the bridge when an agent nears its usage limit"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T14:33:58.528Z"
 waited_seconds: 10
+approved: "2026-11-24T15:07:59.257Z"
 
 ---
 # 0720 · Warn on the bridge when an agent nears its usage limit
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Settings shows each subscription's usage since 1.2 (0646), but you only see it if you open Settings. Usage limits decide whether work moves, so a limit coming should be visible where you look first.
@@ -54,9 +55,16 @@ When an agent is at 90% or more of a usage window, or has hit its limit, All pro
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 An explicit Codex limit can produce no bridge warning.
+Round 2 (codex): changes requested: F2 The fallback applies to every limit_reached reading with no remaining warning, including recognised limits that have already reset.
+Round 3 (codex): approve.
 
 ## Delivery log
+- Review rounds: 3
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 1,856,910
+- Elapsed since build started: 34 min
+- Changed lines: 55 (limit 5000)
 ### Follow-ups
 - Inbox: accept Node's spec reporter in TAP checks (`speck/ideas/2026-11-24-accept-node-s-spec-reporter-in-tap-checks.md`) — tmp-cleanup and related-0676 expect `# fail 2`.
 - Known limits: bridge warning lines reuse Settings' `resetWords` (loaded later on the page); Codex limit-type naming is duplicated for the bridge fallback rather than shared with Settings' readingShown.
