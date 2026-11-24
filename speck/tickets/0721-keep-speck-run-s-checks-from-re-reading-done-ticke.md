@@ -18,6 +18,7 @@ source: "speck/ideas/done/2026-11-15-keep-speck-run-s-checks-from-re-reading-bui
 after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T14:39:13.738Z"
+--note: "Failing before this build: none"
 
 ---
 # 0721 · Keep speck run's checks from re-reading done tickets' logs
