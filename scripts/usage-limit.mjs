@@ -80,14 +80,15 @@ export const clock = (ms, now) => new Date(ms).toISOString().slice(ms - now > 86
 export function carryOn({ repo, runs, startBuild, resumeHint, countStop, now, speak }, id, rec, { cfg, words }, who, message) {
   const recordFile = path.join(runs(), `${id}.json`);
   const { argv, why } = resumeFor(words, cfg, id, rec, message);
-  if (!argv) return speak(`${id}: ${who} has reset, but speck run can't resume its build: ${why}. ${resumeHint(cfg, rec)}.`);
+  if (!argv) { speak(`${id}: ${who} has reset, but speck run can't resume its build: ${why}. ${resumeHint(cfg, rec)}.`); return true; }
   const note = countStop(repo, id); // while its record still has the exit it waited from
   if (note) console.log(`${id}:${note}`);
   const { exited: _e, exit_code: _c, ...kept } = rec, next = { ...resumedRecord(kept), limit_resumed: new Date(now()).toISOString(), resume_command: argv };
-  try { saveRecord(recordFile, next); } catch (e) { return speak(`${id}: ${who} has reset, but its run record couldn't be saved (${e.message}), so it wasn't resumed. ${resumeHint(cfg, rec)}.`); }
+  try { saveRecord(recordFile, next); } catch (e) { speak(`${id}: ${who} has reset, but its run record couldn't be saved (${e.message}), so it wasn't resumed. ${resumeHint(cfg, rec)}.`); return true; }
   const cwd = typeof rec.cwd === 'string' && fs.existsSync(rec.cwd) ? rec.cwd : repo;
   speak(`${id}: ${who} has reset, so I'm carrying on its build (session ${rec.session}).`);
-  startBuild(id, argv, cwd, rec.session, 'a', pid => `${JSON.stringify({ ...next, pid: pid ?? rec.pid }, null, 2)}\n`, rec.env_session ?? rec.session);
+  // 0726: false when the machine slot was taken; caller puts the ticket back on the wait list.
+  return startBuild(id, argv, cwd, rec.session, 'a', pid => `${JSON.stringify({ ...next, pid: pid ?? rec.pid }, null, 2)}\n`, rec.env_session ?? rec.session) !== false;
 }
 
 // speck run's side. ended(id, log, file) reads a build that has ended, true when it stopped on the limit and speck run
@@ -158,7 +159,7 @@ export function usageLimitQueue({ repo, runs, settings, running, startBuild, res
 
   const resume = (agent, id, rec, current) => {
     const name = agentName(agent), build = agent === 'codex' ? '$speck-build' : '/speck-build';
-    carryOn({ repo, runs, startBuild, resumeHint, countStop, now, speak }, id, rec, current, `${name}'s usage limit`,
+    return carryOn({ repo, runs, startBuild, resumeHint, countStop, now, speak }, id, rec, current, `${name}'s usage limit`,
       `${name}'s usage limit has reset, so speck run has resumed the build of ticket ${id}. Carry on with ${build} ${id} from where you left off.`);
   };
 
@@ -173,7 +174,7 @@ export function usageLimitQueue({ repo, runs, settings, running, startBuild, res
       if (!start) continue;
       s.builds = s.builds.filter(x => x !== id);
       if (!save(agent, s)) return;
-      start();
+      if (!start()) { s.builds = [...s.builds, id]; save(agent, s); return; } // 0726: machine slot gone; put it back
     }
   };
 
@@ -193,7 +194,7 @@ export function usageLimitQueue({ repo, runs, settings, running, startBuild, res
       if (!movedOn && (!current || !hasBuildRoom(running.size, current.max))) return;
       s.builds = s.builds.filter(x => x !== id);
       if (!save(agent, s)) return; // saved before it starts, so it's never resumed twice
-      if (!movedOn) resume(agent, id, rec, current);
+      if (!movedOn && !resume(agent, id, rec, current)) { s.builds = [...s.builds, id]; save(agent, s); return; } // 0726
     }
   };
   const check = tickets => { for (const agent of LIMIT_AGENTS) checkAgent(agent, tickets); };

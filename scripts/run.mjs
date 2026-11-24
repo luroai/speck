@@ -336,12 +336,12 @@ function runOn(worker) {
     // 0217: the time it waited, stopped, is left out of its build time, counted while it can't be writing the ticket.
     const note = countStop(repo, id);
     if (note) console.log(`${id}:${note}`);
-    const resumed = { ...resumedRecord(rec), resumed: new Date().toISOString(), resume_command: argv };
-    // Saved before the build carries on, so a record that can't be saved stops it being resumed at all.
-    try { saveRecord(recordFile, resumed); } catch (e) { return reportStopped(id, rec, `speck run couldn't save its run record (${e.message}), so it wasn't resumed`); }
     const cwd = typeof rec.cwd === 'string' && fs.existsSync(rec.cwd) ? rec.cwd : repo;
+    try { if (!slots.takeForStart(cwd, id)) return; } catch (e) { console.log(`${id} build couldn't start: ${e.message}`); return; } // 0726: claim before marking resumed
+    const resumed = { ...resumedRecord(rec), resumed: new Date().toISOString(), resume_command: argv };
+    try { saveRecord(recordFile, resumed); } catch (e) { slots.drop(id); return reportStopped(id, rec, `speck run couldn't save its run record (${e.message}), so it wasn't resumed`); }
     console.log(`${id} build (session ${rec.session}) stopped unexpectedly, so speck run is resuming it once.`);
-    startBuild(id, argv, cwd, rec.session, 'a', pid => `${JSON.stringify({ ...resumed, pid: pid ?? rec.pid }, null, 2)}\n`, rec.env_session ?? rec.session);
+    if (!startBuild(id, argv, cwd, rec.session, 'a', pid => `${JSON.stringify({ ...resumed, pid: pid ?? rec.pid }, null, 2)}\n`, rec.env_session ?? rec.session)) slots.drop(id);
   };
 
   // A killed build speck run won't resume, said once per speck run, with the command that resumes it by hand.
@@ -477,7 +477,6 @@ function runOn(worker) {
     }
     foreman(tickets, ready);
   }
-
   const watchBoard = () => { started = true; tick(); loop = setInterval(tick, pollMs); };
   if (worker) return awaitGo(adoptEarlierBuilds, watchBoard, stop);
   const modelNote = builderModelNote(cfg);

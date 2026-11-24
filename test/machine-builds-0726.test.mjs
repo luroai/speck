@@ -6,9 +6,15 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { spawnSync } from 'node:child_process';
+import crypto from 'node:crypto';
+import { spawn, spawnSync } from 'node:child_process';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { speck } from './support/cli.mjs';
 import { gitEnv, runRepo, startRun, waitFor, stopRun, killAll } from './support/run.mjs';
+import { blockedRepo } from './support/blocked.mjs';
+import { goWithQueue, goWith } from '../scripts/go-with.mjs';
+import { statusData } from '../scripts/speck.mjs';
+import { keptFile } from './support/copy.mjs';
 
 const tmp = name => fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), `speck-0726-${name}-`)));
 
@@ -178,4 +184,134 @@ test('0726 AC1: machine_parallel_tests still shows after max_parallel_tests when
     keys.filter(k => k === 'max_parallel_builds' || k === 'machine_parallel_builds' || k === 'max_parallel_tests' || k === 'machine_parallel_tests'),
     ['max_parallel_builds', 'machine_parallel_builds', 'max_parallel_tests', 'machine_parallel_tests'],
   );
+});
+
+
+const deadPid = () => spawnSync(process.execPath, ['-e', 'process.pid'], { stdio: 'ignore' }).pid;
+const runsFile = (dir, id) => path.join(dir, 'speck', '.cache', 'runs', `${id}.json`);
+const BUILD_TURNS = pathToFileURL(fileURLToPath(new URL('../scripts/build-turns.mjs', import.meta.url))).href;
+
+test('0726 F1: concurrent waits and PID updates never drop a live claim or let a second claim through', async () => {
+  const home = tmp('home');
+  setLimit(home, 1);
+  const prev = process.env.SPECK_HOME_SETTINGS_DIR;
+  process.env.SPECK_HOME_SETTINGS_DIR = home;
+  const { takeBuildTurn, pointBuildTurn, freeBuildTurn, machineBuildWait } = await import(`${BUILD_TURNS}?f1=${Date.now()}`);
+  const holder = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], { stdio: 'ignore' });
+  const repo = tmp('claim-repo'), id = '0001';
+  let claim;
+  try {
+    claim = takeBuildTurn(repo, id, holder.pid);
+    assert.ok(claim, 'first claim taken');
+    assert.match(machineBuildWait() || '', /all 1 build slot/);
+    const script = `
+import { takeBuildTurn, pointBuildTurn, machineBuildWait } from ${JSON.stringify(BUILD_TURNS)};
+import path from 'node:path';
+import os from 'node:os';
+const repo = ${JSON.stringify(repo)};
+const file = ${JSON.stringify(claim.file)};
+const text = ${JSON.stringify(claim.text)};
+const pid = ${holder.pid};
+const n = Number(process.argv[2]);
+let claim = { file, text };
+for (let i = 0; i < 50; i++) {
+  if (machineBuildWait() === null) { console.error('SLOT FREE'); process.exit(2); }
+  const otherRepo = path.join(os.tmpdir(), 'speck-0726-race-' + process.pid + '-' + n + '-' + i);
+  const other = takeBuildTurn(otherRepo, String(9000 + i), process.pid);
+  if (other) { console.error('EXTRA CLAIM ' + other.file); process.exit(3); }
+  claim = pointBuildTurn(claim, pid) || claim;
+}
+console.log('ok');
+`;
+    const workers = Array.from({ length: 8 }, (_, i) => {
+      const child = spawn(process.execPath, ['--input-type=module', '-e', script, String(i)], {
+        env: { ...process.env, SPECK_HOME_SETTINGS_DIR: home }, stdio: ['ignore', 'pipe', 'pipe'],
+      });
+      return new Promise(res => {
+        let out = '', err = '';
+        child.stdout.on('data', d => { out += d; });
+        child.stderr.on('data', d => { err += d; });
+        child.on('exit', code => res({ code, out, err }));
+      });
+    });
+    for (const r of await Promise.all(workers)) assert.equal(r.code, 0, `worker failed: ${r.err || r.out}`);
+    assert.match(machineBuildWait() || '', /all 1 build slot/);
+    assert.ok(fs.existsSync(claim.file), 'live claim still on disk');
+  } finally {
+    freeBuildTurn(claim);
+    try { holder.kill('SIGKILL'); } catch { /* gone */ }
+    if (prev === undefined) delete process.env.SPECK_HOME_SETTINGS_DIR; else process.env.SPECK_HOME_SETTINGS_DIR = prev;
+  }
+});
+
+test('0726 F2: a killed build is not marked resumed while every machine slot is held, then resumes once one frees', async () => {
+  const home = tmp('home'), env = envWith(home), gate = path.join(tmp('gate'), 'go');
+  setLimit(home, 1);
+  const resumeOut = tmp('resume-out');
+  const fake = keptFile('0726-resume-fake.cjs', `const fs = require('fs'), path = require('path');
+const [out, ...args] = process.argv.slice(2);
+let n = 0; while (fs.existsSync(path.join(out, n + '.json'))) n++;
+fs.writeFileSync(path.join(out, n + '.json'), JSON.stringify({ at: Date.now(), args, cwd: process.cwd(), pid: process.pid, build: process.env.SPECK_BUILD_SESSION }));
+console.log('fake build ' + n);
+const gate = process.env.FAKE_GATE;
+const end = () => setTimeout(() => process.exit(+(process.env.FAKE_EXIT || 0)), +(process.env.FAKE_MS || 0));
+if (!gate) end();
+else { const t = setInterval(() => { if (fs.existsSync(gate)) { clearInterval(t); end(); } else if (!fs.existsSync(path.dirname(gate))) process.exit(1); }, 50); }
+`);
+  const cmd = `"${process.execPath}" "${fake}" "${resumeOut}" "/speck-build {id}" --session-id {session}`;
+  const a = runRepo({ tickets: [['0001', {}]], max: 2 });
+  const b = runRepo({ tickets: [['0001', { status: 'building' }]], max: 2, command: cmd });
+  const session = crypto.randomUUID();
+  fs.mkdirSync(path.dirname(runsFile(b.dir, '0001')), { recursive: true });
+  fs.writeFileSync(runsFile(b.dir, '0001'), JSON.stringify({
+    id: '0001', session, cwd: b.dir, started: '2026-10-10T10:00:00.000Z', pid: deadPid(),
+    command: ['claude', '-p', '/speck-build 0001', '--session-id', session],
+  }, null, 2));
+  fs.writeFileSync(path.join(path.dirname(runsFile(b.dir, '0001')), '0001.log'), 'first build\n');
+  const bCalls = () => fs.readdirSync(resumeOut).filter(f => f.endsWith('.json')).map(f => JSON.parse(fs.readFileSync(path.join(resumeOut, f), 'utf8'))).sort((x, y) => x.at - y.at);
+  const runA = startRun(a.dir, { ...env, FAKE_GATE: gate, FAKE_MS: '50' });
+  try {
+    await waitFor(() => a.calls().length >= 1, 'project A to hold the slot', runA.out);
+    const runB = startRun(b.dir, { ...env, FAKE_MS: '2000' });
+    try {
+      await new Promise(r => setTimeout(r, 800));
+      assert.equal(bCalls().length, 0, `B must not resume while A holds the slot:\n${runB.out()}`);
+      assert.equal(JSON.parse(fs.readFileSync(runsFile(b.dir, '0001'), 'utf8')).resumed, undefined, 'must not consume the one-shot resume');
+      fs.writeFileSync(gate, '');
+      await waitFor(() => bCalls().length >= 1, 'B to resume once a slot frees', () => `${runA.out()}\n${runB.out()}`);
+      assert.ok(JSON.parse(fs.readFileSync(runsFile(b.dir, '0001'), 'utf8')).resumed, 'resumed once the slot was free');
+    } finally { await stopRun(runB); killAll(bCalls().map(c => c.pid)); }
+  } finally { await stopRun(runA); killAll(a.calls().map(c => c.pid)); }
+});
+
+test('0726 F2: when startBuild gets no machine slot after the room check, go_with is put back for the next check', () => {
+  const home = tmp('home');
+  setLimit(home, 2);
+  const prev = process.env.SPECK_HOME_SETTINGS_DIR;
+  process.env.SPECK_HOME_SETTINGS_DIR = home;
+  Object.assign(process.env, gitEnv);
+  try {
+    const r = blockedRepo();
+    assert.equal(goWith(r.dir, '0001').status, 200);
+    const before = JSON.parse(fs.readFileSync(r.record, 'utf8')).go_with;
+    assert.ok(before?.option);
+    let startCalls = 0;
+    goWithQueue({
+      repo: r.dir,
+      cfg: { base_branch: 'main', branch_prefix: 'speck/' },
+      words: ['claude', '-p', '/speck-build {id}', '--session-id', '{session}'],
+      max: 2,
+      settings: () => ({ cfg: { base_branch: 'main', branch_prefix: 'speck/' }, words: ['claude', '-p', '/speck-build {id}', '--session-id', '{session}'], max: 2 }),
+      running: new Set(),
+      startBuild: () => { startCalls += 1; return false; },
+      saveRecord: (file, o) => fs.writeFileSync(file, `${JSON.stringify(o, null, 2)}\n`),
+      runs: () => r.runs,
+    }).check(statusData(r.dir).tickets);
+    assert.equal(startCalls, 1, 'tried to start once');
+    const after = JSON.parse(fs.readFileSync(r.record, 'utf8'));
+    assert.deepEqual(after.go_with, before, 'go_with restored when startBuild got no slot');
+    assert.equal(after.went_with, undefined);
+  } finally {
+    if (prev === undefined) delete process.env.SPECK_HOME_SETTINGS_DIR; else process.env.SPECK_HOME_SETTINGS_DIR = prev;
+  }
 });

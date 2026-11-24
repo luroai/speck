@@ -28,13 +28,15 @@ function ensureDir(dir) {
 
 const claimName = (repo, id) => `${crypto.createHash('sha256').update(String(repo)).digest('hex').slice(0, 16)}.${id}.lock`;
 
-function held(file) {
-  const text = read(file);
-  if (text === null) return false;
-  return alive(parse(text).pid);
+// Publishes claim text whole: write a temp file, then rename over the claim, so a reader never sees a truncated file.
+function writeClaim(file, text) {
+  const tmp = `${file}.${process.pid}.${crypto.randomUUID()}.tmp`;
+  fs.writeFileSync(tmp, text);
+  fs.renameSync(tmp, file);
 }
 
 // Drops claims whose build process has gone, and returns the held ones as { file, text, pid, cwd, id }.
+// Call only under withDirLock, so a reader can't delete a claim another process is publishing.
 function heldClaims(dir) {
   if (!dir || !fs.existsSync(dir)) return [];
   const out = [];
@@ -49,7 +51,7 @@ function heldClaims(dir) {
   return out;
 }
 
-// A short critical section so two speck runs don't both see a free slot and both claim.
+// A short critical section so two speck runs don't both see a free slot and both claim, and so cleanup never races a write.
 function withDirLock(dir, fn) {
   ensureDir(dir);
   const lock = path.join(dir, '.claiming');
@@ -58,7 +60,6 @@ function withDirLock(dir, fn) {
     try { fs.mkdirSync(lock); break; }
     catch (e) {
       if (e.code !== 'EEXIST') throw e;
-      // A claim lock left by a killed process: take it over once it's old enough.
       try {
         if (Date.now() - fs.statSync(lock).mtimeMs > 10000) { fs.rmdirSync(lock); continue; }
       } catch { /* gone, try again */ }
@@ -82,12 +83,9 @@ export function takeBuildTurn(repo, id, pid = process.pid, { force = false } = {
     const existing = heldClaims(dir);
     const mine = existing.find(c => c.file === file || (c.id === id && c.cwd === repo) || c.pid === pid);
     const text = JSON.stringify({ pid, cwd: repo, id });
-    if (mine) {
-      fs.writeFileSync(mine.file, text);
-      return { file: mine.file, text };
-    }
+    if (mine) { writeClaim(mine.file, text); return { file: mine.file, text }; }
     if (!force && existing.length >= max) return null;
-    fs.writeFileSync(file, text);
+    writeClaim(file, text);
     return { file, text };
   });
 }
@@ -95,16 +93,27 @@ export function takeBuildTurn(repo, id, pid = process.pid, { force = false } = {
 // Updates a claim to the build's own process once it has started, so the slot stays held if speck run itself ends.
 export function pointBuildTurn(claim, pid) {
   if (!claim?.file || !Number.isInteger(pid) || pid <= 0) return claim;
-  const cur = parse(claim.text), next = JSON.stringify({ ...cur, pid });
-  try { fs.writeFileSync(claim.file, next); } catch { return claim; }
-  return { file: claim.file, text: next };
+  const dir = path.dirname(claim.file), cur = parse(claim.text), next = JSON.stringify({ ...cur, pid });
+  try {
+    return withDirLock(dir, () => {
+      // Gone or replaced: leave the map's text as it was.
+      if (read(claim.file) === null) return claim;
+      writeClaim(claim.file, next);
+      return { file: claim.file, text: next };
+    });
+  } catch { return claim; }
 }
 
 // Frees a build's machine slot once the build has ended or no longer counts.
 export function freeBuildTurn(claim) {
   if (!claim?.file) return;
-  const text = read(claim.file);
-  if (text === null || text === claim.text || parse(text).pid === parse(claim.text).pid) fs.rmSync(claim.file, { force: true });
+  const dir = path.dirname(claim.file);
+  try {
+    withDirLock(dir, () => {
+      const text = read(claim.file);
+      if (text === null || text === claim.text || parse(text).pid === parse(claim.text).pid) fs.rmSync(claim.file, { force: true });
+    });
+  } catch { fs.rmSync(claim.file, { force: true }); }
 }
 
 // Why a ready ticket can't start: every machine-wide slot is in use. null when the limit isn't set or a slot is free.
@@ -113,8 +122,9 @@ export function machineBuildWait() {
   if (max === null) return null;
   const dir = buildTurnsDir();
   if (!dir) return `machine_parallel_builds is ${max}, but there's no home folder for its turns`;
-  try { ensureDir(dir); } catch (e) { return e instanceof SpeckError ? e.message : String(e?.message || e); }
-  const going = heldClaims(dir);
+  let going;
+  try { going = withDirLock(dir, () => heldClaims(dir)); }
+  catch (e) { return e instanceof SpeckError ? e.message : String(e?.message || e); }
   if (going.length < max) return null;
   const who = going.map(c => `process ${c.pid}${c.cwd ? ` in ${c.cwd}` : ''}`);
   return `all ${max} build slot${max === 1 ? '' : 's'} on this machine in use (machine_parallel_builds)${who.length ? `: ${who.join('; ')}` : ''}`;

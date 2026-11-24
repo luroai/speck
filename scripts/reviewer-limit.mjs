@@ -184,8 +184,13 @@ export function reviewerLimitQueue({ repo, runs, settings, running, startBuild, 
       if (!current || !hasBuildRoom(running.size, current.max)) return;
       if (!drop(s.id)) return;
       const who = typeof s.stand_in === 'string' ? `The usage limit of ${s.stand_in}, standing in for the ${s.reviewer} reviewer,` : `The ${s.reviewer} reviewer's usage limit`; // 0693
-      carryOn({ repo, runs, startBuild, resumeHint, countStop, now, speak }, s.id, rec, current, who,
-        `${who} has reset, so speck run has resumed the build of ticket ${s.id}. Run the review round again with \`speck review ${s.id}\`, then carry on with /speck-build ${s.id} from where you left off.`);
+      // 0726: if the machine slot was taken, put the limit record back so the next check tries again.
+      if (!carryOn({ repo, runs, startBuild, resumeHint, countStop, now, speak }, s.id, rec, current, who,
+        `${who} has reset, so speck run has resumed the build of ticket ${s.id}. Run the review round again with \`speck review ${s.id}\`, then carry on with /speck-build ${s.id} from where you left off.`)) {
+        const { id: _id, ...kept } = s;
+        try { fs.mkdirSync(dir(), { recursive: true }); fs.writeFileSync(fileOf(s.id), `${JSON.stringify(kept, null, 2)}\n`); } catch { /* next check */ }
+        return;
+      }
     }
   };
 
