@@ -1,7 +1,7 @@
 ---
 id: "0729"
 title: "Lay out Settings like Cursor's own settings"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -21,7 +21,7 @@ created: 2026-11-24
 ---
 # 0729 · Lay out Settings like Cursor's own settings
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 The panel mostly runs inside Cursor's browser pane, and its Settings view looks out of place there: raw config keys in a mono font as labels, explanations hidden behind ⓘ buttons, and bordered cards with dividers. Cursor's own settings show a plain name with a muted line under it, rows grouped on soft filled blocks under small section labels, and each control on the right.
