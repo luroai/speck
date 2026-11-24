@@ -1,7 +1,7 @@
 ---
 id: "0713"
 title: "Show that speck is checking a question in the app"                # one outcome, no "and"
-status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,12 +18,13 @@ source: "speck/ideas/done/2026-11-11-show-that-speck-is-checking-a-question-in-t
 after: ["0709"]                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T13:48:38.552Z"
-blocked_at: "2026-11-24T14:21:21.782Z"
+blocked_at: ""
+waited_seconds: 21
 
 ---
 # 0713 · Show that speck is checking a question in the app
 
-**Status:** ⛔ blocked
+**Status:** 🔨 building
 
 ## Problem
 While speck's watch agent is about to check a blocked question in the running app, the ticket says "Waiting for you" and counts under Needs you, though speck may carry on by itself. You may check it by hand for nothing.
@@ -46,6 +47,7 @@ Such a ticket says speck is checking it in the app, and counts under Needs you o
 - Failing before this build: none
 - Found failing on the base branch during this build, outside the recorded quick result: test/panel-0469.test.mjs (both its 390 px and 600 px tests, on the Plan card's chain facts). Checked on the base commit without this change: it fails the same way there, so it's left unchanged.
 - Self-check: no changes (checked an empty or missing watch-agent record, a built-in name as the ticket's id, and a check already made for an earlier question; each has a test)
+- Went with the recommendation: Keep today's behaviour with watch off (chosen by speck, as watch is decide, 2026-11-24 14:21 UTC).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
