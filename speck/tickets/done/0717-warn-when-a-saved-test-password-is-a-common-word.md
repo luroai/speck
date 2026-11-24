@@ -1,7 +1,7 @@
 ---
 id: "0717"
 title: "Warn when a saved test password is a common word"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T14:23:11.729Z"
 approved: "2026-11-24T14:26:56.470Z"
+finished: "2026-11-24T15:33:16.732Z"
 
 ---
 # 0717 · Warn when a saved test password is a common word
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Every saved test password counts as a private word in every commit, in any case. A simple password like `test` would then refuse almost every commit that touches a test file, and you wouldn't know why until a commit fails.
