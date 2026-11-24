@@ -42,6 +42,8 @@ These tests check waited times against bounds measured in the test.
 ## Notes
 - `near` is in `test/waiting-0166.test.mjs` and `test/stopped-wait-0217.test.mjs`; `assertCounted` and `assertWrittenSince` are in `test/support/timing.mjs`. 0217 AC2 reads back a backdated time, so an exact check or `assertWrittenSince`-style bounds may fit better than `assertCounted`.
 - Failing before this build: none
+- Self-check: no changes
+- Note: `test/tmp-cleanup.test.mjs` AC1 AC2 fails on this Node (v24) because the runner prints `ℹ fail 2` rather than `# fail 2`; it fails the same way without this ticket's changes, so it isn't fixed here.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
