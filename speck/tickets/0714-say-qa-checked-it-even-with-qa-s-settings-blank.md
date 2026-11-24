@@ -1,7 +1,7 @@
 ---
 id: "0714"
 title: "Say QA checked it even with QA's settings blank"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -22,7 +22,7 @@ started: "2026-11-24T13:51:24.136Z"
 ---
 # 0714 · Say QA checked it even with QA's settings blank
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 A check in the running app is described as QA's only once one of QA's settings is set; with all four blank it still reads as the engineering manager's. Now that Settings shows QA as a member of its own, that hides who checked what.
@@ -46,7 +46,9 @@ A check in the running app always says QA did it.
 - Self-check: no changes
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When speck looks at the running app to check a ticket, its messages now always say QA did it, even if you've never set any of QA's settings. Nothing about which agent does the check has changed. To see it, wait for a check to run and read the Pipeline log or the ticket's Notes: they say QA checked it. Nothing else to watch.
+
+Follow-ups: none.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -56,3 +58,70 @@ A check in the running app always says QA did it.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "73d7d4b8aa1ccd543fe952f9564a7006ec45e256",
+    "session": "fresh",
+    "thread_id": "01a20def-78df-7fa0-a8df-1a9d68fc0c29",
+    "builder_response": "- Tests run: test/qa-0714.test.mjs test/qa-0651.test.mjs test/app-check-0636.test.mjs (AC3: the old-wording assertions in the last two now say QA)\n",
+    "seconds": 24,
+    "usage": {
+      "input_tokens": 183092,
+      "cached_input_tokens": 137216,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 602,
+      "reasoning_output_tokens": 29
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 45876,
+      "cached": 137216,
+      "write": 0,
+      "output": 602
+    },
+    "cost_usd": 0.1114936,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-24T14:22:31.263Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "foremanAgentQueue now labels every app check as QA's. Passing tests in qa-0714 and qa-0651 cover blank-settings run logs and Notes; the passing 0651 Pipeline log test verifies those QA lines remain visible with agent details."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Agent selection still uses qaConfig and foremanArgv unchanged. Passing 0714 AC1+AC2 and 0651 AC4 tests verify blank QA settings retain the watch agent claude, model opus and effort low."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Recorded test output confirms 170 passed, zero failed and three skipped across 173 tests. Changed existing assertions update the old blank-QA wording; no tests were weakened or unrelated behaviour changed."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "App checks now say QA performed them even when QA's settings are blank. They still use the watch agent's agent, model and effort. The relevant tests pass, and I found no blocking concerns."
+  }
+}
+```
+
+</details>
