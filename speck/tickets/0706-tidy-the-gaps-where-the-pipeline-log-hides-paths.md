@@ -41,6 +41,9 @@ Every Pipeline log line still reads as a whole sentence after paths and commands
 
 ## Notes
 - The stripping is `runPlain` in `templates/panel-model.js`; its `\bLog:` rule is case-sensitive, so "Its log:" is left behind. Fixing it in `runPlain` or in the source messages is the builder's choice.
+- Failing before this build: not checked
+- Self-check: made runPlain's dangling-word rules leave "speck run:" and a plain "run" alone, and kept the 0638 message's wording.
+- Pictures: none, because the change is to log wording only.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

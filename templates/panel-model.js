@@ -690,6 +690,11 @@ const RUN_ID = /(?<![\w:./-])(\d{4,})(?![\w:/-]|\.\w)/;
 // processes, paths, links, file names and speck's or a tool's commands. Whatever is left is tidied of the gaps they leave.
 function runPlain(s) {
   return s
+    .replace(/^\S*\/\S*\.(?:ya?ml|json|md|mjs)(?= (?:has|is|was)\b)/, 'The file')
+    .replace(/\s*Last lines of[\s\S]*$/, '')
+    .replace(/\bConflicting files:[\s\S]*?\.(?=\s+[A-Z]|\s*$)\s*/g, '')
+    .replace(/,?\s+or run\s+(?:`[^`]*`|\/[\w-]+(?: \d{4,})?),?/gi, '')
+    .replace(/\bRun\s+`[^`]*`\s+to\b[^.]*\.\s*/g, '')
     .replace(/\([^()]*\b(?:session|process|pid)\b[^()]*\)/gi, '')
     .replace(/`[^`]*`/g, '')
     .replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi, '')
@@ -698,9 +703,11 @@ function runPlain(s) {
     .replace(/\S*\w\.(?:mjs|cjs|js|ts|md|log|json|ya?ml|css|html|txt|lock|git)\b\S*/g, '')
     .replace(/(?<![\w.'-])(?:speck|npm|npx|node|git|gh|claude|codex|cursor-agent)\s+[a-z][\w-]*(?:\s+(?:--?[\w=.-]+|\d{4,}))+/g, '')
     .replace(/(?<![\w.'-])npm (?:test|ci|install)\b/g, '')
-    .replace(/\bLog:\s*(?=$|[.,;])/g, '')
+    .replace(/\b(?:Its\s+)?log:\s*(?=$|[.,;])/gi, '')
     .replace(/\(\s*\)/g, '')
     .replace(/\s+/g, ' ')
+    .replace(/\s+(?:with|in|into|of)(?=\s*[.,;:!?]|\s*$)/gi, '')
+    .replace(/\b(then|or|and)\s+run(?=\s*[.,;:!?]|\s*$)/gi, '$1')
     .replace(/\s+([.,;:!?])/g, '$1')
     .replace(/([,;:])(?=[.,;:]|$)/g, '')
     .trim();
