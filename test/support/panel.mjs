@@ -480,12 +480,23 @@ process.on('exit', () => {
     fs.rmSync(profile, { recursive: true, force: true });
   }
 });
-// A file stopped with a signal, as the test runner stops one that runs out of time, exits through the handler above.
+// A file stopped with a signal, as the test runner stops one that runs out of time, ends its Chromium and waits for it to
+// have exited, up to 5 s, before it exits through the handler above. The handler can't wait, and a Chromium ended there
+// can outlive the file's process by seconds on a busy machine (0723).
 let stopping = false;
+const STOP_WAIT_MS = 5000;
+const endRunning = () => Promise.race([
+  Promise.all([...running].map(({ chrome }) => new Promise(resolve => {
+    if (chrome.exitCode !== null || chrome.signalCode !== null) return resolve();
+    chrome.once('exit', resolve);
+    try { chrome.kill('SIGKILL'); } catch { resolve(); }
+  }))),
+  new Promise(resolve => setTimeout(resolve, STOP_WAIT_MS)),
+]);
 const exitOnSignals = () => {
   if (stopping) return;
   stopping = true;
-  for (const [sig, n] of [['SIGINT', 2], ['SIGTERM', 15], ['SIGHUP', 1]]) process.once(sig, () => process.exit(128 + n));
+  for (const [sig, n] of [['SIGINT', 2], ['SIGTERM', 15], ['SIGHUP', 1]]) process.once(sig, () => endRunning().then(() => process.exit(128 + n)));
 };
 
 // How long b.until() and b.loaded() wait when the call gives no limit of its own.
