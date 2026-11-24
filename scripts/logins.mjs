@@ -98,10 +98,10 @@ export function readLoginInput() {
 }
 
 // 0717: why a saved password may refuse commits: it's short, or it's already in a file git tracks. '' when it's neither.
-// Never holds the password. Searching is by fixed string, in any case, as private words are matched.
+// The password goes to git on its input, never its command line. Searching is by fixed string, in any case, as private words are matched.
 export function weakPasswordReason(repo, password) {
   const short = password.length < 8;
-  const r = spawnSync('git', ['grep', '-q', '-i', '-F', '-e', password], { cwd: repo, stdio: 'ignore' });
+  const r = spawnSync('git', ['grep', '-q', '-i', '-F', '-f', '-'], { cwd: repo, input: `${password}\n`, stdio: ['pipe', 'ignore', 'ignore'] });
   const tracked = r.status === 0;
   if (short && tracked) return 'is short and appears in files git tracks';
   if (short) return 'is shorter than 8 characters';

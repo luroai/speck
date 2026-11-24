@@ -61,3 +61,12 @@ test('0717 AC4: a long unusual password is saved without a warning', () => {
   assert.doesNotMatch(r.stdout, /Warning/);
   assert.equal(savedLogins(dir).admin.password, 'Zq-Plover-4821');
 });
+
+test('0717 AC2: the password is never on a git command line', () => {
+  const dir = repo(), bin = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-fakegit-')), log = path.join(bin, 'args.log');
+  const real = spawnSync('which', ['git'], { encoding: 'utf8' }).stdout.trim();
+  fs.writeFileSync(path.join(bin, 'git'), `#!/bin/sh\necho "$@" >> '${log}'\nexec '${real}' "$@"\n`, { mode: 0o755 });
+  const r = spawnSync(process.execPath, [CLI, 'logins', 'set', 'admin'], { cwd: dir, input: 'ann\nmarmalade-SANDWICH-77\n', encoding: 'utf8', env: { ...process.env, PATH: `${bin}:${process.env.PATH}` } });
+  assert.match(r.stdout, /Warning/, 'still finds it in a tracked file');
+  assert.ok(fs.existsSync(log) && !fs.readFileSync(log, 'utf8').toLowerCase().includes('marmalade'));
+});
