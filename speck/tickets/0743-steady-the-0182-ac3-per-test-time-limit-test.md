@@ -1,7 +1,7 @@
 ---
 id: "0743"
 title: "Steady the 0182 AC3 per-test time limit test"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -22,7 +22,7 @@ started: "2026-11-24T23:12:02.998Z"
 ---
 # 0743 · Steady the 0182 AC3 per-test time limit test
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The 0182 AC3 test "Chromium has closed within 10 s of a test file finishing whose test timed out waiting on its page" gives its inner test 1.5 s, which also covers starting Chromium. On a busy machine Chromium can take longer to open, so the test can fail with no real fault and turn main red.
@@ -45,7 +45,11 @@ The 0182 AC3 per-test time limit test passes on a busy machine and still catches
 - From 0723's own note; 0723 saw Chromium take over 1.5 s at a load average of 125.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Nothing changes in how speck behaves for someone using it. One of speck's own tests, which checks that the test browser is closed after a test runs out of time, could fail just because the machine was busy and the browser was slow to open. It now tries again with more time when that happens.
+
+To see it: it passed 10 times out of 10 with the machine heavily loaded, and it still fails if the browser really is left running.
+
+Worth watching: if the browser takes more than about 12 seconds to open, the test will still fail.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -55,3 +59,70 @@ The 0182 AC3 per-test time limit test passes on a busy machine and still catches
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "29d19723ae00595d94d3220aefdca3ebb72190cc",
+    "session": "fresh",
+    "thread_id": "01a20fdd-128e-7671-abfb-04b2159f8577",
+    "builder_response": "- Tests run: test/chromium-0723.test.mjs test/chromium-0743.test.mjs test/panel-0182.test.mjs (speck test --related, so the commands.checks files ran too)\n- AC1 was checked by hand as well, since a load test would be too heavy for the suite: the 0182 AC3 per-test time limit test passed 10 runs out of 10 with 128 busy loops on 16 cores (load average 115 to 164).\n",
+    "seconds": 22,
+    "usage": {
+      "input_tokens": 175558,
+      "cached_input_tokens": 132096,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 592,
+      "reasoning_output_tokens": 26
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 43462,
+      "cached": 132096,
+      "write": 0,
+      "output": 592
+    },
+    "cost_usd": 0.1060536,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-24T23:21:37.761Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "The ticket records 10/10 runs with 128 busy loops and load averages 115–164. test/chromium-0743.test.mjs AC1 also passed, exercising startup beyond 1.5 s and retrying with longer limits; allowingLonger checks cleanup before each retry."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "test/chromium-0743.test.mjs AC2 passed with real Chromium deliberately left running: it verifies the process remains, goneWithin10s rejects, and remaining processes are ended. The 0182 test uses the same helper and cleanup check."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "/tmp/speck-0743-tests.txt confirms 158 passed, zero failed and three skipped, including the changed 0182 test and existing 0723 tests. The extracted runOutOfTime implementation preserves its previous behaviour."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The test now allows more startup time when Chromium opens slowly, while checking cleanup before retrying. The recorded heavy-load runs passed, and a real leaked Chromium process still makes the check fail. No blocking concerns found."
+  }
+}
+```
+
+</details>
