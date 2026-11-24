@@ -1,7 +1,7 @@
 ---
 id: "0719"
 title: "Read Claude's usage after a Claude review round"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T14:27:38.321Z"
 waited_seconds: 13
+approved: "2026-11-24T15:00:57.998Z"
 
 ---
 # 0719 · Read Claude's usage after a Claude review round
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 speck runs Claude reviewers with `--output-format json`, which has no usage-limit lines, so a review round on Claude, as reviewer or as a stand-in from `reviewer_bench`, gives no reading. Claude's usage in `speck agents` and Settings can be stale just when it nears its limit.
@@ -55,9 +56,14 @@ After a Claude Code review round, speck updates Claude's usage reading the same 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 496,379
+- Elapsed since build started: 33 min
+- Changed lines: 34 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 ### Follow-ups
 - Inbox: run the tmp-cleanup fixture with the TAP reporter (`speck/ideas/2026-11-24-run-tmp-cleanup-fixture-with-tap-reporter.md`), so that check passes on Node 24's default reporter.
