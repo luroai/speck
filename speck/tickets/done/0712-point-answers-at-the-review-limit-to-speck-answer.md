@@ -1,7 +1,7 @@
 ---
 id: "0712"
 title: "Point answers at the review limit to speck answer"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T13:44:39.001Z"
 approved: "2026-11-24T13:52:24.638Z"
+finished: "2026-11-24T15:01:08.147Z"
 
 ---
 # 0712 · Point answers at the review limit to speck answer
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Only Go with the recommendation, `speck answer` and the panel's Answer add the line that opens 2 more review rounds. The speck-build skill tells you to answer in the ticket and run `/speck-build`, which resumes a build that can only block again with the same question.
