@@ -41,6 +41,7 @@ The bridge shows a line for each agent at 90% or more of a usage window, or limi
 
 ## Notes
 - Readings come from `GET /api/usage` (`scripts/subscriptions.mjs`), which only `templates/panel-settings.js` reads today. 90% is where Settings' bars turn orange.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
