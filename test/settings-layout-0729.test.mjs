@@ -41,7 +41,7 @@ const tipOf = (p, r) => p.all(r).find(n => n.tagName === 'p' && cls(n, 'explain'
 // ---------- AC1: a plain name over a short muted line, the control on the right, the key in the tooltip ----------
 
 test('0729 AC1: speck panel gives every setting a plain name and a short line saying what it does, neither of them a key', () => {
-  assert.equal(SERVED.length, 27, 'every setting Settings shows');
+  assert.equal(SERVED.length, 28, 'every setting Settings shows'); // 0707: and machine_parallel_tests
   for (const s of SERVED) {
     assert.match(s.label, /^[A-Z][a-z]*(?:[ -][a-z]+)*$/, `${s.key}: a name in plain words, ${s.label}`);
     assert.match(s.summary, /^[A-Z][^_]*\.$/, `${s.key}: one sentence, ${s.summary}`);
@@ -157,7 +157,7 @@ test('0729 AC3: no row has an info button, and one press on a setting\'s name sh
     assert.equal(tip.hidden, false, `${key}: shown after one press`);
     assert.equal(label.attrs['aria-expanded'], 'true', key);
     assert.ok(tip.textContent.startsWith(server.slice(0, server.indexOf('. ') + 1)), `${key}: its own explanation, ${tip.textContent}`);
-    assert.match(tip.textContent, /A change here is saved (for your machine only|for the project in speck\/config\.yml)/, `${key}: where a change is saved`);
+    assert.match(tip.textContent, /A change here is saved (for your machine only|for the project in speck\/config\.yml|in \S+ for every project on this machine)/, `${key}: where a change is saved`);
     if (/When it isn't set/.test(server)) assert.match(tip.textContent, /When it isn't set, \w+ uses /, `${key}: its default`);
     assert.equal(p.all(pane(p)).filter(n => cls(n, 'explain') && !n.hidden).length, 1, `${key}: one at a time`);
     p.press(label);

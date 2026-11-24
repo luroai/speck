@@ -45,6 +45,8 @@ Settings shows `machine_parallel_tests` beside `max_parallel_tests`, and it can 
 - speck (2026-11-24 13:51 UTC) I'll resume 0707 at 14:45 UTC: 0707 has to come after 0729, which is approved but still waiting in speck run's ship queue behind 0704's ship, so starting now would only be refused again; by 14:45 UTC both ships should have finished. Its instruction: Check that 0729 has shipped to main, then start 0707 on top of the latest main and build it; if 0729 still hasn't shipped, stop again without changing anything
 - 2026-11-24: its first build stopped before starting, as it began on 0729's approved work while that conflicted with main and the main checkout had been made bare. Set ready again once 0729 shipped.
 - Failing before this build: none
+- Self-check: a home settings file that can't be read now leaves the row blank with the reason in its explanation, and Save refuses it with that reason, changing nothing; the same setting given twice is refused before anything is saved. Tests added for both.
+- Out of scope kept: machine_parallel_builds (0726) is a home-folder setting too, but this ticket shows only machine_parallel_tests.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

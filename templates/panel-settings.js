@@ -521,7 +521,7 @@ function settingEditor(x) {
     }
   } else {
     input = el('input', 'edit');
-    input.type = typeof x.value === 'number' ? 'number' : 'text';
+    input.type = typeof x.value === 'number' || x.every_project === true ? 'number' : 'text'; // 0707: a home-folder limit, blank or not
     if (input.type === 'number') input.min = '1';
     input.addEventListener('keydown', e => { if (e.key === 'Enter') { typing(String(input.value ?? '')); saveSettings(); } });
   }

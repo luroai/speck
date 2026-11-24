@@ -15,7 +15,7 @@ import { codexModelsAsync } from './codex-models.mjs';
 import { agentModelsAsync, offeredModels, offeredModelsAsync, findAgentsAsync } from './agents.mjs';
 import { OWN_BUILD_COMMANDS, ownBuildCommand, handSetBuildCommand, otherFamilyReviewer, describeBuildCommand, clearsBuilderModel } from './builder-switch.mjs';
 import { buildsEachTicket } from './build-model.mjs'; import { levelsShown } from './levels.mjs'; // 0661
-import { knownProviders } from './custom-providers.mjs'; import { providerNamed } from './provider-review.mjs'; import { addHomeSettingRow } from './home-settings.mjs'; // 0678
+import { knownProviders } from './custom-providers.mjs'; import { providerNamed } from './provider-review.mjs'; import { addHomeSettingRow } from './home-settings.mjs'; import { homeRow, panelSaveSettings } from './settings-home.mjs'; export { panelSaveSettings }; // 0678, 0707
 import { keysStatus, saveProviderKey } from './keys.mjs';
 import { yourAgentsView, addAgent, removeAgent } from './your-agents.mjs'; import { APP_SETTINGS } from './app.mjs'; import { benchRows, newBenchProblem } from './bench.mjs'; import { qaRows } from './app-check.mjs'; import { TEAM_GROUP, TEAM_KEYS, teamShown } from './team.mjs'; // 0634, 0645, 0651, 0652
 export { panelProviderAddRequest } from './provider-form.mjs'; // 0401
@@ -141,7 +141,7 @@ export function panelSettings(repo, { models, builderModels, foremanModels, agen
       : Object.hasOwn(mine, s.key) ? { for_machine: true, from: 'machine', repo_value: value } : { for_machine: true, from: 'repo', repo_value: value };
     return { key: s.key, label: s.label, summary: namedText(s, s.summary, speckNameOf(file)), value: machine.from === 'machine' ? mine[s.key] : value, default: !inFile, explain: explainFully(s, speckNameOf(file)), // 0729: and its plain name and short line
       editable: EDITABLE.includes(s.key), ...(choices ? { choices } : {}), ...(missing ? { missing } : {}), ...build, ...machine };
-  }) })), ...(models ? { reviewer_models: models } : {}), ...(builderModels ? { builder_models: builderModels } : {}),
+  }).flatMap(row => (row.key === 'max_parallel_tests' ? [row, homeRow()] : [row])) })), /* 0707: yours for every project, after this project's */ ...(models ? { reviewer_models: models } : {}), ...(builderModels ? { builder_models: builderModels } : {}),
     ...(foremanModels ? { foreman_models: foremanModels } : {}), claude_models: CLAUDE_MODELS, providers: providersShown(repo, providers), levels: levelsShown(file) }; // 0661
 }
 
@@ -346,7 +346,7 @@ export function cmdConfigShow(args) {
   // 0386: a value this machine holds is shown as speck uses it, marked this_machine, with speck/config.yml's in repo_value.
   const repo = findRepoRoot(), mine = machineConfig(repo), name = speckNameOf(loadConfig(repo, { machine: false })); // 0575
   const explains = Object.fromEntries(SETTING_GROUPS.flatMap(g => g.settings).map(s => [s.key, namedText(s, s.explain, name)]));
-  const groups = panelSettings(repo).groups.filter(g => g.title !== TEAM_GROUP.title).map(g => ({ title: g.title, settings: g.settings.map(s => { // 0652: Your team's are below
+  const groups = panelSettings(repo).groups.filter(g => g.title !== TEAM_GROUP.title).map(g => ({ title: g.title, settings: g.settings.filter(s => !s.every_project).map(s => { // 0652: Your team's are below. 0707: addHomeSettingRow adds the home folder's
     const repoValue = s.repo_value ?? s.value, machine = Object.hasOwn(mine, s.key), value = machine ? mine[s.key] : repoValue;
     return { key: s.key, value, is_default: JSON.stringify(value) === JSON.stringify(defaults[s.key]), speck_default: defaults[s.key], explain: explains[s.key],
       ...(machine ? { this_machine: true, repo_value: repoValue } : {}) };
@@ -408,9 +408,7 @@ const each = (changes, why) => Object.fromEntries(changes.map(c => [c.key, why])
 // 0293: a change to builder sets build_command to the new builder's own in the same save. One set by hand is replaced
 // only when `replace` is it, exactly as speck uses it, as the page read it when you confirmed.
 // 0311: and clears a builder_model the new builder doesn't offer, as it would be once saved, giving why in `cleared`. `offered`: { builder, models }, the new builder's models as read already, or they're read now.
-export function panelSaveSettings(repo, changes, { confirmed = null, replace = null, offered = null } = {}) {
-  const twice = changes.find((c, i) => changes.findIndex(d => d.key === c.key) !== i);
-  if (twice) return { status: 400, body: { error: `${twice.key} is given more than once. Reload the panel, then try again.` } };
+export function saveRepoSettings(repo, changes, { confirmed = null, replace = null, offered = null } = {}) { // 0707: panelSaveSettings (settings-home.mjs) saves the home folder's first
   const file = path.join(repo, 'speck', 'config.yml');
   const text = fs.readFileSync(file, 'utf8'), cfg = loadConfig(repo, { benches: false }), mine = machineConfig(repo); // 0645: a bench already refused can be fixed
   const checked = changes.map(c => ({ ...c, ...checkChange(repo, text, cfg, c) }));
