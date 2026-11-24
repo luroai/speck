@@ -40,6 +40,8 @@ The 0182 AC3 per-test time limit test passes on a busy machine and still catches
 
 ## Notes
 - Failing before this build: none
+- AC1 checked by hand: the test passed 10 runs out of 10 with 128 busy loops on 16 cores (load average 115 to 164).
+- Self-check: no changes
 - From 0723's own note; 0723 saw Chromium take over 1.5 s at a load average of 125.
 
 ## In plain words
