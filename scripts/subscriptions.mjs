@@ -127,3 +127,19 @@ export async function subscriptionsAnswer(repo, { find = findAgentsAsync, readCu
     return shown && shown.read_at ? { ...base, reading: shown, ...why } : { ...base, none: Object.hasOwn(NONE, a.id) ? NONE[a.id] : 'No reading yet.', ...why };
   }) };
 }
+
+// 0720: the agents the bridge warns about, from speck's newest kept readings, without reading any of them again:
+// [{ id, name, windows: [{ label, used_percent, limited, resets_at, resets_on }] }], each agent with a window at
+// HIGH_PERCENT or more, or limited, and only those windows. A window whose reset time has passed has reset since its
+// reading, so it isn't one.
+const USAGE_NAMES = Object.freeze({ claude: 'Claude Code', codex: 'Codex', cursor: 'Cursor' });
+export function usageWarnings(usage, now = Date.now()) {
+  if (!plain(usage)) return [];
+  return Object.keys(USAGE_NAMES).filter(id => Object.hasOwn(usage, id) && plain(usage[id])).flatMap(id => {
+    const shown = readingShown(id, usage[id], now);
+    if (!shown.read_at) return [];
+    const windows = shown.windows.filter(w => w.high && !(w.resets_at && Date.parse(w.resets_at) <= now))
+      .map(({ label, used_percent, limited, resets_at, resets_on }) => ({ label, used_percent, limited, resets_at, resets_on }));
+    return windows.length ? [{ id, name: USAGE_NAMES[id], windows }] : [];
+  });
+}

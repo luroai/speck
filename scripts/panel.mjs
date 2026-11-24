@@ -26,7 +26,7 @@ import { panelAway } from './panel-background.mjs'; // 0509: --background and --
 import { panelProjects } from './panel-projects.mjs'; // 0516: the project menu, and showing another panel's project here
 import { projectSummary, speckMood } from './panel-summary.mjs'; // 0595: this panel's part of the bridge. 0579: speck's mood
 import { panelStarNote } from './panel-star.mjs'; import { panelSetLevel } from './panel-level.mjs'; import { panelSetBuilder } from './panel-builder.mjs'; // 0538: the star on a note in Capture. 0662: a ticket's level. 0669: its builder
-import { panelUrl } from './panel-url.mjs'; import { subscriptionsAnswer } from './subscriptions.mjs'; // 0538: moved out, to keep this under 600 lines. 0646: Your subscriptions in Settings
+import { panelUrl } from './panel-url.mjs'; import { subscriptionsAnswer, usageWarnings } from './subscriptions.mjs'; import { readUsage } from './agent-usage.mjs'; // 0538: moved out, to keep this under 600 lines. 0646: Your subscriptions in Settings
 
 // ---------- panel (a view in the browser, with its writes: Set ready and Back to Plan, a draft's priority, a ticket's level, Stop build, Go with the recommendation, an answer to the Foreman's question, Ship, Ask for changes, the speck run switch, a setting and a note's star) ----------
 
@@ -541,7 +541,7 @@ export async function panelServer() {
     server.listen(where, resolve);
   });
   server.on('error', e => console.error(`speck panel: ${e.message}`));
-  projects = panelProjects({ port, name, repo: fs.realpathSync(repo), origins, changed, id: panelId });
+  projects = panelProjects({ port, name, repo: fs.realpathSync(repo), origins, changed, id: panelId, usage: () => usageWarnings(readUsage(repo)) }); // 0720: the bridge's usage warnings
   if (!handover) console.log(`speck panel: http://127.0.0.1:${port}/${url ? ` and ${url.origin}/` : ''} ${away ? '(in the background: stop it with speck panel --stop)' : '(press Ctrl+C to stop)'}`);
   process.send('ready');
 

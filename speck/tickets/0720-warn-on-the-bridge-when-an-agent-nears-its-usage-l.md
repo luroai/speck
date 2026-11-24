@@ -44,6 +44,8 @@ The bridge shows a line for each agent at 90% or more of a usage window, or limi
 - Readings come from `GET /api/usage` (`scripts/subscriptions.mjs`), which only `templates/panel-settings.js` reads today. 90% is where Settings' bars turn orange.
 - Failing before this build: none
 - Builder: Cursor took over this build from Claude at 2026-11-24 14:41 UTC, because Claude's usage limit was reached until 2026-11-24 16:10 UTC, more than an hour away.
+- Self-check: no changes
+- Related run (before review): 10 failures, none from this change — chromium-0723 (Chromium start timing), panel-0469 (Plan chain-facts mouse vs touch), related-0676 and tmp-cleanup (Node reporter no longer prints `# fail 2`), usage-limit-0622 (`--session-id` vs `--resume`). All 0720 tests passed.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
