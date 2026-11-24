@@ -1,7 +1,7 @@
 ---
 id: "0725"
 title: "Try an approved ticket's app from its review pack"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -21,7 +21,7 @@ created: 2026-11-24
 ---
 # 0725 · Try an approved ticket's app from its review pack
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 `speck app <id>` starts a ticket's copy of the app (0634), but only from a terminal. Using the change before shipping is stronger evidence than the review pack, and the panel is where you decide to ship.
