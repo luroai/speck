@@ -1,7 +1,7 @@
 ---
 id: "0751"
 title: "Keep a tap on a Plan row's title off its tags"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -21,7 +21,7 @@ created: 2026-11-24
 ---
 # 0751 · Keep a tap on a Plan row's title off its tags
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Since 0727 took Set ready off a closed Plan row, its title sits 2 px above its tags. On a touch screen a tap near the start of the title can land on the priority tag below, as 0739's build saw at 375 px with touch, so someone opening a ticket gets a menu instead.
