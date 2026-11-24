@@ -1,7 +1,7 @@
 ---
 id: "0740"
 title: "Keep a ship's tests from turning the main checkout bare"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T20:10:40.702Z"
+approved: "2026-11-24T20:48:23.518Z"
 
 ---
 # 0740 · Keep a ship's tests from turning the main checkout bare
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 At 18:02:36 on 2026-11-24, during 0738's ship, `core.bare = true` was written to the main checkout's `.git/config`. Git then refused to work there, so the panel loaded no data, two later ships moved `main` without updating the files on disk, and builds stopped before starting. It can happen again on any ship until the cause is found.
@@ -60,9 +61,15 @@ Worth keeping an eye on: in pull request mode, a ship refused for this waits for
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Pull request shipping can merge after its tests make the main checkout bare.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 284,544
+- Elapsed since build started: 38 min
+- Changed lines: 67 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups saved to the inbox: `speck/ideas/2026-11-24-say-in-needs-you-when-the-main-checkout-isn-t-a-work-tree.md` (builds and the panel stop too while it's bare, and nothing says it needs you), `speck/ideas/2026-11-24-hold-the-pull-request-queue-while-the-main-checkout-is-bare.md` (the pull request queue counts a refusal for it as a try, so it waits for a new change once it's set back).
 - Known limits, not saved as ideas: the brief doesn't mention the new refusal or the ship queue's hold. The variables the tests drop are git 2.53's `git rev-parse --local-env-vars` list, fixed in `test/support/git-env.mjs`. Only speck's own tests are kept from inheriting them: another project's tests run under `git bisect run` in a worktree can still make its main checkout bare, and its ships now refuse while it is.
