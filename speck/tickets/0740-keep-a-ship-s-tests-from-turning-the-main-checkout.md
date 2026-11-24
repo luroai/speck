@@ -1,7 +1,7 @@
 ---
 id: "0740"
 title: "Keep a ship's tests from turning the main checkout bare"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-24
+started: "2026-11-24T20:10:40.702Z"
 
 ---
 # 0740 · Keep a ship's tests from turning the main checkout bare
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 At 18:02:36 on 2026-11-24, during 0738's ship, `core.bare = true` was written to the main checkout's `.git/config`. Git then refused to work there, so the panel loaded no data, two later ships moved `main` without updating the files on disk, and builds stopped before starting. It can happen again on any ship until the cause is found.
