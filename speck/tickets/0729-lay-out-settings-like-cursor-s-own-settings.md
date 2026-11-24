@@ -1,7 +1,7 @@
 ---
 id: "0729"
 title: "Lay out Settings like Cursor's own settings"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -22,7 +22,7 @@ started: "2026-11-24T11:55:19.985Z"
 ---
 # 0729 · Lay out Settings like Cursor's own settings
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The panel mostly runs inside Cursor's browser pane, and its Settings view looks out of place there: raw config keys in a mono font as labels, explanations hidden behind ⓘ buttons, and bordered cards with dividers. Cursor's own settings show a plain name with a muted line under it, rows grouped on soft filled blocks under small section labels, and each control on the right.
@@ -55,7 +55,9 @@ Settings reads like a page of Cursor's settings: plain names, a muted line each,
 - speck (2026-11-24 12:28 UTC) told you: Nothing is stuck. About 19 minutes went on reading the large Settings code and its many older layout tests before writing any code, and about 9 more on proving the new tests fail on the old code, where each failing run sat for 85 to 90 seconds waiting for parts of the page that don't exist yet. On the new code the same tests pass in seconds, and the build is now checking what its browser test measures. Why: The build log's timestamps show where the time went, the slow runs were only the expected failures on the old code, and the machine's load of 85 to 154 slowed everything further.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Settings now looks like a page of Cursor's own settings. Each setting shows a plain name, such as Name, Watch or Bench, with a short grey line under it saying what it does, and its control on the right, or under the name on a narrow screen. Resting the pointer on a row shows the setting's technical name. Settings are grouped on soft grey rounded blocks under small grey labels, with no borders or dividing lines, and each member of Your team has a block of its own that starts with its picture, name and job. The ⓘ buttons are gone: press a setting's name or its short line to read its full explanation, and press again to hide it.
+
+To see it, open Settings in the panel, in the light and the dark look. Worth knowing: the menus and text boxes are taller for now, so every control is easy to tap. The next ticket, 0730, restyles them to look like Cursor's.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -65,3 +67,85 @@ Settings reads like a page of Cursor's settings: plain names, a muted line each,
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-up ideas:
+  - Each control in Settings is still named by its setting's key for screen readers (the Name box is read out as `speck_name`), while it shows a plain name. Saved to the inbox: `speck/ideas/2026-11-24-name-each-settings-control-by-its-setting-s-plain-name.md`.
+- Known limits:
+  - Menus and text and number boxes are drawn at least 44 px tall so that each has a 44 px target, which makes them look bigger until 0730 restyles the controls, keeping the targets.
+  - A setting's short line is part of its name's press target, so its words can't be selected with the pointer. The full explanation's can.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "d6c58c2cf637ca8283e94af966c76497f4414e91",
+    "session": "fresh",
+    "thread_id": "01a20dd0-d8e8-7aa1-aa68-3ed8ab0fade9",
+    "builder_response": "- Tests run: test/settings-layout-0729.test.mjs test/panel-0257.test.mjs test/panel-0268.test.mjs test/panel-0273.test.mjs test/panel-0275.test.mjs test/panel-0277.test.mjs test/panel-0281.test.mjs test/panel-0371.test.mjs test/panel-0385.test.mjs test/panel-0395.test.mjs test/panel-0417.test.mjs test/panel-0427.test.mjs test/panel-0428.test.mjs test/panel-0472.test.mjs test/panel-0593.test.mjs test/panel-0612.test.mjs test/settings-0381.test.mjs test/settings-0396.test.mjs test/settings-0397.test.mjs test/settings-0412.test.mjs test/settings-info-0405.test.mjs test/panel-0379.test.mjs test/panel-0432.test.mjs test/settings-levels-0666.test.mjs (with `commands.checks`), all passing.\n\nRound 1. Before it, `speck test --related` ran 487 test files (every one naming a file this branch changes, through test/support/panel.mjs for most): 4 failed, and the files above are the run its last line asked for once they were fixed. 0379 AC2 still pressed an info button, and 0432 AC1 looked for `max_parallel_builds` in the view's text: both pinned the old layout, so they now press the setting's name and look for its name in words. 0666 AC4's style check found my new 44 px rule first, as its pattern matches any selector list ending in `#settings .levels .ltextbtn`, so that rule lists it earlier. 0666 AC4 at 375 px was a real fault: the 44 px minimum width I gave a level's Remove replaced the flex row's automatic minimum, so beside a long level name the row squeezed Remove narrower than its word and the build levels box scrolled sideways by under a pixel. Remove, a risk's tick box with its word and Appearance's buttons, which have the same minimum, now never shrink (`flex: none`).\n\nWhat the change does, by criterion:\n\n- AC1: speck panel sends each setting's plain name and short line with its explanation (`label` and `summary` beside `explain` in `SETTING_GROUPS` in `scripts/settings.mjs`, and in `TEAM_GROUP` in `scripts/team.mjs` for the benches and QA's settings). The engineering manager's are called by `speck_name`, as their explanations are. `settingRow` and `settingInfo` in `templates/panel-settings.js` draw each row as its name (14 px, the interface font) over its short line (12 px, `--muted`) on the left and its control on the right. The key is the row's `title`, its tooltip. For a role's one list, which sets its model too (0400), that's `builder and builder_model`. A setting the server gives no name for is named in words made from its key (`keyWords`), never the key. Appearance and Auto-build have their names and lines in the view.\n- AC2: each group is a `section` with a small muted label (`.sh h4`, 12 px, `--muted`) over its `.block`s, each filled with `--raise`, with 12 px corners and no border. Rows have no borders, and the divider under each heading and the line above the build levels are gone. Each member's card in Your team is a block (`member block`) that opens with its `.mhead` row of character, name and job. Appearance and Auto-build had no heading; AC2 asks for every group to have a label, so they're under \"General\".\n- AC3: there are no info buttons. A setting's name is a button (`button.name`, with `aria-expanded`, and `aria-controls` and `aria-describedby` pointing at the explanation), and its `::after` covers the short line too, so one press on either shows the full explanation: the server's `explainFully` text, with its default and where a change is saved. The next press, Escape or a press elsewhere hides it. Nothing shows from the pointer resting on a row or from focus any more, as the name is a far bigger target than the info button was; Enter or Space works as a press. This machine's own value and its Clear button are in the explanation as before (`ownLine`). A model drawn in its agent's row, when there's no list of your agents' models, has no name of its own, so it's explained with its agent, as a role's effort already was (0405).\n- AC4: rows wrap (`flex-wrap`), the name taking at least 40% of the row, so a control too wide to sit beside the name goes under it, still on the right. Every control has a 44 px target. Settings' menus and text and number boxes were about 22 px tall, and its switches and Appearance's buttons 26 px, so not all had one. A menu can't be given a bigger target without being drawn bigger, so menus and boxes are now drawn at least 44 px tall. The switches, a risk's tick box with its word, a level's Remove and Appearance's buttons got invisible 44 px targets. These rules are in `panel-cards.css`, where 0417's test wants every 44 px rule for every pointer. The browser test in test/settings-layout-0729.test.mjs checks each control's target by hit-testing a 44 px cross round it at 375 px.\n- AC5: each existing test I changed pinned the old layout:\n  - Keys as labels: 0257 (row names, and a key followed by its value in the view's text), 0273 (a key breaking only at `_` or `.`), 0381 and the support module's `rowOf` (rows found by the key in their label, now by `data-key`), 0427 (its self-check named the rule that kept key labels in the monospace), 0432.\n  - Info buttons: 0268, 0275, 0281, 0371, 0379, 0385, 0395, 0397, 0405, 0412, 0417, 0428, 0472, 0593 and 0612. Each now presses the setting's name. Those that checked the button's hover pause and focus now check that nothing shows until a press.\n  - Dividers, groups with no label and one-line rows: 0277, whose check that the info buttons line up now checks that names and controls line up on the block's edges. 0396 (\"no heading over them\", and a one-line switch row), 0412 (a one-line Appearance row) and 0593 (a divider under each heading).\n\nThe brief's sentence on the Settings view now describes this layout. The review pack has pictures in both looks, at a desktop width and on a phone, and with an explanation open.\n",
+    "seconds": 26,
+    "usage": {
+      "input_tokens": 367049,
+      "cached_input_tokens": 267136,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 800,
+      "reasoning_output_tokens": 136
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 99913,
+      "cached": 267136,
+      "write": 0,
+      "output": 800
+    },
+    "cost_usd": 0.2345396,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-24T13:49:06.414Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/settings.mjs and scripts/team.mjs supply plain labels and summaries; settingRow and settingInfo render them with key tooltips. AC1 tests in test/settings-layout-0729.test.mjs passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "settingGroup and memberCard create labelled blocks and team headers. panel-settings.css uses --raise, rounded corners and no borders or dividers. Structural and real-browser AC2 tests passed in both themes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "settingInfo replaces info buttons with pressable names; paired explanations retain defaults, save locations and ownLine clear options. AC3 tests and updated settings-info-0405 and settings-0397 tests passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Wrapping rows and target sizing are implemented in panel-settings.css and panel-cards.css. The real-browser AC4 test passed at 375 px in both themes, checking placement, overflow and control hit targets."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0729-tests.txt: 304 passed, zero failed, three unrelated legacy skips. Updated tests replace assertions tied to the previous layout while retaining behavioural checks."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Settings now uses plain names, muted descriptions and rounded filled groups. Explanations and machine-specific clear options remain accessible. Browser tests confirm the layout fits a phone-width screen in both themes. No blocking issues found."
+  }
+}
+```
+
+</details>
