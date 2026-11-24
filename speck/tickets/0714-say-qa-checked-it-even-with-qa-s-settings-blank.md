@@ -41,6 +41,10 @@ A check in the running app always says QA did it.
 ## Notes
 - The gate is `qa = !!check && qaOn(c)` in `scripts/foreman-agent.mjs`. Parsers already accept both wordings (`scripts/foreman-took.mjs`, `templates/panel-model.js`). Tests pinning the old wording: `test/app-check-0636.test.mjs`, possibly `test/qa-0651.test.mjs` and `test/app-check-0679.test.mjs`.
 
+- Failing before this build: none
+- Pictures: none, because nothing visual changes (log wording only)
+- Self-check: no changes
+
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
 

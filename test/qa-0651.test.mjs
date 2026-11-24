@@ -167,7 +167,7 @@ test('0651 AC3: the Pipeline log shows QA\'s lines with the agent it checked on'
 
 // ---------- AC4 ----------
 
-test('0651 AC4: with the QA settings blank, app checks run as they do today', async () => {
+test('0651 AC4: with the QA settings blank, app checks run on the watch agent\'s, and say QA did them', async () => {
   assert.equal(qaOn({ qa_agent: '', qa_model: '', qa_effort: '', qa_bench: [] }), false);
   const cfg = { builder: 'claude', watch_model: 'opus' };
   assert.equal(qaConfig(cfg), cfg, 'the watch agent\'s settings as they are');
@@ -176,9 +176,9 @@ test('0651 AC4: with the QA settings blank, app checks run as they do today', as
   assert.equal(a.starts[0].argv[0], 'claude');
   assert.ok(a.starts[0].argv.includes('opus') && a.starts[0].argv.includes('low'), 'watch_model and watch_effort');
   a.act('decide', '0001', OPTION, `--saw=${SAW}`, '--why=It shows as asked');
-  assert.match(a.note(), / Checked in the app: /);
+  assert.match(a.note(), / QA checked in the app: /);
   a.end(); a.check(blocked({ status: 'building' }));
   await new Promise(resolve => setImmediate(resolve));
-  assert.ok(a.said.some(l => /I'm looking into it on claude/.test(l)) && a.said.some(l => /I stopped the app I started/.test(l)), a.said.join('\n'));
-  assert.ok(!a.said.some(l => /\bQA\b/.test(l)), a.said.join('\n'));
+  assert.ok(a.said.some(l => /QA is checking it in the app on claude/.test(l)) && a.said.some(l => /QA stopped the app it started/.test(l)), a.said.join('\n')); // 0714: QA's, settings blank or not
+  assert.ok(!a.said.some(l => /I'm looking into it|I stopped the app I/.test(l)), a.said.join('\n'));
 });
