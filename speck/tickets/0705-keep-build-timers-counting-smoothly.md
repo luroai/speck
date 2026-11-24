@@ -40,10 +40,12 @@ Every build timer counts up one second at a time, every time.
 - Real-time updates of the board itself.
 
 ## Notes
+- Self-check: no changes
+- Failing before this build: none
 - `startCounters` and `tickCounters` in `templates/panel.js` use `setInterval(tickCounters, COUNTER_MS)` with `COUNTER_MS = 1000`. Each counter has its own start, so one timer lined up with one build's seconds still drifts against the others.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Build timers now count one second at a time without skipping or repeating a number. To see it, watch a running build's timer in the panel. Nothing else changed.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

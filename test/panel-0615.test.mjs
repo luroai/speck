@@ -53,7 +53,7 @@ test('0615 AC1: a Build row\'s tooltip moves on with its minutes', async () => {
   const line = () => detailsOf(p, queueRows(p)[0]);
   assert.match(line().title, /^Writing tests and code · 18 min|· 18 min\n/);
   now += 2 * 60000;
-  [...p.intervals.values()].find(v => v.ms === 1000).fn();
+  [...p.intervals.values()].find(v => v.ms === 250).fn();
   assert.match(line().textContent, /· 20 min$/);
   assert.ok(line().title.startsWith(line().textContent), `the tooltip starts with the line as it is now: ${JSON.stringify(line().title)}`);
 });
