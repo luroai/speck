@@ -1,7 +1,7 @@
 ---
 id: "0710"
 title: "Say what to do when the ticket a build started on is cancelled"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,13 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-11-15-say-what-to-do-when-a-ticket-s-base-ticket-is-cancelled.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0709"]                # ticket ids that must be done first
 created: 2026-11-24
+built_on: "0709"
+started: "2026-11-24T12:56:04.886Z"
 
 ---
 # 0710 · Say what to do when the ticket a build started on is cancelled
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 When a ticket was started on another ticket's approved work and that ticket is then cancelled, `speck ship` tells you to ship the cancelled ticket first, which can never happen. The ticket is stuck, with no way out but editing `built_on:` by hand.
