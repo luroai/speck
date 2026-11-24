@@ -42,7 +42,8 @@ Settings' switches, menus, boxes and buttons look like Cursor's settings control
 - The Save button's place and saving model.
 
 ## Notes
-- Failing before this build: none
+- Failing before this build: none (recorded full suite passed). Note: test/tmp-cleanup.test.mjs AC1 AC2 fails on this Node (v24) because the runner prints `ℹ fail 2` rather than TAP `# fail 2`; it fails the same way without this ticket's changes, so it isn't fixed here.
+- Self-check: drawToggle reuses the track and knob so flipping a switch doesn't detach row nodes (0370); on/off switches keep class "switch" (not "edit") so they stay borderless with Auto-build's track; value still true/false for Save; select menus stay native for phone pickers with a gradient chevron (no font-file load); --switch kept apart from --green with 3:1 vs --raise in both looks.
 - Raised by the user on 2026-11-24 with a screenshot of Cursor's General settings.
 - Switches are `[role="switch"]` in `templates/panel-settings.css`; lists are `select` elements built in `templates/panel-settings.js`. Keeping them as native `select` elements, styled, keeps phones' own pickers.
 - Green: pick one that meets 3:1 against the track's surroundings in both looks, kept apart from the panel's status green if they would be confused.

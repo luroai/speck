@@ -75,7 +75,8 @@ test('0273 AC4, AC5: at the narrowest width each row fits, and in both looks the
         document.documentElement.setAttribute('data-theme', '${look}');
         const probe = document.createElement('i');
         document.body.appendChild(probe);
-        const tokens = new Set(['--bg', '--panel', '--raise', '--line', '--line-soft', '--text', '--muted', '--faint', '--bad', '--warn', '--ok', '--accent'].map(t => {
+        // 0730: --switch and --switch-off for Settings' on/off tracks; --input for boxes and menus
+        const tokens = new Set(['--bg', '--panel', '--raise', '--input', '--line', '--line-soft', '--text', '--muted', '--faint', '--bad', '--warn', '--ok', '--accent', '--switch', '--switch-off', '--switch-knob'].map(t => {
           probe.style.color = 'var(' + t + ')';
           return getComputedStyle(probe).color;
         }));

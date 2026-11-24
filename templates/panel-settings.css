@@ -1,12 +1,13 @@
 /* The panel's styles (0472: a file for each area of the panel): Settings, over the whole panel, and its question about unsaved changes. */
-  /* 0396: Appearance's and Auto-build's switches: a track whose knob slides right when it's on, and its state beside it */
+  /* 0396: Appearance's and Auto-build's switches: a track whose knob slides right when it's on, and its state beside it.
+     0730: green when on and grey when off, with a white knob, as Cursor's; --switch is kept apart from the panel's status --green. */
   #settings [role="switch"] { display: inline-flex; align-items: center; gap: 8px; padding: 0; font: inherit; font-family: var(--font-ui); font-size: 14px; color: var(--text); background: none; border: 0; cursor: pointer; }
   #settings [role="switch"]:disabled { cursor: default; opacity: .6; }
-  #settings [role="switch"] .track { position: relative; flex: none; box-sizing: border-box; width: 34px; height: 18px; border: 1px solid var(--line); border-radius: 9px; background: var(--raise); }
-  #settings [role="switch"] .knob { position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; color: var(--panel); background: var(--muted); transition: left .15s; }
-  #settings [role="switch"][aria-checked="true"] .track { border-color: var(--text); color: var(--panel); background: var(--text); }
-  #settings [role="switch"][aria-checked="true"] .knob { left: 18px; background: var(--panel); }
-  #settings [role="switch"]:hover .track { border-color: var(--text); }
+  #settings [role="switch"] .track { position: relative; flex: none; box-sizing: border-box; width: 34px; height: 18px; border: 1px solid var(--switch-off); border-radius: 9px; background: var(--switch-off); }
+  #settings [role="switch"] .knob { position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: var(--switch-knob); transition: left .15s; box-shadow: 0 1px 2px var(--line); }
+  #settings [role="switch"][aria-checked="true"] .track { border-color: var(--switch); background: var(--switch); }
+  #settings [role="switch"][aria-checked="true"] .knob { left: 18px; background: var(--switch-knob); }
+  #settings [role="switch"]:hover .track { filter: brightness(0.95); }
   #settings [role="switch"] .state { white-space: nowrap; }
   @media (prefers-reduced-motion: reduce) { #settings [role="switch"] .knob { transition: none; } }
   /* 0412: Appearance's System, Light and Dark, side by side, the chosen one filled. 0428: each a box of its own, as every button is */
@@ -77,8 +78,9 @@
   #settings .levels .lfield .edit { box-sizing: border-box; width: 100%; }
   #settings .levels .lfield .ltext { font-size: 12px; }
   #settings .levels .ladd { grid-column: 1 / -1; display: flex; justify-content: flex-end; }
-  #settings .levels .ltextbtn { padding: 0; font: inherit; font-family: var(--font-ui); font-size: 12px; color: var(--muted); background: none; border: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
-  #settings .levels .ltextbtn:hover, #settings .levels .ltextbtn:focus-visible { color: var(--text); }
+  /* 0730: Remove, as Cursor's small Open button: rounded, light border, interface font (was an underlined text link) */
+  #settings .levels .ltextbtn { box-sizing: border-box; padding: 0 10px; font: inherit; font-family: var(--font-ui); font-size: 12px; font-weight: 500; line-height: 20px; color: var(--text); background: none; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; } /* 0612: every button's 10 px */
+  #settings .levels .ltextbtn:hover, #settings .levels .ltextbtn:focus-visible { border-color: var(--text); }
   #settings .levels .ltextbtn:disabled { cursor: default; opacity: .6; }
   #settings .setting .setting { position: static; padding: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; flex: 0 1 auto; min-width: 0; max-width: 100%; } /* 0729: as wide as its list, beside its agent's on the right */
   #settings .setting .setting .pick { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-width: 0; max-width: 100%; }
@@ -111,13 +113,23 @@
   #settings .provider-form .pfield { display: grid; gap: 2px; min-width: 0; color: var(--muted); }
   #settings .provider-form .pfield .edit { box-sizing: border-box; width: 100%; }
   #settings .provider-form .keyline { display: flex; justify-content: flex-end; margin-top: 6px; }
-  /* 0258: a setting the panel can change: its control and Save button */
-  #settings .setting .edit, #settings .arow .edit { font-family: var(--font-mono); font-size: 12px; color: var(--text); background: var(--input); border: 1px solid var(--line); padding: 1px 6px; min-width: 0; max-width: 100%; }
+  /* 0258: a setting the panel can change: its control and Save button.
+     0730: boxes and lists in the interface font, as Cursor's; lists are compact menus with no border until hover or focus. */
+  #settings .setting .edit, #settings .arow .edit { font-family: var(--font-ui); font-size: 14px; color: var(--text); background: var(--input); border: 1px solid var(--line); border-radius: 8px; padding: 2px 8px; min-width: 0; max-width: 100%; }
+  /* 0730: a chevron from two muted squares, with no font file load, so 0147's host check stays clean */
+  #settings select.edit { appearance: none; -webkit-appearance: none; border-color: transparent; padding-right: 22px; cursor: pointer;
+    background-color: transparent;
+    background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+    background-position: calc(100% - 11px) calc(50% - 1px), calc(100% - 7px) calc(50% - 1px); background-size: 5px 5px; background-repeat: no-repeat; }
+  #settings select.edit:hover, #settings select.edit:focus, #settings select.edit:focus-visible { border-color: var(--line); color: var(--text);
+    background-color: var(--input);
+    background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+    background-position: calc(100% - 11px) calc(50% - 1px), calc(100% - 7px) calc(50% - 1px); background-size: 5px 5px; background-repeat: no-repeat; }
   /* 0281: the boxes a whole number of pixels wide, borders and padding included, so their right edges fall on a whole
      pixel. 0273: the text box in the row's right half. */
   #settings .setting input.edit[type="number"] { box-sizing: border-box; width: calc(8ch + 14px); width: round(up, calc(8ch + 14px), 1px); }
   #settings .setting input.edit[type="text"] { box-sizing: border-box; width: calc(16ch + 14px); width: round(up, calc(16ch + 14px), 1px); }
-  #settings .setting .risk { font-family: var(--font-mono); font-size: 12px; color: var(--text); display: inline-flex; align-items: center; gap: 4px; } /* 0259: auto_ship_risk's boxes */
+  #settings .setting .risk { font-family: var(--font-ui); font-size: 14px; color: var(--text); display: inline-flex; align-items: center; gap: 4px; } /* 0259: auto_ship_risk's boxes */
   #settings .setting .save, #settings .arow .save { box-sizing: border-box; padding: 0 16px; font: inherit; font-family: var(--font-ui); font-size: 14px; font-weight: 500; line-height: 20px; color: var(--text); background: none; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; } /* 0612: the secondary style */
   #settings .setting .save:hover, #settings .arow .save:hover { color: var(--text); border-color: var(--text); }
   #settings .setting .save[aria-pressed="true"] { color: var(--text); border-color: var(--text); background: var(--raise); } /* 0261: where a change goes, once picked */
