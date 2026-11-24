@@ -119,12 +119,14 @@ function cmdCheck(args) {
   if (errors.length) throw new SpeckError('', 1);
 }
 
+const BLANKABLE = ['level', 'builder', 'builder_model', 'builder_effort', 'reviewer', 'reviewer_model', 'reviewer_effort'];
+
 function cmdSet(args) {
   if (/^\d+$/.test(args[1] ?? '')) return setSeveralReady(args, cmdSet); // 0681: `speck set <id> <id>… status ready`
   const [id, key, ...rest] = args;
   const value = rest.join(' ');
-  // priority is the one field that can be cleared, with `speck set <id> priority ""`.
-  if (!id || !key || (!value && !(key === 'priority' && rest.length))) throw new SpeckError(SET_USAGE);
+  // priority and the build settings can be cleared, with `speck set <id> priority ""`.
+  if (!id || !key || (!value && !((key === 'priority' || BLANKABLE.includes(key)) && rest.length))) throw new SpeckError(SET_USAGE);
   checkSetValue(key, value);
   const repo = findRepoRoot();
   const cfg = loadConfig(repo);
@@ -148,7 +150,7 @@ function cmdSet(args) {
     if (commit.status !== 0)
       throw new SpeckError(`Couldn't commit ${posix(path.relative(repo, from))}, so ${t.fm.id} is unchanged:\n${(commit.stderr || commit.stdout || '').trim().split('\n').slice(-5).join('\n')}\nFix that, then run this again.`);
   }
-  console.log(`${t.fm.id} ${key} → ${value}`);
+  console.log(value === '' ? `${t.fm.id} ${key} is now blank` : `${t.fm.id} ${key} → ${value}`);
 }
 
 // `speck set`'s checks and write, shared with the panel so the two can't drift. The checks throw a SpeckError saying

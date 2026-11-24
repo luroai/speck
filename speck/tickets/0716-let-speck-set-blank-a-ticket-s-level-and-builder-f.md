@@ -42,6 +42,8 @@ Someone working from the terminal, or an agent, can give a ticket a level or its
 
 ## Notes
 - `cmdSet` in `scripts/speck.mjs` allows an empty value only for `priority`. `scripts/panel-level.mjs` already blanks a level through the same `checkSetValue`/`checkSetTicket`.
+- Failing before this build: none
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
