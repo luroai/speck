@@ -1,7 +1,7 @@
 ---
 id: "0736"
 title: "Fix the full suite failing on main at 5bbb046"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -22,7 +22,7 @@ started: "2026-11-24T15:53:48.835Z"
 ---
 # 0736 · Fix the full suite failing on main at 5bbb046
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The full suite fails on main at commit 5bbb046 (5bbb0466df17e16d3dd3a9fdb44997e1ac1ea63c). Failing tests:
@@ -67,7 +67,7 @@ Failing before this build: none (the recorded result for this code, the quick su
 Self-check: no changes
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Nothing you use day to day changes. The full test suite on main was failing under load because one browser check that proves a wait gives up in time was measuring the clock too tightly: on a busy machine Chrome's one-second limit could take a couple of seconds of wall time to fire, and the check allowed only two and a half. That check now allows ten seconds on the clock while still requiring the one-second give-up and the same error messages, so a busy machine no longer fails the suite by chance. To see it: after this lands, the full suite on main should pass. Worth watching: a follow-up idea asks for fix tickets to name only the tests that still fail after the suite's retry, so the next busy-machine failure doesn't open an oversized fix ticket.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -77,3 +77,66 @@ Self-check: no changes
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: one to the inbox — name only the tests that still fail after a full-suite retry (`speck/ideas/2026-11-24-name-only-the-tests-that-still-fail-after-a-full-suite-retry.md`).
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "ff6b3f5c6698b163c2be1d8d0bca53e62281e33b",
+    "session": "fresh",
+    "thread_id": "01a20e4f-ffef-7470-823c-386538c5bfa8",
+    "builder_response": "Round 1, type: fix ticket.\n- Tests run: test/steady-0736.test.mjs test/slow-tests-0429.test.mjs test/panel-0159.test.mjs (and the commands.checks files speck test --files adds; then --related reused that passing result)\n\nCause: the full suite at 5bbb046 failed 22 tests on the first run; its retry of those files left only one failure — 0159 AC3 (b.js / b.until), `took 2588 ms` against a 2500 ms within budget wrapping a 1 s Chrome timeout. The other named tests passed on that retry (chance failures under parallel load). latest.json still listed all 22 because names() reads every not-ok in the combined first+retry output.\n\nFix: raise the within budget from 2500 ms to 10 s for 0159 AC3's b.js(), b.until() and b.loaded() give-up checks (Chrome's own 1 s limit unchanged). Update 0429's pin of those within values. Add test/steady-0736.test.mjs to check the new budgets.\n\nNo product code changed (0 lines outside tests/speck).\n",
+    "seconds": 32,
+    "usage": {
+      "input_tokens": 200306,
+      "cached_input_tokens": 161408,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 921,
+      "reasoning_output_tokens": 123
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 38898,
+      "cached": 161408,
+      "write": 0,
+      "output": 921
+    },
+    "cost_usd": 0.1031468,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-24T16:08:04.649Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "test/panel-0159.test.mjs exercises the three timeout behaviours with real Chromium, retains the explicit 1000 ms limits and expected error assertions, and passes in /tmp/speck-0736-tests.txt. The change increases only the elapsed-time allowance. The other named tests remain unchanged and are recorded as passing on the earlier retry; the whole-suite ship check remains required."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "/tmp/speck-0736-tests.txt reports 161 passed, zero failed and three skipped. The changed 0429 checks and new 0736 check pass. No product code changes; broader regression verification runs at ship."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The change gives browser timeout tests more scheduling allowance on busy machines while preserving their one-second timeout settings and error checks. The targeted tests pass. No blocking issues found; the full suite still needs to pass before shipping."
+  }
+}
+```
+
+</details>
