@@ -1,7 +1,7 @@
 ---
 id: "0714"
 title: "Say QA checked it even with QA's settings blank"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: "speck/ideas/done/2026-11-11-say-qa-checked-it-even-with-qa-s-settings-b
 after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T13:51:24.136Z"
+approved: "2026-11-24T14:22:36.077Z"
 
 ---
 # 0714 · Say QA checked it even with QA's settings blank
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A check in the running app is described as QA's only once one of QA's settings is set; with all four blank it still reads as the engineering manager's. Now that Settings shows QA as a member of its own, that hides who checked what.
@@ -54,9 +55,14 @@ Follow-ups: none.
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 183,694
+- Elapsed since build started: 31 min
+- Changed lines: 6 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ## Review rounds
