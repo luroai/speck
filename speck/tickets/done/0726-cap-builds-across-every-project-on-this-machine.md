@@ -1,7 +1,7 @@
 ---
 id: "0726"
 title: "Cap builds across every project on this machine"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T15:15:44.235Z"
 approved: "2026-11-24T17:16:17.514Z"
+finished: "2026-11-24T17:28:56.896Z"
 
 ---
 # 0726 · Cap builds across every project on this machine
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 `max_parallel_builds` applies to each project on its own, so several projects' speck runs can start many builds at once; five builds ran this machine out of memory. 0678 capped test runs across projects, but not builds.
