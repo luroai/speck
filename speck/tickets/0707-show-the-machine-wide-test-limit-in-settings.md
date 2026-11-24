@@ -15,7 +15,7 @@ reviewer: ""             # blank: the reviewer your settings give when each revi
 reviewer_model: ""       # blank: your settings' reviewer_model (blank there too: the reviewer's default)
 reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low | medium | high | xhigh | max
 source: "speck/ideas/done/2026-11-15-show-machine-parallel-tests-in-the-settings-view.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
-after: []                # ticket ids that must be done first
+after: ["0729"]                # ticket ids that must be done first
 created: 2026-11-24
 
 ---
