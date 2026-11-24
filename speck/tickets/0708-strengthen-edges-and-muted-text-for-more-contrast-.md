@@ -43,6 +43,10 @@ With the system's more-contrast setting on, the panel's edges and muted text mee
 - Tokens are in `templates/panel-base.css` (`--line`, `--line-soft`, `--border`, `--muted`, `--faint`, `--raise`, `--panel`), light and dark. No `prefers-contrast` rule exists yet.
 - Decision: keep the look as designed and serve low-vision readers through the system setting, rather than adding stronger edges for everyone.
 
+- Failing before this build: none
+- Pictures: none, because the change only applies with the system's more-contrast setting, which the panel's look settings can't switch on.
+- Self-check: no changes
+
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
 
