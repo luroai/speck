@@ -47,7 +47,8 @@ An idle check costs about the same however many done tickets there are.
 - Self-check: after round 1, cache only buildExit and shippedCriteriaChanged (not the whole entry), so spend and settings still update; checked missing records/logs and that a warmed board takes up spend and reviewer setting changes.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+An idle speck run no longer re-reads every finished ticket's build log or asks git about it on each look at the board. It only looks again when that ticket's log or run record has changed, and it reads the shared spend files once per look however many tickets there are. The board still shows the same facts as before — spend, settings and what a ticket is waiting on stay up to date. To see it, watch speck run's processor use with top while nothing is building: it should stay steadier as the project's history grows. Keep an eye on it: tickets still in progress are read as they were.
+
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -57,6 +58,7 @@ An idle check costs about the same however many done tickets there are.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none to the inbox. Known limit: the tip of the base branch is re-read once per board check; shipped-criteria answers grow with distinct tip+criteria pairs until the process ends.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -142,6 +144,93 @@ An idle check costs about the same however many done tickets there are.
     ],
     "escalation_question": "",
     "summary": "The change avoids repeated log reads and git calls, and the counting tests support that improvement. However, it also freezes information that must keep updating, including costs, settings and recent spending. Those stale board results need fixing before merge."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "93ac4dee3b77f0f7a6e4f757da50109026e290c6",
+    "session": "continued",
+    "thread_id": "01a20e1a-9c87-7df2-8b5b-3331ea21c81a",
+    "builder_response": "- Tests run: test/run-reads-0721.test.mjs\n- F1: fixed. Cache only buildExit (by run record + log stats) and shippedCriteriaChanged (by base tip + criteria text) in scripts/closed-board.mjs; statusData rebuilds every entry each check so spend, settings and waiting_on stay current. Regression: 0721 AC4 (round 1 F1).\n- F2: fixed. recent_spend is computed by totalSpent on every check again; no whole-entry freeze. Regression: 0721 AC4 (round 1 F2).\n",
+    "seconds": 25,
+    "usage": {
+      "input_tokens": 408608,
+      "cached_input_tokens": 330240,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2010,
+      "reasoning_output_tokens": 169
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 22162,
+      "cached": 201216,
+      "write": 0,
+      "output": 794
+    },
+    "cost_usd": 0.0723856,
+    "saved_at": "2026-11-24T15:14:26.706Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "cachedBuildExit avoids reopening unchanged logs; cachedShipped avoids ticket-specific git calls. The passing 0721 AC1 test counts log opens and git calls on a second check."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "spend.mjs jsonLines caches parsed files by stat. The passing 0721 AC2 test verifies one read per shared spend file across multiple tickets."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "cachedBuildExit keys results on run record and log stats. The passing 0721 AC3 test changes both files and verifies renewed reads and updated output."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "statusData now rebuilds entries on every check, including settings, dependencies and current spend. Passing AC4 tests cover unchanged JSON output, updated shared spend and reviewer settings, and recent-spend filtering."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "All six 0721 tests and the supplied compatibility checks pass. The unchanged tmp-cleanup reporter-format failure remains unrelated to this implementation."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/closed-board.mjs",
+        "issue": "Resolved: whole-entry caching was removed. Board fields now refresh each check; only build-exit and shipped-criteria results are cached by their dependencies.",
+        "suggested_fix": "",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "Resolved: totalSpent again receives the current seven-day cutoff on every check, so recent_spend is no longer frozen.",
+        "suggested_fix": "",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The revised change avoids repeated closed-ticket log reads and git checks while keeping board information current. Both previous blocking issues are resolved, and the relevant tests pass. It is ready for the owner's merge decision."
   }
 }
 ```
