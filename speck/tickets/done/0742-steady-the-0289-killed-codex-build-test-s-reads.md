@@ -1,7 +1,7 @@
 ---
 id: "0742"
 title: "Steady the 0289 killed-Codex-build test's reads"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T23:12:03.167Z"
 approved: "2026-11-24T23:15:03.057Z"
+finished: "2026-11-24T23:20:42.265Z"
 
 ---
 # 0742 · Steady the 0289 killed-Codex-build test's reads
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 "0289 AC3: speck run resumes a killed Codex build in its own session" failed in 0711's related run with `Unexpected end of JSON input` on a busy machine, and passed again alone. Its fake `codex` writes each call's file with a plain write while the test reads the folder, so it can read a half-written file.
