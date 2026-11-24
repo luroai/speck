@@ -23,12 +23,13 @@ test('0722 AC1: the check fails when a command outside the setup prompt differs'
   assert.equal(readmeNpxProblems(base).length, 1);
 });
 
-test('0722 AC1: the check fails when the terminal command\'s init is changed or removed', () => {
+test('0722 AC1: the check fails when the terminal command\'s init is changed, removed or given an extra argument', () => {
   const prompt = setupPrompt(read('README.md'));
   assert.ok(prompt, 'needs a real setup prompt as the base');
   const wrap = cmd => `## Get started\n\n\`\`\`text\n${prompt}\`\`\`\n\n## Without an agent\n\n\`\`\`bash\n${cmd}\n\`\`\`\n`;
   assert.equal(readmeNpxProblems(wrap("npx 'github:luroai/speck#semver:*' detect")).length, 1, 'init → detect');
   assert.equal(readmeNpxProblems(wrap("npx 'github:luroai/speck#semver:*'")).length, 1, 'init removed');
+  assert.equal(readmeNpxProblems(wrap("npx 'github:luroai/speck#semver:*' init --help")).length, 1, 'init --help');
 });
 
 test('0722 AC1: the check fails when the README has no setup prompt', () => {

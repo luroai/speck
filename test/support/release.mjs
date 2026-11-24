@@ -25,8 +25,9 @@ export function setupPromptProblems(readme) {
   return [];
 }
 
-// Every speck npx command in a text, as written, including its subcommand (such as `init`), quoted or not.
-const speckNpx = s => [...s.matchAll(/npx (?:-y )?['"]?github:luroai\/speck[^\s`]*(?:\s+[a-z][\w-]*)?/g)].map(m => m[0]);
+// Every speck npx command in a text, as written, including its subcommand and arguments, up to a backtick or
+// newline (Markdown command boundaries), quoted or not.
+const speckNpx = s => [...s.matchAll(/npx (?:-y )?['"]?github:luroai\/speck[^\n`]*/g)].map(m => m[0].trimEnd());
 
 // A list of plain-English problems when any speck npx command in the README differs from the setup prompt's
 // (0722), including the terminal one under Without an agent; empty when they all match.
