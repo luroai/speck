@@ -53,6 +53,8 @@ speck is ready to be released as 1.6.0.
 - Checked 2026-11-24: `v1.5.0` is tagged on origin.
 - 0695's checks that name 1.5.0 as the current version should check the current version, as 0695 did for 0684's.
 - Failing before this build: not checked
+- Built from main at `speck(0730): Make Settings' controls look like Cursor's`, with 0731's approved work under it (`speck start` started this on 0731, so 0731 ships first and is in the changelog). 0733 was cancelled and 0737 is still a draft, so neither is in it. `npm run prices` ran on 2026-11-24. The README's demo pictures show the Build lane, not Plan's rows, so 0727 and 0728 don't change them and they weren't taken again.
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
