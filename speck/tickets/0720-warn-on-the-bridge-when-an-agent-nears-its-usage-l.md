@@ -18,6 +18,7 @@ source: "speck/ideas/done/2026-11-10-show-each-agent-s-usage-in-the-panel.md"   
 after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T14:33:58.528Z"
+waited_seconds: 10
 
 ---
 # 0720 · Warn on the bridge when an agent nears its usage limit
