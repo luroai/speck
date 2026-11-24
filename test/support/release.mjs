@@ -25,6 +25,28 @@ export function setupPromptProblems(readme) {
   return [];
 }
 
+// Every speck npx command in a text, as written, including its subcommand and arguments, up to a backtick or
+// newline (Markdown command boundaries), quoted or not.
+const speckNpx = s => [...s.matchAll(/npx (?:-y )?['"]?github:luroai\/speck[^\n`]*/g)].map(m => m[0].trimEnd());
+
+// A list of plain-English problems when any speck npx command in the README differs from the setup prompt's
+// (0722), including the terminal one under Without an agent; empty when they all match.
+export function readmeNpxProblems(readme) {
+  const prompt = setupPrompt(readme);
+  if (!prompt) return ["The README has no setup prompt: no code block names speck-setup."];
+  const fromPrompt = speckNpx(prompt);
+  if (!fromPrompt.length) return ["The README's setup prompt has no speck npx command."];
+  const expected = fromPrompt[0];
+  if (fromPrompt.some(c => c !== expected)) {
+    return [`The README's setup prompt has differing speck npx commands: ${[...new Set(fromPrompt)].join(', ')}.`];
+  }
+  const bad = [...new Set(speckNpx(readme).filter(c => c !== expected))];
+  if (bad.length) {
+    return [`The README has speck npx commands that differ from the setup prompt's \`${expected}\`: ${bad.join(', ')}.`];
+  }
+  return [];
+}
+
 // The text of one `## <version>` section, up to the next `## ` heading or the end.
 export function changelogSection(changelog, version) {
   const v = version.replace(/\./g, '\\.');

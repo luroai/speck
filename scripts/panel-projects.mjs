@@ -84,7 +84,7 @@ function chosen(req, port) {
 // The panel at `port`'s side of it: its record, the menu's part of /api/state, and route(), which answers the
 // requests that are the menu's or another panel's. `origins` are the addresses this panel serves; `changed` tells
 // the page's stream when the running panels change.
-export function panelProjects({ port, name, repo, origins, changed, id }) {
+export function panelProjects({ port, name, repo, origins, changed, id, usage = () => [] }) {
   const unregister = registerPanel({ port, name, repo });
   let cached = null, cachedAt = 0;
   const list = () => { if (!cached || Date.now() - cachedAt > LIST_MS) { cached = runningPanels(); cachedAt = Date.now(); } return cached; };
@@ -137,7 +137,9 @@ export function panelProjects({ port, name, repo, origins, changed, id }) {
       const s = await summaryOf(p.port);
       return s ? { ...s, ...p, running: true } : { ...p, running: false };
     }));
-    return json(res, 200, { self: port, projects });
+    let warn = [];
+    try { warn = usage(); } catch { /* no warnings when the readings can't be read */ } // 0720
+    return json(res, 200, { self: port, projects, usage: Array.isArray(warn) ? warn : [] });
   }
 
   // Passes the request on to the panel on `to`, on this machine, as one made to it directly, and its answer back.

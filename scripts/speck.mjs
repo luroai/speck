@@ -26,9 +26,9 @@ import { cmdConfig } from './config.mjs'; import { cmdConfigShow } from './setti
 import { cmdTest } from './turns.mjs';
 import { cmdPanel, panelServer } from './panel.mjs';
 import { cmdRun, cmdPause, cmdPlay, cmdStop, resumeCommandOf, pidAlive, processRows, buildKilled, resumeHint, runState } from './run.mjs';
-import { foremanView, foremanLines, readForeman, fixingOf } from './foreman.mjs'; import { leftChecks } from './app-check.mjs'; // 0679
+import { foremanView, foremanLines, readForeman, fixingOf } from './foreman.mjs'; import { leftChecks, appChecking } from './app-check.mjs'; // 0679. 0713: appChecking
 import { withForeman, foremanBoard, foremanTicketLines, decidedFor, withCalls } from './foreman-took.mjs';
-import { agentView, cmdForeman, cmdWatch } from './foreman-agent.mjs';
+import { agentView, readAgentState, cmdForeman, cmdWatch } from './foreman-agent.mjs';
 import { logTail } from './build-log.mjs';
 import { buildStop, countStop, wontResume } from './stop-wait.mjs'; import { removeScratch } from './scratch.mjs';
 import { roundRunning } from './review-running.mjs';
@@ -386,6 +386,11 @@ export function ticketShown(repo, id) {
   return t ? { status: t.fm.status, worktree: t.at || null, build_running: buildRunning(runsOf(repo), t.fm.id, groupLeader()) } : null;
 }
 
+// 0713: the watch agent's record and its questions to you, for appChecking, from parsed `tickets`.
+const watchAgentOf = (runs, tickets) => ({ state: readAgentState(runs), asks: agentView(runs, tickets.map(t => ({ id: t.fm.id, status: t.fm.status }))).asks });
+// Board entry `e` with app_checking: whether speck is checking its question in the app, so it waits for speck, not you.
+const withAppCheck = (cfg, agent, e) => ({ ...e, app_checking: appChecking(cfg, e, agent.state, agent.asks) });
+
 export function statusData(repo) {
   const cfg = loadConfig(repo);
   const tickets = statusTickets(repo, cfg);
@@ -393,6 +398,7 @@ export function statusData(repo) {
   const cancelled = new Set(tickets.filter(t => t.fm.status === 'cancelled').map(t => padId(t.fm.id))); // 0686
   const runs = runsOf(repo);
   const leads = groupLeader(), fixing = fixingOf(cfg), builderOf = boardBuilders(cfg, repo), providers = knownProviders(repo);
+  const watchAgent = watchAgentOf(runs, tickets); // 0713
   const entries = tickets.map(t => {
     const lint = lintTicket(t, cfg);
     const facts = questionFacts(contentLines(t.sections['blocked question'])); // 0283
@@ -402,7 +408,7 @@ export function statusData(repo) {
     const criteria_change = ['done', 'cancelled'].includes(t.fm.status) ? null : criteriaChange(t.at || repo, cfg, t.fm.id), criteria_changed = criteria_change !== null; // 0565
     const shipsWhyNot = autoShipWhyNot(cfg, padId(t.fm.id), t.fm.risk, ticketRounds(t.raw).rounds, ticketKind(t), changesPending(t.raw, ticketRounds(t.raw).rounds).length > 0, criteria_changed, ['done', 'cancelled'].includes(t.fm.status) ? '' : () => receiptWhyNot(repo, t.fm.id, ticketRounds(t.raw).rounds), leftChecks(t.sections.notes), builtOn ?? ''); // 0629. 0679. 0674
     const stop = inHand(t) ? buildStop(runs, t.fm.id) : null, builder = builderSpent(runs, t.fm.id), watch = watchSpent(runs, t.fm.id), delegated = delegatedSpent(runs, t.fm.id);
-    return withForeman(t, fixing, { // 0317
+    return withAppCheck(cfg, watchAgent, withForeman(t, fixing, { // 0317
       ...t.fm,
       // 0388: the builder and reviewer it would use now: its own, or else the settings'. 0391: a provider's, by its name
       ...builderOf(t.fm), build_with: ticketBuild(t.fm, cfg, providers), // 0545: and the model its builds run on. 0669: its Builder fact, and where it comes from
@@ -459,7 +465,7 @@ export function statusData(repo) {
       ship: shipState(runs, t.fm.id), watch_tokens: watch.tokens, watch_cost_usd: watch.cost_usd, delegated_tokens: delegated.tokens, delegated_cost_usd: delegated.cost_usd, // 0525: the watch agent's spend, 0534: Codex sessions started in its worktree
       pull_request: prShown(runs, t.fm.id, t.fm), // 0295: its pull request's link, or why it couldn't be opened
       builder_tokens: builder.tokens, builder_cost_usd: builder.cost_usd, builder_models: builder.models ?? [], reviewer_cost_usd: reviewerCost(ticketRounds(t.raw).rounds, runs, t.fm.id), ...totalSpent(runs, t.fm.id, ticketRounds(t.raw).rounds, Date.now() - 7 * 864e5), // 0529, 0530, 0595: and what it spent in the last 7 days: builder_models, 0526: total_cost_usd, total_tokens, total_cost_unknown
-    });
+    }));
   });
   entries.sort(byPriority);
   const dir = path.join(repo, 'speck', 'ideas');
@@ -482,7 +488,7 @@ function cmdStatus(args = []) {
   const tickets = statusTickets(repo, cfg), name = speckNameOf(cfg); // 0576
   if (!tickets.length) return console.log('No tickets yet. Capture an idea, then run /speck-ticket.');
   // 0285: the Foreman, as the panel's header shows it, from speck run's own record. Blocked tickets are listed below.
-  const board = foremanBoard(tickets, cfg, runs), foremanOn = new Map(board.map(b => [b.id, b])); // 0317
+  const board = foremanBoard(tickets, cfg, runs, watchAgentOf(runs, tickets)), foremanOn = new Map(board.map(b => [b.id, b])); // 0317
   for (const line of foremanLines(foremanView({ run: runState(runs), record: readForeman(runs), tickets: board, fixing: fixingOf(cfg), agent: agentView(runs, board, name), name }))) console.log(line);
   const order = ['approved', 'blocked', 'reviewing', 'building', 'ready', 'draft', 'done', 'cancelled'];
   for (const s of order) {
