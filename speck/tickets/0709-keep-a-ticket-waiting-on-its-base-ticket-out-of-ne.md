@@ -41,6 +41,7 @@ Such a ticket stays under Building, saying it ships after its base ticket, and a
 - A `built_on:` ticket that was cancelled: that has a ticket of its own.
 
 ## Notes
+- Failing before this build: none
 - `autoShipWhyNot` (`scripts/ship.mjs`) turns auto-ship off while `built_on` hasn't shipped, so the board sets `auto_ship: false` and `ships_after`. `buildGroup` and `doingNow` (`templates/panel-model.js`), `atShip` (`scripts/panel-summary.mjs`) and the status line (`scripts/foreman.mjs`, the speck-status skill) are where it shows. A ticket speck will act on (`foreman_will`) is already grouped under Building, which this follows.
 
 ## In plain words
