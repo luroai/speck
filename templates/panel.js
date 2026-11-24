@@ -801,7 +801,8 @@ function buildNotes(t) {
     t.exit_label && t.exit_message ? el('div', t.to_ship ? 'question exit to-ship' : t.carried_by ? 'question exit carried' : 'question exit', t.exit_message) : null,
     t.ship_hint ? el('div', 'act', t.ship_hint) : null,
     shipsAfter(t) ? el('div', 'act ships-after', `Ships after ${shipsAfter(t)}, which it was built on.`) : null, // 0698
-    t.status !== 'blocked' ? null : t.foreman_will === true ? el('div', 'act foreman-will', `${speckCalled()} will take its recommendation: ${t.blocked_recommendation}`)
+    t.status !== 'blocked' ? null : t.app_checking === true ? el('div', 'act foreman-will', `${speckCalled()} is checking it in the app`) // 0713
+      : t.foreman_will === true ? el('div', 'act foreman-will', `${speckCalled()} will take its recommendation: ${t.blocked_recommendation}`)
       : el('div', 'act', `Waiting for you. Answer the question, then run /speck-build ${t.id}`), // the bar already shows the status
     went ? el('div', 'act went-with', `${went.by === 'foreman' ? `${speckCalled()} went with the recommendation` : 'You went with the recommendation'}: ${went.option} · ${tookAt(went.at)}`) : null,
   ].filter(Boolean);

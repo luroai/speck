@@ -44,6 +44,19 @@ export const appStartSet = cfg => String(cfg?.commands?.start ?? '').trim() !== 
 export const appCheckable = (cfg, t) => !!cfg && speckActs(fixingOf(cfg)) && checksInApp(t) && t.status === 'blocked' && t.risk === 'low';
 // The question as checked, so each is checked once: its text, what to check and the recommendation.
 export const checkKey = t => crypto.createHash('sha256').update(JSON.stringify([t.blocked_question ?? '', t.blocked_check_in_app ?? '', t.blocked_recommendation ?? ''])).digest('hex').slice(0, 16);
+// 0713: whether speck's watch agent is checking, or will check, board ticket `t`'s question in the app, so it waits for
+// speck rather than for you: speck run checks it (appCheckable), the agent hasn't asked you about it (`asks`, agentView's),
+// and this question hasn't been checked yet, or its check is still waiting or running (`state`, readAgentState's). Once
+// checked with no action taken, it waits for you.
+export function appChecking(cfg, t, state, asks = []) {
+  if (!t || !appCheckable(cfg, t)) return false;
+  const id = String(t.id), key = checkKey(t), mine = x => !!x && String(x.id) === id;
+  if ((Array.isArray(asks) ? asks : []).some(mine)) return false;
+  const s = state && typeof state === 'object' ? state : {}, checked = s.checked && typeof s.checked === 'object' ? s.checked : {};
+  if (!Object.hasOwn(checked, id) || checked[id] !== key) return true;
+  const ours = x => mine(x) && x.key === key && !!checkOf(x);
+  return (Array.isArray(s.queue) ? s.queue : []).some(ours) || ours(s.running);
+}
 // The agent's queue entry for it, with what its brief needs.
 export const checkItem = (t, log) => ({ id: String(t.id), key: checkKey(t), what: `its build is blocked on a question to check in the app: ${t.blocked_check_in_app}`, log,
   check: { question: t.blocked_question ?? '', line: t.blocked_check_in_app, recommendation: t.blocked_recommendation ?? '' } });
