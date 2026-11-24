@@ -37,26 +37,26 @@ test('0606 AC1: every figure is a tile of one style: the surface colour, no bord
   assert.equal(cssValue(tile, 'color'), 'var(--text)', 'its own text colour on its fill (0161)');
 });
 
-test('0606 AC1: its number is in the panel\'s font, and its label in the muted colour on one line', () => {
+test('0606 AC1: its number is in the panel\'s font, and its label in the muted colour, wrapping rather than cut (0702)', () => {
   assert.equal(cssValue(cssRules('.stat .num'), 'font-family'), 'var(--font-ui)');
   const label = cssRules('.stat .label');
   assert.equal(cssValue(label, 'color'), 'var(--muted)');
-  assert.equal(cssValue(label, 'white-space'), 'nowrap');
-  assert.equal(cssValue(label, 'text-overflow'), 'ellipsis');
+  assert.equal(cssValue(label, 'white-space'), undefined, 'a long label wraps');
+  assert.equal(cssValue(label, 'text-overflow'), undefined, 'no ellipsis');
   assert.equal(cssValue(cssRules('.stats'), 'grid-auto-rows'), '1fr', 'tiles in a row the same height');
 });
 
 // The window's width picks, as a media query would, with no media query of its own (0140). The real-browser checks at
-// 479 and 480 px with a scrollbar are below; panel-0162 and panel-0157 check 375, 700 and 1280 px.
-test('0606 AC2: two columns below 480 px wide and four from 480 px, chosen by the window\'s width, with no media query of its own (0140)', () => {
-  assert.equal(cssValue(cssRules('.stats'), 'grid-template-columns'), 'repeat(auto-fill, minmax(clamp(25% - 6.1px, (480px - 100vw) * 100000, 50% - 4.1px), 1fr))');
+// 799 and 800 px with a scrollbar are below; panel-0162 and panel-0157 check 375, 700 and 1280 px.
+test('0606 AC2: two columns below 800 px wide and four from 800 px, chosen by the window\'s width, with no media query of its own (0140)', () => {
+  assert.equal(cssValue(cssRules('.stats'), 'grid-template-columns'), 'repeat(auto-fill, minmax(clamp(25% - 6.1px, (800px - 100vw) * 100000, 50% - 4.1px), 1fr))');
   assert.equal(cssValue(cssRules('.stats'), 'gap'), '8px');
   // auto-fill with the column the clamp gives for a grid `w` wide in a window `vw` wide: how many fit, gaps included
-  const columns = (w, vw) => { const track = Math.min(Math.max(w / 4 - 6.1, (480 - vw) * 100000), w / 2 - 4.1); return Math.floor((w + 8) / (track + 8)); };
-  for (const [vw, want] of [[320, 2], [375, 2], [479, 2], [479.5, 2], [480, 4], [600, 4], [720, 4]]) for (const bar of [0, 15]) assert.equal(columns(Math.min(vw, 720) - 32 - bar, vw), want, `${vw} px, a ${bar} px scrollbar`);
+  const columns = (w, vw) => { const track = Math.min(Math.max(w / 4 - 6.1, (800 - vw) * 100000), w / 2 - 4.1); return Math.floor((w + 8) / (track + 8)); };
+  for (const [vw, want] of [[320, 2], [375, 2], [480, 2], [720, 2], [799, 2], [799.5, 2], [800, 4], [1280, 4]]) for (const bar of [0, 15]) assert.equal(columns(Math.min(vw, 720) - 32 - bar, vw), want, `${vw} px, a ${bar} px scrollbar`);
 });
 
-test('0606 AC2: in a real browser with a scrollbar on the lane, 479 px shows two to a row and 480 px four, closed and open', skip, async () => {
+test('0606 AC2: in a real browser with a scrollbar on the lane, 799 px shows two to a row and 800 px four, closed and open', skip, async () => {
   const r = panelRepo();
   const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
   const b = await browserPage('about:blank');
@@ -66,7 +66,7 @@ test('0606 AC2: in a real browser with a scrollbar on the lane, 479 px shows two
   const perRow = () => b.js(`(() => { const tops = [...document.querySelectorAll('#shipped-stats .stat')].map(n => Math.round(n.getBoundingClientRect().top)); return { n: tops.length, rows: new Set(tops).size,
     bar: (l => l.offsetWidth - l.clientWidth)(document.getElementById('shipped-list')) }; })()`);
   try {
-    await b.send('Emulation.setDeviceMetricsOverride', { width: 480, height: 600, deviceScaleFactor: 1, mobile: false });
+    await b.send('Emulation.setDeviceMetricsOverride', { width: 800, height: 600, deviceScaleFactor: 1, mobile: false });
     await b.send('Page.enable');
     await b.send('Page.addScriptToEvaluateOnNewDocument', { source: stub });
     await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
@@ -74,7 +74,7 @@ test('0606 AC2: in a real browser with a scrollbar on the lane, 479 px shows two
     await b.js(openLane('shipped'));
     for (const open of [false, true]) {
       if (open) await b.js(`(document.getElementById('more-stats').click(), true)`);
-      for (const [width, want] of [[480, 4], [479, 2]]) {
+      for (const [width, want] of [[800, 4], [799, 2]]) {
         await b.send('Emulation.setDeviceMetricsOverride', { width, height: 600, deviceScaleFactor: 1, mobile: false });
         await b.js(`new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(1))))`);
         const g = await perRow();

@@ -169,7 +169,7 @@ const TILES = `[...document.querySelectorAll('#shipped-stats .stat')].map(n => {
     lines: Math.round(lr.height / parseFloat(ls.lineHeight)), labelSize: parseFloat(ls.fontSize), labelColor: ls.color,
     count: count && { size: parseFloat(getComputedStyle(count).fontSize), color: getComputedStyle(count).color, below: count.getBoundingClientRect().top >= lr.bottom - 0.5 } };
 })`;
-for (const [width, perRow] of [[375, 2], [700, 4], [1280, 4]]) { // three to a row since 0162. 0606: two below 480 px, four from it
+for (const [width, perRow] of [[375, 2], [700, 2], [1280, 4]]) { // three to a row since 0162. 0606: two below 800 px, four from it (0702)
   // 0587: the three tiles up top. 0606: the four that always show.
   test(`0157 AC2: at ${width} px the four stats up top are tiles of equal size, ${perRow} to a row, each number above its label, each label on one line (0606)`, skip, async () => {
     await withPanel(async b => {
@@ -183,7 +183,7 @@ for (const [width, perRow] of [[375, 2], [700, 4], [1280, 4]]) { // three to a r
         const first = tiles.find(x => Math.round(x.top) === Math.round(t.top));
         assert.ok(Math.abs(t.width - tiles[0].width) < 1 && Math.abs(t.height - first.height) < 1, `every tile the same size: ${JSON.stringify(tiles.map(x => [x.width, x.height]))}`);
         assert.ok(t.numAbove, 'the number above its label');
-        assert.equal(t.lines, 1, `a label on ${t.lines} lines`); // 0606: one line, cut off with … if it can't fit
+        assert.ok(t.lines >= 1 && t.lines <= 2, `a label on ${t.lines} lines`); // 0702: whole, wrapping to a second line when it must
       }
       const faint = await b.js(RGB('var(--faint)'));
       for (const t of tiles.filter(x => x.count)) { // 0606: shipped today covers no median
