@@ -1,7 +1,7 @@
 ---
 id: "0745"
 title: "Name only the tests that still fail after a full-suite retry"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T23:16:24.266Z"
 approved: "2026-11-24T23:40:10.826Z"
+finished: "2026-11-24T23:58:16.961Z"
 
 ---
 # 0745 · Name only the tests that still fail after a full-suite retry
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 When the full suite's retry clears some of the first run's failures, `latest.json` and the fix ticket still name every first-run failure. On a busy machine that makes oversized fix tickets: 0736 named 22 tests when only 0159 AC3 still failed.
