@@ -40,6 +40,7 @@ The pull request queue holds while the main checkout is bare and tries again onc
 
 ## Notes
 - `scripts/pr-queue.mjs`; the check is `bareMain()` in `scripts/bare-main.mjs`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
