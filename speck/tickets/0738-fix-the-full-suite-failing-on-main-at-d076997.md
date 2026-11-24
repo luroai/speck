@@ -42,6 +42,7 @@ The full suite passes on main again.
 
 ## Notes
 <!-- Constraints, links and decisions. Optional. -->
+Failing before this build: none (the recorded quick-suite result at 5378f9e passed; the full suite's failures are the ones this ticket names)
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
