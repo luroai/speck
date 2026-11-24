@@ -43,6 +43,9 @@ The full suite passes on main again.
 ## Notes
 <!-- Constraints, links and decisions. Optional. -->
 Failing before this build: none (the recorded quick-suite result at 5378f9e passed; the full suite's failures are the ones this ticket names)
+Causes, from the failed full run's output at d076997: 0058 AC3/AC4 selected `9 ` where it expected two digits, as two ticks of the counter reach 10 min only when the real clock had already passed the 8th minute; 0476 AC2 and AC4 timed out waiting for a lane to open after a swipe. Reproduced the 0476 ones with Chromium's CPU throttling (30-60x): Chromium drops the last moves and the touchend of a gesture altogether (none arrive 20 s later), so the page never sees the finger lift. That's the browser giving up on a starved page, not the panel, so the touch helpers now check the page got each gesture's touchend and do the gesture again when it didn't (up to 3 tries, then a plain failure). Pacing each event to the page didn't help.
+Self-check: bounded the 0058 loop to 3 more ticks, so a counter that never reaches two digits fails at the assertion rather than looping; the touchend counter is added for every page loaded in the tab too, so 0476's refresh test keeps it.
+Pictures: none, because the ticket changes only tests.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
