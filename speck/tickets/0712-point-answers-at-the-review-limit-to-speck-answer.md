@@ -42,6 +42,10 @@ An answer to a question at the review limit always goes through `speck answer` o
 ## Notes
 - `allowedRounds` (`scripts/review-limit.mjs`) counts lines written by `go-with.mjs` and `foreman-answer.mjs` (`speck answer`, the panel's Answer). The skill text is `skills/speck-build/SKILL.md`, sections on blocking and resuming.
 
+- Failing before this build: none
+- Self-check: no changes
+- Pictures: none, because nothing visual changes
+
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
 
