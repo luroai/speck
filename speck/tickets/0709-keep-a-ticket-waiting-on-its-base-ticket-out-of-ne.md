@@ -1,7 +1,7 @@
 ---
 id: "0709"
 title: "Keep a ticket waiting on its base ticket out of Needs you"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: "speck/ideas/done/2026-11-15-don-t-say-ready-to-ship-while-the-base-tick
 after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T11:55:03.915Z"
+approved: "2026-11-24T12:45:44.482Z"
 
 ---
 # 0709 · Keep a ticket waiting on its base ticket out of Needs you
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 An approved ticket built on another ticket that hasn't shipped has auto-ship turned off until that ticket ships, so the panel puts it under Needs you as Ready to ship. You're asked to act when shipping it now would only have to wait.
@@ -57,9 +58,14 @@ Worth a look: while the other builds were running, the browser tests timed out a
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 281,319
+- Elapsed since build started: 51 min
+- Changed lines: 24 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none for the inbox. The related run's 50 failures were real-browser and real-panel tests timing out at a load average over 150 from other builds; all passed on re-runs apart from 0517's 50 ms frame timing, which passed alone.
 
