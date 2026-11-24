@@ -3,8 +3,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { panelRepo, freePort, startPanel, stop, request, post, tokenOf, headOf, gitEnv, findChrome, browserPage, deferred } from './support/panel.mjs';
-import { settingsPage, openSettings, rowOf, controlOf, saveButton, changeTo, tick, posted } from './support/settings.mjs';
+import { panelRepo, freePort, startPanel, stop, request, post, tokenOf, headOf, gitEnv, deferred } from './support/panel.mjs';
+import { settingsPage, openSettings, rowOf, controlOf, changeTo, tick, posted } from './support/settings.mjs';
 import { panelSettings, panelSaveSettings, panelSaveRequest } from '../scripts/settings.mjs';
 import { machineConfig } from '../scripts/machine.mjs';
 
@@ -45,50 +45,22 @@ function page(views, saves = [], answer = true) {
   return p;
 }
 const opened = async p => { await p.settle(); await openSettings(p); return p; };
+const OK = { ok: true, changed: ['x'] };
 const pick = (p, key, label) => p.press(p.all(rowOf(p, key)).find(n => n.tagName === 'button' && n.textContent === label));
 
-test('0274 AC1: no setting has its own Save; the view has one, which is pressable only while a value differs from the saved one', async () => {
-  const p = await opened(page([view()]));
-  const buttons = p.all(p.byId('settings')).filter(n => n.tagName === 'button');
-  assert.deepEqual(buttons.filter(b => b.textContent === 'Save').length, 1, 'one Save');
-  for (const key of ['auto_ship', 'auto_ship_risk', 'reviewer_effort', 'reviewer_model', 'max_parallel_builds', 'limits.max_review_rounds'])
-    assert.ok(!p.all(rowOf(p, key)).some(n => n.tagName === 'button' && /^save$/i.test(n.textContent)), `${key} has no Save of its own`);
-  const save = saveButton(p);
-  assert.ok(cls(save.parentNode, 'savebar'), 'in the bar at the bottom');
-  const pane = p.byId('settings');
-  assert.equal(pane.children[pane.children.length - 1], save.parentNode, 'after every setting');
-  assert.equal(save.disabled, true, 'nothing changed yet');
-
-  changeTo(p, 'limits.max_review_rounds', '4');
-  assert.equal(save.disabled, false);
+// 0731: the one Save is gone: each setting saves by itself as it changes.
+test('0274, since 0731: no Save, and each change is sent by itself as it\'s made, with where it goes', async () => {
+  const p = await opened(page([view(), view({ reviewer_effort: 'high' }), view({ reviewer_effort: 'high', rounds: 4 }), view({ reviewer_effort: 'high', rounds: 4, machine: 3 })], [OK, OK, OK]));
+  assert.ok(!p.all(p.byId('settings')).some(n => n.tagName === 'button' && /^Save$/.test(n.textContent || '')), 'no Save');
   changeTo(p, 'reviewer_effort', 'high');
-  changeTo(p, 'limits.max_review_rounds', '3');
-  assert.equal(save.disabled, false, 'reviewer_effort still differs');
-  changeTo(p, 'reviewer_effort', '');
-  assert.equal(save.disabled, true, 'every changed value put back');
-
-  // Ticking a box, then unticking it, puts it back too.
-  tick(p, 'auto_ship_risk', 'high', true);
-  assert.equal(save.disabled, false);
-  tick(p, 'auto_ship_risk', 'high', false);
-  assert.equal(save.disabled, true);
-  assert.deepEqual(posted(p), [], 'nothing is sent until Save');
-});
-
-test('0274 AC2: Save sends every changed setting in one request, with where each goes, and nothing for the rest', async () => {
-  const p = await opened(page([view(), view({ reviewer_effort: 'high', rounds: 4, machine: 3 })], [{ ok: true, changed: ['x'] }]));
-  changeTo(p, 'reviewer_effort', 'high');
+  await p.settle();
   changeTo(p, 'limits.max_review_rounds', '4');
+  await p.settle();
   changeTo(p, 'max_parallel_builds', '3');
-  changeTo(p, 'reviewer_model', 'm1');
-  changeTo(p, 'reviewer_model', ''); // put back: not sent
-  p.press(saveButton(p));
   await p.settle();
   const sent = p.settingsCalls.filter(c => c.method === 'POST');
-  assert.equal(sent.length, 1, 'one request');
-  assert.ok(sent[0].url.startsWith('/api/settings/save?'));
-  assert.ok(sent[0].headers['X-Speck-Token'], 'with the token');
-  assert.deepEqual(asked(sent[0].url), { 'repo:reviewer_effort': 'high', 'repo:limits.max_review_rounds': '4', 'machine:max_parallel_builds': '3' });
+  assert.ok(sent.every(c => c.url.startsWith('/api/settings/save?') && c.headers['X-Speck-Token']), 'each with the token');
+  assert.deepEqual(sent.map(c => asked(c.url)), [{ 'repo:reviewer_effort': 'high' }, { 'repo:limits.max_review_rounds': '4' }, { 'machine:max_parallel_builds': '3' }]);
 });
 
 test('0274 AC2: the changed shared settings go into one commit of speck/config.yml on the base branch, this machine\'s are saved for it, and the rest are left alone', () => {
@@ -140,27 +112,22 @@ test('0274 AC2: the panel server takes the changes together from the view, only 
   } finally { await stop(p); }
 });
 
-test('0274 AC3: a change that lets more tickets ship asks first, and nothing is sent unless you confirm', async () => {
+test('0274 AC3: a change that lets more tickets ship asks first, and nothing is sent unless you confirm (0731: as it\'s made)', async () => {
   const p = await opened(page([view()], [], false));
   changeTo(p, 'auto_ship', 'true');
-  changeTo(p, 'reviewer_effort', 'high');
-  p.press(saveButton(p));
   await p.settle();
   assert.equal(p.asks.length, 1);
   assert.match(p.asks[0], /approved low-risk tickets/);
   assert.deepEqual(posted(p), [], 'cancelled: nothing is saved');
   assert.equal(controlOf(p, 'auto_ship').value, 'false', 'auto_ship as it was');
-  assert.equal(controlOf(p, 'reviewer_effort').value, 'high', 'the other change stays to save');
 
-  // Turning auto_ship on and adding high at once asks about both, and says so when it's sent.
-  const q = await opened(page([view(), view({ auto_ship: true, auto_ship_risk: ['low', 'high'] })], [{ ok: true, changed: ['x'] }], true));
-  changeTo(q, 'auto_ship', 'true');
+  // Adding high while auto_ship is on asks about both, and says so when it's sent.
+  const q = await opened(page([view({ auto_ship: true }), view({ auto_ship: true, auto_ship_risk: ['low', 'high'] })], [OK], true));
   tick(q, 'auto_ship_risk', 'high', true);
-  q.press(saveButton(q));
   await q.settle();
   assert.match(q.asks[0], /approved low-risk and high-risk tickets/);
   assert.equal(posted(q).length, 1);
-  assert.deepEqual(asked(posted(q)[0]), { 'repo:auto_ship': 'true', 'repo:auto_ship_risk': 'low,high', confirm: 'low,high' });
+  assert.deepEqual(asked(posted(q)[0]), { 'repo:auto_ship_risk': 'low,high', confirm: 'low,high' });
 });
 
 test('0274 AC3: the server saves nothing that lets more tickets ship unless it was confirmed, judging the changes together', () => {
@@ -238,94 +205,51 @@ test('0274 AC4 F1: when writing or committing speck/config.yml fails, this machi
   assert.deepEqual(snapshot(r), was);
 });
 
-test('0274 AC2 F2: a change made while Save is waiting stays, to be saved next', async () => {
+test('0274 AC2 F2, since 0731: a change made while a save is on its way is saved next, by itself', async () => {
   const answer = deferred();
-  const p = await opened(page([view(), view({ reviewer_effort: 'high' })], [answer]));
+  const p = await opened(page([view(), view({ reviewer_effort: 'high' }), view({ reviewer_effort: 'high', rounds: 5 })], [answer, OK]));
   changeTo(p, 'reviewer_effort', 'high');
-  p.press(saveButton(p));
   await p.settle();
-  assert.equal(saveButton(p).disabled, true, 'while saving');
   changeTo(p, 'limits.max_review_rounds', '5'); // made while waiting
-  answer.resolve({ ok: true, changed: ['reviewer_effort'] });
+  await p.settle();
+  assert.equal(controlOf(p, 'limits.max_review_rounds').value, '5', 'kept while it waits');
+  answer.resolve(OK);
+  await p.settle();
   await p.settle();
   assert.equal(controlOf(p, 'reviewer_effort').value, 'high');
-  assert.equal(controlOf(p, 'limits.max_review_rounds').value, '5', 'kept');
-  assert.equal(saveButton(p).disabled, false, 'still to save');
-  assert.deepEqual(posted(p).map(asked), [{ 'repo:reviewer_effort': 'high' }]);
+  assert.equal(controlOf(p, 'limits.max_review_rounds').value, '5');
+  assert.deepEqual(posted(p).map(asked), [{ 'repo:reviewer_effort': 'high' }, { 'repo:limits.max_review_rounds': '5' }]);
 });
 
-test('0274 AC4: the view shows each refusal beside its setting, keeping every change in place to fix', async () => {
+test('0274 AC4, since 0731: the view shows a refusal beside its setting, which goes back to the saved value', async () => {
   const refused = { 'limits.max_review_rounds': 'limits.max_review_rounds must be a whole number of 1 or more (got "0").' };
   const p = await opened(page([view()], [{ status: 422, body: { error: refused['limits.max_review_rounds'], refused } }]));
-  changeTo(p, 'reviewer_effort', 'high');
   changeTo(p, 'limits.max_review_rounds', '0');
-  p.press(saveButton(p));
   await p.settle();
   assert.match(rowOf(p, 'limits.max_review_rounds').textContent, /must be a whole number of 1 or more/);
-  assert.doesNotMatch(rowOf(p, 'reviewer_effort').textContent, /whole number/);
-  assert.equal(controlOf(p, 'limits.max_review_rounds').value, '0');
-  assert.equal(controlOf(p, 'reviewer_effort').value, 'high');
-  assert.equal(saveButton(p).disabled, false, 'still to save');
+  assert.equal(controlOf(p, 'limits.max_review_rounds').value, '3');
   assert.equal(p.settingsCalls.filter(c => c.method === 'GET' && c.url.startsWith('/api/settings')).length, 1, 'not read again');
 
-  // A refusal that's no one setting's shows under Save. 0387: a change to your own setting goes for this machine, unasked.
+  // A refusal that's no one setting's shows under the setting sent. 0387: a change to your own setting goes for this machine, unasked.
   const q = await opened(page([view()], [{ status: 500, body: { error: 'Couldn\'t commit speck/config.yml, so nothing was saved.' } }]));
   changeTo(q, 'max_parallel_builds', '4');
-  q.press(saveButton(q));
   await q.settle();
   assert.deepEqual(asked(posted(q)[0]), { 'machine:max_parallel_builds': '4' });
-  assert.match(saveButton(q).parentNode.textContent, /Couldn't commit/);
-  assert.equal(controlOf(q, 'max_parallel_builds').value, '4');
+  assert.match(rowOf(q, 'max_parallel_builds').textContent, /Couldn't commit/);
+  assert.equal(controlOf(q, 'max_parallel_builds').value, '1');
 });
 
-test('0274 AC5: after a save the view shows the values as speck now reads them, with Save disabled', async () => {
-  const p = await opened(page([view(), view({ reviewer_effort: 'high', rounds: 4 })], [{ ok: true, changed: ['reviewer_effort', 'limits.max_review_rounds'] }]));
+test('0274 AC5: after a save the view shows the values as speck now reads them (0731: clearing this machine\'s value saves at once)', async () => {
+  const p = await opened(page([view(), view({ reviewer_effort: 'high' })], [OK]));
   changeTo(p, 'reviewer_effort', 'high');
-  changeTo(p, 'limits.max_review_rounds', '4');
-  p.press(saveButton(p));
   await p.settle();
   assert.equal(p.settingsCalls.filter(c => c.method === 'GET' && c.url.startsWith('/api/settings')).length, 2, 'read again');
   assert.equal(controlOf(p, 'reviewer_effort').value, 'high');
-  assert.equal(controlOf(p, 'limits.max_review_rounds').value, '4');
-  assert.equal(saveButton(p).disabled, true);
 
-  // Clearing this machine's value waits for Save too, then shows the repo's.
   const q = await opened(page([view({ machine: 3 }), view()], [{ ok: true, changed: ['max_parallel_builds'] }]));
-  assert.equal(saveButton(q).disabled, true);
   pick(q, 'max_parallel_builds', 'Clear this machine\'s value');
-  assert.deepEqual(posted(q), []);
-  assert.equal(saveButton(q).disabled, false);
-  q.press(saveButton(q));
   await q.settle();
   assert.deepEqual(asked(posted(q)[0]), { 'machine:max_parallel_builds': '' });
   assert.equal(controlOf(q, 'max_parallel_builds').value, '1');
-  assert.ok(!p.all(rowOf(q, 'max_parallel_builds')).some(n => n.tagName === 'button' && /this machine's value/.test(n.textContent)), 'the repo\'s value now (0397: no mark)');
-  assert.equal(saveButton(q).disabled, true);
-});
-
-// ---------- in a real browser: only a real one scrolls the view ----------
-
-const skip = findChrome() ? false : 'needs Chrome or Chromium';
-test('0274 AC1: Save stays in view at the bottom of the view however far it\'s scrolled', { skip }, async () => {
-  const r = panelRepo();
-  const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
-  const b = await browserPage('about:blank');
-  try {
-    await b.send('Emulation.setDeviceMetricsOverride', { width: 390, height: 500, deviceScaleFactor: 1, mobile: true });
-    await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
-    await b.until(`location.port === '${panel.port}' && document.readyState === 'complete'`, 'the panel');
-    await b.js(`document.getElementById('settings-open').click()`);
-    await b.until(`document.querySelectorAll('#settings .setting').length >= 10`, 'the settings');
-    const at = where => b.js(`(() => {
-      const pane = document.getElementById('settings');
-      pane.scrollTop = ${where === 'top' ? 0 : 'pane.scrollHeight'};
-      const box = pane.getBoundingClientRect(), save = pane.querySelector('.save-all').getBoundingClientRect();
-      return { scrolls: pane.scrollHeight > pane.clientHeight, inView: save.top >= box.top && save.bottom <= box.bottom, gap: box.bottom - save.bottom };
-    })()`);
-    const top = await at('top'), bottom = await at('bottom');
-    assert.equal(top.scrolls, true, 'the view is taller than the screen');
-    assert.ok(top.inView, `scrolled to the top: ${JSON.stringify(top)}`);
-    assert.ok(bottom.inView, `scrolled to the bottom: ${JSON.stringify(bottom)}`);
-    assert.ok(top.gap < 40, `at the bottom of the view: ${JSON.stringify(top)}`);
-  } finally { await b.close(); await stop(panel); }
+  assert.ok(!q.all(rowOf(q, 'max_parallel_builds')).some(n => n.tagName === 'button' && /this machine's value/.test(n.textContent)), 'the repo\'s value now (0397: no mark)');
 });

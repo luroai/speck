@@ -8,7 +8,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { panelRepo, gitEnv } from './support/panel.mjs';
 import { speck } from './support/cli.mjs';
-import { settingsPage, openSettings, rowOf, controlOf, changeTo, saveButton, posted } from './support/settings.mjs';
+import { settingsPage, openSettings, rowOf, controlOf, changeTo, posted } from './support/settings.mjs';
 import { panelSettings, panelSaveSettings, panelSaveRequest } from '../scripts/settings.mjs';
 import { homeSettings, setHomeSetting } from '../scripts/home-settings.mjs';
 
@@ -107,7 +107,6 @@ test('0707 AC2: the page\'s Save sends it, and the server saves it from that que
   const p = settingsPage([view(''), view(5)], [{ ok: true, changed: ['machine_parallel_tests'] }]);
   await openSettings(p);
   changeTo(p, 'machine_parallel_tests', '5');
-  p.press(saveButton(p));
   await p.settle();
   const url = posted(p).find(u => u.startsWith('/api/settings/save'));
   const query = url.split('?')[1];
@@ -181,7 +180,6 @@ test('0707 AC4: the page shows the refusal beside the setting', async () => {
   const p = settingsPage([view(3)], [{ status: 422, body: { error: why, refused: { machine_parallel_tests: why } } }]);
   await openSettings(p);
   changeTo(p, 'machine_parallel_tests', '0');
-  p.press(saveButton(p));
   await p.settle();
   assert.match(rowOf(p, 'machine_parallel_tests').textContent, /must be a whole number of 1 or more/);
 });

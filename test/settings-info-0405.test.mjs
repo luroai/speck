@@ -90,7 +90,7 @@ test('0405 AC2: this machine\'s own effort is said, with its button, in the role
   assert.ok(clear, 'its button is there');
   p.press(clear);
   const after = tipsIn(p, rowOf(p, 'reviewer'))[0];
-  assert.match(after.textContent, /This machine's value, high, is cleared when you save\./);
+  assert.match(after.textContent, /This machine's value, high, is being cleared\./); // 0731: at once
   assert.equal(after.hidden, false, 'the role\'s explanation stays open');
   assert.deepEqual(infos(p, rowOf(p, 'reviewer')).map(i => i.key), ['reviewer']);
 });

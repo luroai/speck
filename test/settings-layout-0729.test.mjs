@@ -177,8 +177,7 @@ test('0729 AC3: a setting this machine has its own value for still says so in it
   p.press(clear);
   const again = tipOf(p, rowOf(p, 'reviewer'));
   assert.equal(again.hidden, false, 'the explanation stays open to show what it did');
-  assert.match(again.textContent, /This machine's value, high, is cleared when you save\./);
-  assert.ok(p.all(again).some(n => n.tagName === 'button' && n.textContent === 'Keep this machine\'s value'));
+  assert.match(again.textContent, /This machine's value, high, is being cleared\./); // 0731: at once, with no Keep
 });
 
 // ---------- AC2 and AC4 in a real browser: the blocks as drawn, and a 375 px wide view ----------

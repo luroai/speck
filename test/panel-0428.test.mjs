@@ -50,9 +50,7 @@ const BUTTONS = {
   'Answer / Dismiss': ['button', '.foreman-ask .ask-reply'],
   'Reload page': ['button', '.foreman .reload'],
   'Settings\' Save beside a setting': ['button', '#settings .setting .save', '#settings .arow .save'],
-  'Settings\' Save': ['button', '#settings .save-all'],
-  'Settings\' question\'s buttons': ['button', '#settings-unsaved button', '#settings-unsaved button.save-all'],
-  'Settings\' question\'s other buttons': ['button', '#settings-unsaved button', '#settings-unsaved button.secondary'], // 0603: Discard and Keep editing
+  // 0731: Settings' Save and its question on closing are gone
   'Close': ['button', '#full-ticket .close', '#doc-view .close', '#foreman .close', '#settings .close'],
   'Ship': ['button', '#full-ticket .ship', '#doc-view .ship'],
   'Ask for changes': ['button', '#full-ticket .ask-changes', '#doc-view .ask-changes'],
@@ -82,7 +80,6 @@ test('0428 AC2, since 0602: cards, the stats\' tiles (0606) and the pop-ups have
   const BOXES = {
     'a Plan card': ['.item'], 'a Build card': ['.q'],
     'a stat\'s tile': ['.stat'], // 0593: Settings' groups are plain sections. 0606: each tile its own corners
-    'Settings\' question': ['#settings-unsaved .box'],
   };
   for (const [what, sels] of Object.entries(BOXES)) assert.equal(resolve(sels)['border-radius'], '12px', what);
   assert.equal(resolve(['.stats'])['border-radius'], undefined, '0606: the grid has no corners to cut its tiles');

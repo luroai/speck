@@ -398,7 +398,7 @@ function checkChange(repo, text, cfg, { key, value, machine, blank }) {
 const refusal = (status, refused, more = {}) => ({ status, body: { error: [...new Set(Object.values(refused))].join('\n'), refused, ...more } });
 const each = (changes, why) => Object.fromEntries(changes.map(c => [c.key, why]));
 
-// 0274: the panel's one Save, for every setting changed in the Settings view. `changes`: { key, value, machine, blank }
+// 0274: the panel's save of the settings changed in the Settings view (0731: one setting at a time). `changes`: { key, value, machine, blank }
 // each. Each is checked first, and if any is refused nothing is saved, with why in `refused` by setting. Otherwise
 // 0387: your own settings are saved for this machine, as `speck config set` does, without a commit, and the rest are
 // written to speck/config.yml, rewriting only their lines, and committed in one commit of only that file on the base
@@ -443,7 +443,7 @@ export function saveRepoSettings(repo, changes, { confirmed = null, replace = nu
     const problem = sameModelProblem(String(will.builder ?? ''), String(will.reviewer ?? ''), will, will.reviewer_model);
     const switching = models.some(c => c.key === 'builder' && !c.same);
     if (problem) return refusal(422, each(models, switching
-      ? `${problem} For a ${will.builder} builder, a reviewer from another family is ${otherFamilyReviewer(String(will.builder))}: pick it as the reviewer in the same Save.` : problem));
+      ? `${problem} For a ${will.builder} builder, a reviewer from another family is ${otherFamilyReviewer(String(will.builder))}.` : problem)); // 0731: each setting saves by itself, so there's no Save to pick it in too
   }
   const toFile = checked.filter(c => !c.own && !c.same), toMachine = checked.filter(c => c.own && !c.same);
   if (toFile.length) {
@@ -509,7 +509,7 @@ export function panelSettingRequest(repo, rawKey, rawValue, confirmed = null, sc
   catch (e) { return { status: 500, body: { error: e instanceof SpeckError ? e.message : String(e?.message || e) } }; }
 }
 
-// 0274: the panel's POST /api/settings/save, the Settings view's one Save. Its address's query gives each change, as
+// 0274: the panel's POST /api/settings/save, which the Settings view sends as each setting changes (0731). Its address's query gives each change, as
 // repo:<key>=<value> for the repo or machine:<key>=<value> for this machine only, machine:<key>= clearing this
 // machine's value and blank:<key>= saving a blank one for this machine (0387), and confirm=<risks> once you've
 // confirmed a change that lets more tickets ship by themselves (0259). 0293: replace=<build_command> once you've

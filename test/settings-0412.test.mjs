@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { page, findChrome, browserPage } from './support/panel.mjs';
 import { sharedPanel } from './support/shared-panel.mjs';
-import { settingsPage, openSettings, saveButton, posted } from './support/settings.mjs';
+import { settingsPage, openSettings, posted } from './support/settings.mjs';
 
 // ---------- 0412: Appearance offers System, Light and Dark ----------
 
@@ -121,16 +121,15 @@ test('0412 AC3: without the <head> script\'s pickLook, a choice still switches t
   assert.deepEqual(chosen(p), ['System']);
 });
 
-test('0412 AC4: the choice is kept in this browser only: nothing is sent, Save stays off and Close asks nothing', async () => {
+test('0412 AC4: the choice is kept in this browser only: nothing is sent, and Close asks nothing', async () => {
   const { p } = await opened();
   for (const word of ['Dark', 'Light', 'System']) choose(p, word);
   await p.settle();
   assert.deepEqual(posted(p), []);
   assert.ok(!p.settingsCalls.some(c => /look|theme/.test(c.url)), 'no request names the look');
-  assert.equal(saveButton(p).disabled, true, 'no unsaved change');
+  // 0731: there's no Save to stay off
   p.press(p.all(p.byId('settings')).find(n => n.tagName === 'button' && n.className === 'close'));
   await p.settle();
-  assert.equal(p.byId('settings-unsaved').hidden, true);
   assert.equal(p.byId('settings').hidden, true);
 });
 

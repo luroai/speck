@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { panelRepo, headOf, gitEnv } from './support/panel.mjs';
-import { settingsPage, openSettings, rowOf, controlOf, saveButton, changeTo, posted } from './support/settings.mjs';
+import { settingsPage, openSettings, rowOf, controlOf, changeTo, posted } from './support/settings.mjs';
 import { panelSettings, panelSaveSettings, panelSaveRequest } from '../scripts/settings.mjs';
 import { DEFAULT_BUILD_COMMAND } from '../scripts/build-model.mjs';
 import { parseYaml, parseTicket, loadConfig } from '../scripts/core.mjs';
@@ -78,7 +78,6 @@ test('0293 AC1: the view offers the builders, says what switching sets, and Save
   assert.ok(p.all(rowOf(p, 'builder')).some(n => n.textContent === 'Not offered: cursor (Cursor isn\'t installed).'));
   changeTo(p, 'builder', 'codex');
   assert.ok(p.all(rowOf(p, 'builder')).some(n => n.tagName === 'p' && /build_command/.test(n.textContent) && /blank/.test(n.textContent) && /Codex/.test(n.textContent)));
-  p.press(saveButton(p));
   await p.settle();
   assert.deepEqual(asks, [], 'nothing set by hand: nothing to ask');
   assert.equal(posted(p).length, 1);
@@ -158,7 +157,6 @@ test('0293 AC3: the view asks before replacing a build_command set by hand, and 
     await p.settle();
     await openSettings(p);
     changeTo(p, 'builder', 'codex');
-    p.press(saveButton(p));
     await p.settle();
     assert.equal(asks.length, 1);
     assert.match(asks[0], /set by hand to 'my-build \{id\}'/);

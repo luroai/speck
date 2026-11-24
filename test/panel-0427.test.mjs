@@ -68,7 +68,7 @@ test('0427 AC2: ids, the build log, code and figures use Cursor\'s monospace', (
 });
 
 test('0427 AC3: headings, tab names and ticket titles are the interface font at 600, and the old fonts are gone', () => {
-  for (const sel of ['.tab .tab-name', '.sh h2', '.title', /* 0600: a shipped row's title is 15 px medium, as every row's */ /* 0470: the pop-up's Log heading is gone */ '#settings .top h3', '#settings .sgroup h4', '#settings-unsaved h3',
+  for (const sel of ['.tab .tab-name', '.sh h2', '.title', /* 0600: a shipped row's title is 15 px medium, as every row's */ /* 0470: the pop-up's Log heading is gone */ '#settings .top h3', '#settings .sgroup h4', // 0731: Settings' question on closing is gone
     '#full-ticket h4, #full-ticket > .md .md-h1, #full-ticket > .md .md-h2, #full-ticket > .md .md-h3']) {
     const r = rule(sel);
     assert.equal(family(r), UI, `${sel}: the interface font`);
@@ -85,7 +85,7 @@ test('0427 AC4: no label is in spaced capitals: buttons and labels are sentence 
   }
   for (const sel of ['.full-open', '.set-ready', '.q .stop-build', '.q .back-to-plan', '.resume .copy', '.group', '.detail h4',
     '#doc-view .close', '#settings .close', // 0602: the build log has no Close. 0603: nor the review pack
-    '#full-ticket .live-buttons .full-open, #full-ticket .live-buttons .stop-build', '#full-ticket .ship, #doc-view .ship', '#settings .save-all']) { // 0472: Settings' Close in its own file
+    '#full-ticket .live-buttons .full-open, #full-ticket .live-buttons .stop-build', '#full-ticket .ship, #doc-view .ship']) { // 0472: Settings' Close in its own file. 0731: its Save is gone
     assert.equal(family(rule(sel)), UI, `${sel}: the interface font`);
   } // 0520: Plan's Tickets, Ideas and Inbox buttons (.toggle, labelled `${label} · ${n}`) are gone
   // The words themselves are already sentence case: the capitals were only the stylesheet's.

@@ -1,5 +1,5 @@
 // 0707: the Settings view's home-folder settings, your own for every project on this machine (0678): its row for
-// machine_parallel_tests, and its Save, which saves them in the home folder's file as `speck config set` does, without
+// machine_parallel_tests, and its save, which saves them in the home folder's file as `speck config set` does, without
 // a commit, all or none with the project's settings.
 
 import { SpeckError } from './core.mjs';
@@ -21,7 +21,7 @@ export function homeRow() {
 
 const refusal = (status, refused) => ({ status, body: { error: [...new Set(Object.values(refused))].join('\n'), refused } });
 
-// 0274: the panel's one Save, for every setting changed in the Settings view (see saveRepoSettings). 0707: a change to
+// 0274: the panel's save of the settings changed in the Settings view, one at a time since 0731 (see saveRepoSettings). 0707: a change to
 // one of PANEL_HOME_SETTINGS is checked as `speck config set` checks it, with the same reason when it's refused, and
 // saved in the home folder's file, or removed from it when blank. Any change refused, here or by saveRepoSettings,
 // and none is saved: the home folder's values are put back as they were.

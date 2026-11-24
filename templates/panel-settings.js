@@ -21,13 +21,13 @@ function chooseLook(look) {
   drawLook();
 }
 // 0257: the Settings view. It shows the settings people tune, read afresh from speck/config.yml each time it opens.
-// 0258: the ones the server marks editable can be changed in place. 0274: the view's one Save sends every change at
-// once, and the server saves them all or none.
+// 0258: the ones the server marks editable can be changed in place. 0731: each saves the moment it changes, by itself
+// (0274's one Save, and 0275's question on closing with changes not saved, are gone).
 let settingAgentModels = new Map(); // 0369: each agent chosen since the view opened: { reading } | { models } | { why }
 let settingsView = null, settingsSeq = 0; // null while it's closed, or { state: 'error' | 'ok', … }
 let settingsOpening = false; // 0409: whether a press on Settings is waiting for the config, to open it
 let settingTyped = new Map(), settingRefused = new Map(); // key → what was typed, and why the server refused it, until the view closes
-let settingClear = new Set(); // 0261: keys whose machine value is cleared on Save
+let settingClear = new Set(); // 0261: keys whose machine value is being cleared
 // 0399: "Your agents", after Auto-build, drawn in place in a box kept while the view is open, so a change to it moves
 // nothing else in the view and keeps the keyboard focus. Each agent's { busy, typed } until the view closes: a provider's
 // key is only ever sent, never read back, as the server says only whether this machine has it (0393).
@@ -36,18 +36,14 @@ let agentStates = new Map();
 let subsBox = null, subsView = null, subsSeq = 0; // 0646: Your subscriptions' box, and what GET /api/usage gave it: null, { state: 'loading' | 'ok' | 'error', … }
 let teamLimits = new Map(); // 0652: each member's card's line saying its agent is limited, as drawn
 let providerForm = null; // 0401: the Add an API provider form's { name, address, type, key, models, busy } until the view closes
-let settingsFailed = null; // 0274: why the last Save failed, when it wasn't one setting's fault
-let settingsSaid = null; // 0311: what the last Save changed that you didn't, such as builder_model cleared
-let settingsBar = null;
+let settingDone = new Map(); // 0731: key → { text }, the line its row shows once it's saved: 'Saved.', for a few seconds, or what the save changed that you didn't (0311)
 let settingRowsDrawn = new Map(); // 0370: key → its row, and its explanation's number, as drawn
-let settingControls = new Map(); // 0276: key → its control, as drawn // 0274: the Save button, as drawn
+let settingControls = new Map(); // 0276: key → its control, as drawn
 // 0268: each setting's explanation, one at a time. 0729: a press on the setting's name or its short line shows it, and
 // the next press there hides it, as Cursor's settings have no info buttons. Nothing shows from the pointer resting on a row.
 let settingTip = null; // the key whose explanation shows, or null
 let settingTips = new Map(); // key → its explanation, in the view as it's drawn
 let settingInfos = new Map(); // 0395: key → the button that shows it, its name, in the view as it's drawn
-// 0275: closing the view with changes not saved asks first. null, or the question being asked, as { saving }.
-let settingsLeaving = null;
 $('settings-open').addEventListener('click', openSettings);
 $('settings-backdrop').addEventListener('click', e => { if (e.target === $('settings-backdrop')) leaveSettings(); });
 // 0368: the pop-up covers the backdrop, so a click on the pop-up itself, beside its column, is a click on the backdrop.
@@ -76,7 +72,6 @@ document.addEventListener('pointerdown', e => {
   settingsDownBeside = false;
 });
 renderSettings(); // closed
-renderLeaving(); // not asking
 // 0409: it opens once the config has come back, onto its groups and their values, with no loading line in their place.
 // 0667: `to` 'levels' opens it scrolled to the Builder's Build levels, as a ticket's Level menu asks. A click on the
 // Settings button passes its event, which asks for nothing.
@@ -93,7 +88,7 @@ function openSettings(how) {
 async function loadSettings() {
   const mine = ++settingsSeq;
   settingAgentModels = new Map();
-  // The lists read last time, shown while they're read again after a Save.
+  // The lists read last time, shown while they're read again after a save.
   const had = settingsView !== null && settingsView.state === 'ok' && settingsView.catalogues === undefined ? settingsView : null;
   const opening = settingsOpening, next = await readSettings('/api/settings?quick=1');
   if (opening) { settingsOpening = false; $('settings-open').setAttribute('aria-busy', 'false'); }
@@ -103,7 +98,7 @@ async function loadSettings() {
   if (quick && had !== null) keepChoices(next, had);
   if (quick && had === null) Object.assign(next, { catalogues: 'loading', agent_models: [] }); // a list for each role, saying it's loading
   settingsView = next;
-  renderSettings();
+  if (opening) renderSettings(); else renderKeeping(); // 0731: read again after a save
   const pane = $('settings');
   if (opening && pane.focus) pane.focus({ preventScroll: true }); // so the keys scroll the pane, and none reach the page behind
   if (opening && settingsTo === 'levels' && levelsBox !== null && levelsBox.scrollIntoView) levelsBox.scrollIntoView({ block: 'start' }); // 0667
@@ -165,58 +160,21 @@ function fillCatalogues(full, asked) {
 // 0407: whether the agents' lists are still being read, and why they couldn't be, or null.
 const cataloguesLoading = () => settingsView !== null && settingsView.catalogues === 'loading';
 const cataloguesWhy = () => settingsView !== null && settingsView.catalogues !== null && typeof settingsView.catalogues === 'object' ? settingsView.catalogues.why : null;
-// 0275: Close, Escape and a click outside the view: at once with nothing to save, otherwise after asking.
-function leaveSettings() {
-  if (settingsLeaving !== null) return;
-  if (settingsView === null || settingsView.state !== 'ok' || !settingChanges().length) { closeSettings(); return; }
-  settingsLeaving = { saving: false };
-  renderLeaving();
-}
-function renderLeaving() {
-  const box = $('settings-unsaved'), asking = settingsLeaving !== null;
-  box.hidden = !asking;
-  $('settings').inert = asking; // Tab stays in the question
-  if (!asking) { box.replaceChildren(); return; }
-  const choice = (label, cls, fn) => { const b = el('button', cls, label); b.type = 'button'; b.addEventListener('click', fn); return b; };
-  const keep = choice('Keep editing', 'secondary', keepEditing);
-  const title = el('h3', null, 'Unsaved changes');
-  title.id = 'settings-unsaved-title';
-  box.replaceChildren(el('div', 'box', null, title,
-    el('p', null, 'You have unsaved changes in Settings. Save them before closing, or discard them?'),
-    el('div', 'choices', null, choice(settingsLeaving.saving ? 'Saving…' : 'Save', 'save-all', saveAndLeave), choice('Discard', 'secondary', closeSettings), keep)));
-  box.setAttribute('role', 'alertdialog');
-  box.setAttribute('aria-modal', 'true');
-  box.setAttribute('aria-labelledby', title.id);
-  if (keep.focus) keep.focus();
-}
-function keepEditing() {
-  settingsLeaving = null;
-  renderLeaving();
-  const pane = $('settings');
-  if (pane.focus) pane.focus({ preventScroll: true });
-}
-// Saves as the view's Save does, then closes once saved. Refused, or waiting on 0259's confirmation, the question goes
-// so the view shows why, as it would after its own Save.
-async function saveAndLeave() {
-  const asked = settingsLeaving;
-  if (asked === null || asked.saving) return;
-  asked.saving = true;
-  renderLeaving();
-  const saved = await saveSettings();
-  if (settingsLeaving !== asked) return; // kept editing, or closed, since
-  if (saved && !settingChanges().length) closeSettings(); // nothing changed since it was sent
-  else keepEditing();
-}
+// Close, Escape and a click outside the view. 0731: at once, as every change is saved already.
+const leaveSettings = () => closeSettings();
 function closeSettings() {
   settingsView = null;
   settingsSeq++;
   settingAgentModels = new Map();
-  settingsLeaving = null;
-  renderLeaving();
   settingTip = null;
   settingTyped = new Map();
   settingRefused = new Map();
   settingClear = new Set();
+  settingDone = new Map();
+  // 0731: a save still on its way from this view carries on, but doesn't hold up the next view's
+  settingsQueue = Promise.resolve();
+  settingPending = new Map();
+  settingsSession++;
   agentsBox = agentsSaid = null;
   levelsBox = levelsSaid = levelForm = null; // 0661
   levelsBusy = false;
@@ -225,7 +183,6 @@ function closeSettings() {
   agentsAdding = false;
   agentStates = new Map();
   providerForm = null;
-  settingsFailed = settingsSaid = null;
   renderSettings();
   const back = $('settings-open');
   if (back.focus) back.focus();
@@ -241,7 +198,6 @@ function renderSettings() {
   settingInfos = new Map();
   settingControls = new Map();
   settingRowsDrawn = new Map();
-  settingsBar = null;
   if (!open) { pane.replaceChildren(); return; }
   const close = el('button', 'close', 'Close');
   close.type = 'button';
@@ -261,20 +217,18 @@ function renderSettings() {
       if (left.length) kids.push(settingGroup('sgroup', g.title, el('div', 'block', null, ...left)));
     }
   }
-  if (settingsView.state === 'ok' && settingRows().some(x => x.editable === true)) kids.push(saveBar()); // none to change: nothing to save
   // 0652: Your team first, then 0646's Your subscriptions, once the settings have loaded, then the rest as they were:
   // Appearance and Auto-build (0396), 0399's Your agents and the server's groups.
   const ok = settingsView.state === 'ok', team = ok ? teamGroup(teamRows) : null;
   kids.splice(1, 0, ...(ok ? [team, subsGroup()].filter(Boolean) : []), toggleGroup(), ...(ok ? [agentsGroup()] : []));
   pane.replaceChildren(...kids);
-  refreshSettings();
   showSettingTip(settingTips.has(settingTip) ? settingTip : null);
 }
 // 0729: a group of the view, `cls` its section's classes: its small muted label, then `blocks`, each a rounded block a
 // shade off the page, with no border, holding its rows.
 const settingGroup = (cls, title, ...blocks) => el('section', cls, null, el('div', 'sh', null, el('h4', null, title)), ...blocks);
-// 0372: kept in this browser rather than speck/config.yml, so it switches the page as it's pressed and Save neither
-// sends it nor counts it as a change. 0412: System, Light and Dark, as radio buttons in one group: Tab reaches the one
+// 0372: kept in this browser rather than speck/config.yml, so it switches the page as it's pressed and is never
+// sent with the settings. 0412: System, Light and Dark, as radio buttons in one group: Tab reaches the one
 // chosen, and the arrow keys, Home and End choose another, kept between redraws so it keeps focus.
 const lookButtons = LOOKS.map(([look, word]) => {
   const b = el('button', null, word);
@@ -364,6 +318,7 @@ function settingRow(x, n) {
     x.key === 'watch_model' && foremanModelsWhy() !== null ? el('p', null, foremanModelsWhy()) : null, // 0348
     Object.hasOwn(BENCH_OF, x.key) ? benchLine(x.key) : null, x.key === 'qa_agent' ? qaInheritLine() : null, // 0652
     settingRefused.has(x.key) ? el('p', 'bad', settingRefused.get(x.key)) : null,
+    settingDone.has(x.key) && !settingRefused.has(x.key) ? el('p', 'saved', settingDone.get(x.key).text) : null, // 0731
     // 0400: a refusal of the role's model, whose list is the role's own
     role !== null && settingRefused.has(ROLES[role].model) && settingRefused.get(ROLES[role].model) !== settingRefused.get(x.key) ? el('p', 'bad', settingRefused.get(ROLES[role].model)) : null,
     tip);
@@ -373,7 +328,7 @@ function settingRow(x, n) {
   settingRowsDrawn.set(x.key, { row, n, control });
   return row;
 }
-// 0397: this machine's own value of `x`, with its button, or that it's cleared on Save, for its explanation; null when
+// 0397: this machine's own value of `x`, with its button, or that it's being cleared, for its explanation; null when
 // it has none. 0405: `tip`, the explanation it's in, kept open by its button.
 function ownLine(x, tip = x.key) {
   // 0400: a role's list holds its model too, so it's this machine's own when either is.
@@ -418,7 +373,6 @@ function redrawSettings(keys, kept = null) {
     drawn.row.parentNode.removeChild(drawn.row);
   }
   drawTeamLimits(); // 0652: a member's agent picked again
-  refreshSettings();
   showSettingTip(settingTips.has(settingTip) ? settingTip : null);
 }
 // 0370: the settings whose rows show what a change to `key` alters: its own lines, and the lists of models and efforts
@@ -465,8 +419,9 @@ function placeSettingTip(tip) {
   const edge = Math.max(pane.getBoundingClientRect().top, line ? line.getBoundingClientRect().bottom : -Infinity);
   if (tip.getBoundingClientRect().top < edge) tip.classList.add('below');
 }
-// 0258: a setting's control, a list of the server's choices or a box to type in. 0274: what's typed or picked is kept,
-// and Save sends it with the rest. 0259: auto_ship_risk's is a box to tick for each risk.
+// 0258: a setting's control, a list of the server's choices or a box to type in. 0274: what's typed or picked is kept
+// until it's saved. 0731: a switch, a list or a box ticked saves at once; a box typed in saves on Enter, or on leaving
+// it changed. 0259: auto_ship_risk's is a box to tick for each risk.
 function settingEditor(x) {
   const typed = settingTyped.has(x.key) ? settingTyped.get(x.key) : settingNow(x);
   const typing = value => {
@@ -478,9 +433,9 @@ function settingEditor(x) {
     } else if (Object.hasOwn(BENCH_OF, x.key) || QA_KEYS.includes(x.key) || x.key === 'watch_model' || x.key === 'watch_effort') { // 0652: a bench's order as typed, and what QA takes from the watch agent
       redrawSettings([...new Set([x.key, 'qa_bench', 'qa_agent'])], x.key);
     }
-    else refreshSettings();
   };
-  if (settingClear.has(x.key)) { // 0261: this machine's value goes on Save, leaving the repo's
+  const save = value => { typing(value); saveSetting([x.key]); };
+  if (settingClear.has(x.key)) { // 0261: this machine's value is being cleared, leaving the repo's
     const shown = el('input', 'edit');
     shown.type = 'text';
     shown.value = String(x.repo_value ?? '');
@@ -496,7 +451,7 @@ function settingEditor(x) {
       box.checked = typed.split(',').includes(c);
       box.setAttribute('aria-label', `${x.key} ${c}`);
       // What's ticked, as the server reads it: "low,high".
-      box.addEventListener('change', () => typing(boxes.filter(b => b.checked).map(b => b.value).join(',')));
+      box.addEventListener('change', () => save(boxes.filter(b => b.checked).map(b => b.value).join(',')));
       return box;
     });
     return boxes.map(b => el('label', 'risk', null, b, el('span', null, b.value)));
@@ -512,7 +467,7 @@ function settingEditor(x) {
       e.stopPropagation?.();
       const next = sw.value !== 'true'; // value is kept by drawToggle (aria-checked too); the fake page has no getAttribute
       drawToggle(sw, next, next ? 'On' : 'Off');
-      typing(next ? 'true' : 'false');
+      save(next ? 'true' : 'false');
     });
     settingControls.set(x.key, sw);
     return [sw];
@@ -537,13 +492,15 @@ function settingEditor(x) {
     input = el('input', 'edit');
     input.type = typeof x.value === 'number' || x.every_project === true ? 'number' : 'text'; // 0707: a home-folder limit, blank or not
     if (input.type === 'number') input.min = '1';
-    input.addEventListener('keydown', e => { if (e.key === 'Enter') { typing(String(input.value ?? '')); saveSettings(); } });
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') save(String(input.value ?? '')); });
   }
   input.value = typed;
   input.setAttribute('aria-label', x.key);
   settingControls.set(x.key, input);
-  input.addEventListener('input', () => typing(String(input.value ?? '')));
-  input.addEventListener('change', () => typing(String(input.value ?? '')));
+  if (choices === null) input.addEventListener('input', () => typing(String(input.value ?? ''))); // a list saves on change alone
+  // A box drawn again while typed in, as after another setting's save, has no change to send when it's left, so leaving it saves too.
+  if (choices === null) input.addEventListener('blur', () => saveSetting([x.key]));
+  input.addEventListener('change', () => save(String(input.value ?? '')));
   return [input];
 }
 // 0276: what a setting's list offers: the server's choices, or with the reviewer's models, read when the view opened,
@@ -754,7 +711,7 @@ const agentLabel = id => yourAgent(id)?.name ?? knownAgent(id)?.name ?? builderN
 // A setting's key, with its model's when it's a role whose list holds both.
 const withRoleModel = key => yourModels() !== null && Object.hasOwn(ROLES, key) ? [key, ROLES[key].model] : [key];
 const fromMachine = key => settingRows().some(r => r.key === key && r.for_machine === true && r.from === 'machine');
-// Whether Save clears this machine's values for `role`, leaving the project's.
+// Whether this machine's values for `role` are being cleared, leaving the project's.
 const roleCleared = role => { const own = withRoleModel(role).filter(fromMachine); return own.length > 0 && own.every(k => settingClear.has(k)); };
 // The project's value of `key`, under this machine's own.
 const projectValue = key => { const r = settingRows().find(x => x.key === key); return !r ? '' : r.for_machine === true && r.from === 'machine' ? settingNow({ value: r.repo_value }) : settingNow(r); };
@@ -800,7 +757,7 @@ function roleWords(role, value) {
 }
 function roleEditor(x) {
   const role = x.key;
-  if (roleCleared(role)) { // 0261: this machine's value goes on Save, leaving the project's
+  if (roleCleared(role)) { // 0261: this machine's value is being cleared, leaving the project's
     const shown = el('input', 'edit');
     shown.type = 'text';
     shown.value = roleWords(role, roleValue(role, projectValue));
@@ -837,15 +794,14 @@ function roleEditor(x) {
   select.value = picked;
   select.setAttribute('aria-label', role);
   settingControls.set(role, select);
-  const choose = () => {
+  select.addEventListener('change', () => { // 0731: saved at once, the agent and its model together
     const v = String(select.value ?? ''), at = v.indexOf('|');
     if (at < 0) return;
     settingTyped.set(role, v.slice(0, at));
     settingTyped.set(ROLES[role].model, v.slice(at + 1));
     redrawSettings(ROLE_AFFECTS[role], role);
-  };
-  select.addEventListener('input', choose);
-  select.addEventListener('change', choose);
+    saveSetting(withRoleModel(role));
+  });
   return [select];
 }
 // What a change to a role's list redraws: its own row, its effort, and the Foreman's, which can run on the builder's agent.
@@ -914,7 +870,7 @@ function memberCard(m, rows) {
   return card;
 }
 // 0661: the builder's card's build levels, in the order speck/config.yml gives them, each with its builder, model and
-// effort. Each change, addition or removal is saved to speck/config.yml at once, by itself, rather than with Save, and
+// effort. Each change, addition or removal is saved to speck/config.yml at once, by itself, as every setting is (0731), and
 // the server answers with the levels as they are then. 0666: each level picks its builder and model from the Builder's
 // own list, and its effort from the efforts they offer, with Default first for the Builder's own.
 const LEVEL_KEYS = ['builder', 'builder_model', 'builder_effort'];
@@ -1341,7 +1297,7 @@ async function saveProvider() {
   if (saved) loadSettings();
 }
 // 0393's key field, in a provider's row: never filled in with a saved key. Saving it saves only the key, for this
-// machine, apart from the view's Save, and adds the provider to your agents.
+// machine, apart from the view's settings, and adds the provider to your agents.
 function keyLine(a) {
   const st = agentState(a.id);
   const input = focusable(el('input', 'edit'), `key:${a.id}`);
@@ -1411,7 +1367,7 @@ async function saveKey(a) {
   drawAgents(saved ? `key:${a.id}` : null);
 }
 // 0261: in the explanation of a setting that uses this machine's own value (0397), the project's value and a button to
-// clear this machine's on Save. Pressing it keeps the explanation open, to show what it did.
+// clear this machine's, which 0731 saves at once. Pressing it keeps the explanation open, to show what it did.
 function machineLine(x, tip = x.key) {
   const clear = el('button', 'save', 'Clear this machine\'s value');
   clear.type = 'button';
@@ -1419,55 +1375,47 @@ function machineLine(x, tip = x.key) {
     for (const k of withRoleModel(x.key).filter(fromMachine)) settingClear.add(k);
     for (const k of withRoleModel(x.key)) { settingTyped.delete(k); settingRefused.delete(k); }
     keepSettingTip(tip);
-    renderSettings();
+    renderKeeping();
+    saveSetting(withRoleModel(x.key));
   });
   const project = withRoleModel(x.key).length > 1 ? roleWords(x.key, roleValue(x.key, projectValue)) : `${settingValue(x.repo_value)}${x.default ? ', speck\'s default' : ''}`; // 0400
   return el('span', 'line', null, el('span', null, `This is your machine's own value, used over the project's: ${project}.`), clear);
 }
-function clearLine(x, tip = x.key) {
-  const keep = el('button', 'save', 'Keep this machine\'s value');
-  keep.type = 'button';
-  keep.addEventListener('click', () => { for (const k of withRoleModel(x.key)) { settingClear.delete(k); settingRefused.delete(k); } keepSettingTip(tip); renderSettings(); });
+// 0731: while this machine's value is being cleared.
+function clearLine(x) {
   const value = withRoleModel(x.key).length > 1 ? roleWords(x.key, roleValue(x.key, settingSaved)) : settingValue(x.value); // 0400
-  return el('span', 'line', null, el('span', null, `This machine's value, ${value}, is cleared when you save.`), keep);
+  return el('span', 'line', null, el('span', null, `This machine's value, ${value}, is being cleared.`));
 }
 const keepSettingTip = key => { settingTip = key; }; // shown again once the view is drawn again
 const settingRows = () => settingsView !== null && Array.isArray(settingsView.groups)
   ? settingsView.groups.flatMap(g => Array.isArray(g.settings) ? g.settings : []) : [];
-// 0274: each setting whose value differs from the one the view read, as { key, value, machine }: what Save sends.
+// 0274: each setting whose value differs from the one the view read, as { key, value, machine }: what a save sends (0731: one setting's at a time).
+// 0731: or from the one its latest save asked for, while that save is on its way.
 function settingChanges() {
   const out = [];
   for (const x of settingRows()) {
     if (x.editable !== true) continue;
-    if (settingClear.has(x.key)) { out.push({ key: x.key, value: '', machine: true, clear: true }); continue; }
+    const pending = settingPending.has(x.key) ? settingPending.get(x.key) : null;
+    if (settingClear.has(x.key)) { if (!pending || !pending.clear) out.push({ key: x.key, value: '', machine: true, clear: true }); continue; }
     if (!settingTyped.has(x.key)) continue;
-    const value = settingTyped.get(x.key), now = settingNow(x);
+    const value = settingTyped.get(x.key), now = pending === null ? settingNow(x) : pending.clear ? settingNow({ value: x.repo_value }) : pending.value;
     const same = x.key === 'auto_ship_risk' ? value.split(',').filter(Boolean).sort().join() === now.split(',').filter(Boolean).sort().join() : value === now;
     if (same) continue;
     out.push({ key: x.key, value, machine: x.for_machine === true }); // 0387: your own settings, for this machine
   }
   return out;
 }
-// 0274: the view's one Save, kept in view at the bottom of the pane however far it's scrolled.
-function saveBar() {
-  const save = el('button', 'save-all', 'Save');
-  save.type = 'button';
-  save.addEventListener('click', saveSettings);
-  settingsBar = save;
-  return el('div', 'savebar', null, settingsFailed !== null ? el('p', 'bad', settingsFailed) : null, settingsSaid !== null ? el('p', 'said', settingsSaid) : null, save);
+// 0731: a setting's value as the view last read it, or as the save of it on its way will leave it.
+function valueAhead(key) {
+  const x = settingRows().find(r => r.key === key);
+  if (!x) return undefined;
+  const p = settingPending.has(key) ? settingPending.get(key) : null;
+  return p === null ? x.value : p.clear ? x.repo_value : savedAs(x, { value: p.value });
 }
-// After each change: Save is pressable only while something differs and nothing is being saved.
-function refreshSettings() {
-  if (settingsView === null || settingsView.state !== 'ok') return;
-  const changes = settingChanges();
-  if (settingsBar !== null) {
-    settingsBar.disabled = changes.length === 0 || settingsView.saving === true;
-    settingsBar.textContent = settingsView.saving === true ? 'Saving…' : 'Save';
-  }
-}
-// 0259: auto_ship and auto_ship_risk as the view last read them, as the ship queue reads them.
+// 0259: auto_ship and auto_ship_risk as the view last read them, as the ship queue reads them. 0731: or as the saves on
+// their way will leave them, so a change made while one is on its way asks what it adds to that.
 function shippingNow() {
-  const of = key => (settingRows().find(x => x.key === key) || {}).value;
+  const of = valueAhead;
   return { on: of('auto_ship') === true, risks: [].concat(of('auto_ship_risk') ?? []).map(String) };
 }
 // When these changes let more tickets ship by themselves than now, the risks that would then ship ("low,high"), which
@@ -1486,97 +1434,123 @@ function shipsMore(changes) {
 // machine's value leaves speck/config.yml's.
 function allowsSameModel(changes) {
   const x = settingRows().find(r => r.key === 'allow_same_model_review'), c = changes.find(c => c.key === 'allow_same_model_review');
-  if (!x || !c || x.value === true) return false;
+  if (!x || !c || valueAhead(x.key) === true) return false; // 0731: or as a save on its way will leave it
   return c.clear ? x.repo_value === true : c.value === 'true';
 }
-// 0274: Save sends every change in one request, and the server saves all of them or none. 0275: true once saved.
-// A Save pressed while one from the same view is being sent waits for that one.
-let settingsSending = null; // { view, done }
-function saveSettings() {
-  if (settingsSending !== null && settingsSending.view === settingsView) return settingsSending.done;
-  const sending = { view: settingsView, done: sendSettings() };
-  settingsSending = sending;
-  sending.done.finally(() => { if (settingsSending === sending) settingsSending = null; });
-  return sending.done;
-}
-async function sendSettings() {
-  if (settingsView === null || settingsView.state !== 'ok' || settingsView.saving) return;
-  const changes = settingChanges(), mine = settingsSeq;
-  if (!changes.length) return;
+// 0731: saves the setting `keys` name (a role's agent and model together, 0400) as it's now picked or typed, by itself.
+// What it sends, and any question it asks first, are settled now, as the change is made; it's sent once every save asked
+// for before it has been answered, so saves land in the order made, and it's sent even if the view closes first.
+// Nothing is sent when it's as saved, or as the save on its way will leave it.
+let settingsQueue = Promise.resolve();
+let settingPending = new Map(); // key → { value } or { clear: true }, the latest save asked for it and not yet answered
+let settingsSession = 0; // the view as opened: one more each time it closes
+function saveSetting(keys) {
+  if (settingsView === null || settingsView.state !== 'ok') return Promise.resolve();
+  const changes = settingChanges().filter(c => keys.includes(c.key));
+  if (!changes.length) return Promise.resolve();
+  const back = (why = null) => {
+    for (const k of keys) {
+      settingTyped.delete(k); settingClear.delete(k); settingDone.delete(k);
+      if (why === null) settingRefused.delete(k); else settingRefused.set(k, why);
+    }
+    renderKeeping();
+    return Promise.resolve();
+  };
   // Checked here first, so nothing is sent: auto_ship_risk with nothing ticked (0259).
-  const unticked = changes.find(c => c.key === 'auto_ship_risk' && c.value === '' && !c.clear);
-  if (unticked) {
-    settingRefused.set(unticked.key, 'Tick at least one risk. To stop tickets shipping by themselves, turn auto_ship off instead.');
-    renderSettings();
-    return;
-  }
+  if (changes.some(c => c.key === 'auto_ship_risk' && c.value === '' && !c.clear))
+    return back('Tick at least one risk. To stop tickets shipping by themselves, turn auto_ship off instead.');
   const more = shipsMore(changes);
   if (more !== null) {
     const ask = `Let more tickets ship by themselves? With this change, speck run's ship queue will merge ${more.words} and push them to the base branch without waiting for you.`;
-    if (typeof confirm !== 'function' || !confirm(ask)) { // cancelled: nothing is saved, and auto_ship and auto_ship_risk go back as they were
-      for (const k of ['auto_ship', 'auto_ship_risk']) { settingTyped.delete(k); settingRefused.delete(k); settingClear.delete(k); }
-      renderSettings();
-      return;
-    }
+    if (typeof confirm !== 'function' || !confirm(ask)) return back(); // cancelled: nothing is saved
   }
   if (allowsSameModel(changes)) { // 0511
     const ask = 'Let the reviewer run the same model as the builder? With this on, a review is no longer by a different model, so it may catch less of what the builder missed.';
-    if (typeof confirm !== 'function' || !confirm(ask)) { // cancelled: nothing is saved, and it goes back as it was
-      settingTyped.delete('allow_same_model_review'); settingRefused.delete('allow_same_model_review'); settingClear.delete('allow_same_model_review');
-      renderSettings();
-      return;
-    }
+    if (typeof confirm !== 'function' || !confirm(ask)) return back();
   }
   const replacing = replacesCommand(changes);
-  if (replacing !== null && (typeof confirm !== 'function' || !confirm(replacing.ask))) { // 0293: cancelled: the builder goes back as it was
-    for (const k of withRoleModel('builder')) settingTyped.delete(k); // 0400: and the model chosen with it
-    settingRefused.delete('builder');
-    renderSettings();
-    return;
-  }
-  settingsView.saving = true;
-  settingRefused = new Map();
-  settingsFailed = settingsSaid = null;
-  refreshSettings();
-  let refused = null, why = null, ask = false, again = false, said = null;
+  if (replacing !== null && (typeof confirm !== 'function' || !confirm(replacing.ask))) return back(); // 0293: the builder goes back as it was
+  const job = { keys, changes, more, replacing, session: settingsSession, marks: new Map() };
+  for (const c of changes) { const m = c.clear ? { clear: true } : { value: c.value }; settingPending.set(c.key, m); job.marks.set(c.key, m); }
+  for (const k of keys) { settingRefused.delete(k); settingDone.delete(k); }
+  const done = settingsQueue.then(() => sendSettings(job));
+  settingsQueue = done.catch(() => {});
+  return done;
+}
+// The view drawn again as it was, keeping how far it's scrolled and which setting's control has the keyboard focus.
+function renderKeeping() {
+  const pane = $('settings'), top = pane.scrollTop, had = [...settingControls].find(([, c]) => c === document.activeElement);
+  renderSettings();
+  pane.scrollTop = top;
+  const again = had ? settingControls.get(had[0]) : null;
+  if (again && again.focus && again !== document.activeElement) again.focus({ preventScroll: true });
+}
+// The value a row holds once `c` is saved, as the server would send it, so a change made before the view is read
+// again is compared with what's saved.
+function savedAs(x, c) {
+  if (c.clear) return x.repo_value;
+  if (typeof x.value === 'boolean') return c.value === 'true';
+  if (Array.isArray(x.value) || x.key === 'auto_ship_risk') return c.value.split(',').filter(Boolean);
+  if (typeof x.value === 'number' && c.value.trim() !== '' && Number.isFinite(Number(c.value))) return Number(c.value);
+  return c.value;
+}
+// 0274: the server checks every change it's sent and saves all of them or none. 0731: `job`, one setting's save as
+// saveSetting settled it. A change the server refuses goes back to the saved value, with why under its row, unless a
+// later change to it is waiting to be saved or being typed.
+async function sendSettings(job) {
+  const { keys, changes, more, replacing } = job;
+  let refused = null, why = null, reread = false, said = null;
   // 0387: machine:<key>= clears this machine's value, so a blank one for this machine is sent as blank:<key>=.
   const query = [...changes.map(c => `${!c.machine ? 'repo' : c.value === '' && !c.clear ? 'blank' : 'machine'}%3A${encodeURIComponent(c.key)}=${encodeURIComponent(c.value)}`),
     ...(more !== null ? [`confirm=${encodeURIComponent(more.risks)}`] : []),
     ...(replacing !== null ? [`replace=${encodeURIComponent(replacing.value)}`] : [])].join('&');
   try {
     const res = await fetch(`/api/settings/save?${query}`, { method: 'POST', headers: { 'X-Speck-Token': TOKEN } });
+    let body = null;
+    try { body = await res.json(); } catch { /* no JSON: say what we know */ }
     if (!res.ok) {
-      let body = null;
-      try { body = await res.json(); } catch { /* no JSON: say what we know */ }
       why = body && typeof body.error === 'string' && body.error ? body.error : `The server refused (${res.status}).`;
       refused = body && body.refused !== null && typeof body.refused === 'object' ? body.refused : null;
-      ask = res.status === 409 && body !== null && body.confirm === true;
-      again = res.status === 409 && body !== null && body.replace === true; // 0293: build_command changed since
+      reread = res.status === 409 && body !== null && (body.confirm === true || body.replace === true); // 0259, 0293: changed since
     } else {
-      let body = null;
-      try { body = await res.json(); } catch { /* saved all the same */ }
       const cleared = body && body.cleared !== null && typeof body.cleared === 'object' ? body.cleared.builder_model : undefined;
       if (typeof cleared === 'string' && cleared) said = `builder_model was cleared, because ${cleared}.`; // 0311
     }
   } catch { why = "Couldn't reach the panel server, so nothing was saved."; }
-  if (mine !== settingsSeq || settingsView === null) return; // closed, or opened again, since
-  settingsView.saving = false;
+  for (const [k, m] of job.marks) if (settingPending.get(k) === m) settingPending.delete(k);
+  if (job.session !== settingsSession || settingsView === null) return; // closed since: saved or not, there's no view to show it in
   if (why !== null) {
-    // Each refusal beside its setting, or under Save when it's no one setting's; what you changed stays as it is.
-    const mineToo = refused === null ? [] : Object.entries(refused).filter(([k, v]) => changes.some(c => c.key === k) && typeof v === 'string');
-    for (const [k, v] of mineToo) settingRefused.set(k, v);
-    if (!mineToo.length) settingsFailed = why;
-    if (ask) { for (const k of ['auto_ship', 'auto_ship_risk']) { settingTyped.delete(k); settingClear.delete(k); } loadSettings(); return; } // 0259: changed since: read them again
-    if (again) { loadSettings(); return; } // 0293: read build_command again, keeping the builder picked
-    renderSettings();
+    // Each setting's own reason, or the server's one reason for them all.
+    for (const k of keys) {
+      const own = refused !== null && Object.hasOwn(refused, k) && typeof refused[k] === 'string' ? refused[k] : null;
+      const c = changes.find(c => c.key === k), later = settingPending.has(k);
+      const typedSince = c !== undefined && !c.clear && settingTyped.has(k) && settingTyped.get(k) !== c.value;
+      if (later) continue; // the later change is saved next, and says how that went
+      if (!typedSince) { settingTyped.delete(k); settingClear.delete(k); }
+      settingRefused.set(k, own ?? why);
+    }
+    if (reread) loadSettings(); else renderKeeping();
     return;
   }
-  // Saved: forget what was sent, keeping any change made while it was being saved, which Save sends next.
-  settingsSaid = said;
+  // Saved: what the row holds now, and that it saved, for a few seconds. A change made to it since stays, to save next.
   for (const c of changes) {
+    const x = settingRows().find(r => r.key === c.key);
+    if (x) { x.value = savedAs(x, c); if (x.for_machine === true) x.from = c.clear ? 'repo' : 'machine'; }
     if (c.clear) settingClear.delete(c.key);
     else if (settingTyped.get(c.key) === c.value) settingTyped.delete(c.key);
+    settingDone.set(c.key, { text: 'Saved.', brief: true });
   }
+  const shown = keys.find(k => settingRowsDrawn.has(k)) ?? keys[0];
+  if (said !== null) settingDone.set(shown, { text: said, brief: false }); // 0311: stays until the view closes
+  const marks = keys.map(k => [k, settingDone.get(k)]);
+  setTimeout(() => { // each of these marks, unless another has taken its place since
+    for (const [k, m] of marks) {
+      if (!m || !m.brief || settingDone.get(k) !== m) continue;
+      settingDone.delete(k);
+      if (settingRowsDrawn.has(k)) redrawSettings([k], k);
+    }
+  }, 2500);
+  renderKeeping();
   loadSettings(); // the values speck now reads
   return true;
 }

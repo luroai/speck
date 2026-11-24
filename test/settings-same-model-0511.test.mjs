@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { panelRepo, freePort, startPanel, stop, request, post, tokenOf, headOf, gitEnv } from './support/panel.mjs';
-import { settingsPage, openSettings, rowOf, controlOf, saveButton, changeTo, posted } from './support/settings.mjs';
+import { settingsPage, openSettings, rowOf, controlOf, changeTo, posted } from './support/settings.mjs';
 import { panelSettings, panelSaveSettings, panelSaveRequest, EDITABLE } from '../scripts/settings.mjs';
 import { machineConfig } from '../scripts/machine.mjs';
 
@@ -67,7 +67,7 @@ test('0511 AC1: allow_same_model_review is an on/off setting with the reviewer\'
   assert.equal(machineConfig(r.dir).allow_same_model_review, false);
 });
 
-test('0511 AC1: the view shows it as a switch of true or false, and Save sends it for this machine', async () => {
+test('0511 AC1: the view shows it as a switch of true or false, and saves it for this machine as it changes (0731)', async () => {
   const p = askingPage([view(false), view(true)], [{ ok: true, changed: ['allow_same_model_review'] }], true);
   await p.settle();
   await openSettings(p);
@@ -77,7 +77,6 @@ test('0511 AC1: the view shows it as a switch of true or false, and Save sends i
   assert.equal(c.attrs['aria-checked'], 'false');
   assert.equal(c.value, 'false');
   changeTo(p, 'allow_same_model_review', 'true');
-  p.press(saveButton(p));
   await p.settle();
   assert.deepEqual(posted(p), ['/api/settings/save?machine%3Aallow_same_model_review=true']);
 });
@@ -87,14 +86,12 @@ test('0511 AC2: turning it on asks first, saying a review is then no longer by a
   await p.settle();
   await openSettings(p);
   changeTo(p, 'allow_same_model_review', 'true');
-  p.press(saveButton(p));
   await p.settle();
   assert.equal(p.asked.length, 1);
   assert.match(p.asked[0], /same model as the builder/);
   assert.match(p.asked[0], /no longer by a different model/);
   assert.deepEqual(posted(p), [], 'nothing is sent');
   assert.equal(controlOf(p, 'allow_same_model_review').value, 'false', 'back as it was');
-  assert.equal(saveButton(p).disabled, true, 'nothing left to save');
 });
 
 test('0511 AC2: turning it off, or a change that leaves it as it is, asks nothing', async () => {
@@ -102,10 +99,8 @@ test('0511 AC2: turning it off, or a change that leaves it as it is, asks nothin
   await p.settle();
   await openSettings(p);
   changeTo(p, 'allow_same_model_review', 'false');
-  p.press(saveButton(p));
   await p.settle();
   changeTo(p, 'reviewer', 'claude-subagent');
-  p.press(saveButton(p));
   await p.settle();
   assert.deepEqual(p.asked, []);
   assert.deepEqual(posted(p), ['/api/settings/save?machine%3Aallow_same_model_review=false', '/api/settings/save?repo%3Areviewer=claude-subagent']);
@@ -118,7 +113,6 @@ test('0511 AC2: clearing this machine\'s value asks first when speck/config.yml\
   const clear = p.all(rowOf(p, 'allow_same_model_review')).find(n => n.tagName === 'button' && /Clear this machine's value/.test(n.textContent || ''));
   p.press(clear);
   await p.settle();
-  p.press(saveButton(p));
   await p.settle();
   assert.equal(p.asked.length, 1);
   assert.deepEqual(posted(p), [], 'cancelled: nothing is sent');

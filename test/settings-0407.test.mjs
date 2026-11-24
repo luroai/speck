@@ -2,7 +2,7 @@ import './support/tmp.mjs'; // first: sends every temporary folder into one per-
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { panelRepo, gitEnv, startPanel, stop, freePort, request, deferred } from './support/panel.mjs';
-import { settingsPage, openSettings, rowOf, controlOf, changeTo, saveButton, posted } from './support/settings.mjs';
+import { settingsPage, openSettings, rowOf, controlOf, changeTo, posted } from './support/settings.mjs';
 import { settingsQuick, CLAUDE_MODELS } from '../scripts/settings.mjs';
 
 Object.assign(process.env, gitEnv);
@@ -99,7 +99,6 @@ test('0407 AC2: each role\'s list and Your agents say they are loading, then fil
   assert.equal(typed.value, '3', 'what was typed stays');
   assert.equal(pane(p).scrollTop, 420, 'not scrolled');
   assert.deepEqual(pane(p).children, groups, 'the view isn\'t drawn again');
-  assert.equal(saveButton(p).disabled, false, 'the change is still there to save');
 });
 
 test('0407 AC2: the keyboard focus in Your agents stays on its control when the view reads the lists again after a Save', async () => {
@@ -110,7 +109,6 @@ test('0407 AC2: the keyboard focus in Your agents stays on its control when the 
   await openSettings(p);
   await p.settle();
   changeTo(p, 'max_parallel_builds', '3');
-  p.press(saveButton(p));
   await p.settle();
   assert.doesNotMatch(pane(p).textContent, /loading the list|Loading your agents/, 'the lists read last time show while they\'re read again');
   assert.match(agentsBox(p).textContent, /Claude Code/);
@@ -143,7 +141,6 @@ test('0407 AC3: a setting that needs no list is saved while the lists are still 
   await openSettings(p);
   assert.match(options(p, 'reviewer').map(o => o.textContent).join(' '), /loading the list/, 'still loading');
   changeTo(p, 'max_parallel_builds', '3');
-  p.press(saveButton(p));
   await p.settle();
   const sent = posted(p).find(u => u.startsWith('/api/settings/save'));
   assert.ok(sent, 'Save sent it');
@@ -165,7 +162,6 @@ test('0407 self-check: an agent removed while the lists are read again stays rem
   await openSettings(p);
   await p.settle();
   changeTo(p, 'max_parallel_builds', '3');
-  p.press(saveButton(p));
   await p.settle();
   p.press(p.all(agentsBox(p)).find(n => n.tagName === 'button' && n.attrs?.['aria-label'] === 'Remove Codex'));
   await p.settle();

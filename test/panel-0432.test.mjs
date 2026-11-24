@@ -8,7 +8,8 @@ import { ROOT, SETTINGS, settingsScript, pageScript, page, fakePage, panelRepo, 
 // ---------- 0432: the Settings view's script in a file of its own ----------
 
 const SETTINGS_NAMES = ['openSettings', 'loadSettings', 'renderSettings', 'redrawSettings', 'settingEditor', 'roleEditor', 'toggleGroup',
-  'drawAgents', 'leaveSettings', 'renderLeaving', 'closeSettings', 'saveSettings', 'sendSettings', 'chooseLook', 'settingsView', 'lookButtons'];
+  'drawAgents', 'leaveSettings', 'closeSettings', 'saveSetting', 'sendSettings', // 0731: renderLeaving and saveSettings are gone
+  'chooseLook', 'settingsView', 'lookButtons'];
 const declares = (js, name) => new RegExp(`^(?:async function|function|let|const) ${name}\\b`, 'm').test(js);
 
 test('0432 AC1: the Settings script is in templates/panel-settings.js, which the page loads from /panel-settings.js, and panel.html no longer has it', () => {

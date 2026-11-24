@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { panelRepo, gitEnv } from './support/panel.mjs';
-import { settingsPage, openSettings, controlOf, changeTo, saveButton, posted } from './support/settings.mjs';
+import { settingsPage, openSettings, controlOf, changeTo, posted } from './support/settings.mjs';
 import { AGENTS_FOUND } from './support/your-agents.mjs';
 import { fakeAgents, READY, CURSOR_MODELS } from './support/agents.mjs';
 import { settingsAnswer, CLAUDE_MODELS } from '../scripts/settings.mjs';
@@ -69,14 +69,10 @@ test('0403 AC2: the default model is labelled "(default)", once, and selected wh
   }
   assert.equal(controlOf(p, 'builder').value, 'claude|', 'blank builder_model: Claude Code\'s default is selected');
   assert.equal(controlOf(p, 'reviewer').value, 'codex|', 'blank reviewer_model: Codex\'s default is selected');
-  // Its default kept, nothing changes on save.
+  // Its default kept, nothing is saved (0731: as it's picked).
   changeTo(p, 'builder', 'claude|');
-  assert.equal(saveButton(p).disabled, true, 'leaving the default selected changes nothing');
-  // Another model, then the default again: the model stays blank.
-  changeTo(p, 'builder', 'claude|opus');
-  assert.equal(saveButton(p).disabled, false);
-  changeTo(p, 'builder', 'claude|');
-  assert.equal(saveButton(p).disabled, true, 'back to the default: blank, as saved');
+  await p.settle();
+  assert.deepEqual(posted(p), [], 'leaving the default selected changes nothing');
 });
 
 test('0403 AC2: choosing the default entry after another model saves a blank model', async () => {
@@ -84,7 +80,6 @@ test('0403 AC2: choosing the default entry after another model saves a blank mod
   await openSettings(p);
   assert.equal(controlOf(p, 'builder').value, 'claude|opus');
   changeTo(p, 'builder', 'claude|');
-  p.press(saveButton(p));
   await p.settle();
   assert.equal(saveQuery(p).get('blank:builder_model'), '');
   assert.equal(saveQuery(p).has('machine:builder'), false, 'the agent is unchanged');
@@ -95,7 +90,7 @@ test('0403 AC2: a model saved by the default\'s own name shows as the default en
   await openSettings(p);
   assert.equal(controlOf(p, 'reviewer').value, 'codex|');
   assert.ok(!labels(p, 'reviewer').some(l => /not offered/.test(l)), labels(p, 'reviewer').join(' / '));
-  assert.equal(saveButton(p).disabled, true, 'nothing changed');
+  assert.deepEqual(posted(p), [], 'nothing is saved unless you change it'); // 0731
 });
 
 test('0403 AC3: an agent that lists no models offers only its default, still labelled "(default)"', async () => {
