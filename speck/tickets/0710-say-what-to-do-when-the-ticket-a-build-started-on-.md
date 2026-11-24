@@ -45,6 +45,7 @@ speck says the base ticket was cancelled and names a way on that works.
 - `builtOnWaiting` (`scripts/built-on.mjs`) only checks `status === 'done'`, so a cancelled base reads as waiting; `builtOnCheck`, `autoShipWhyNot` (`scripts/ship.mjs`) and `scripts/ship-queue.mjs` give the "ship it first" wording.
 - Refuse and name the ways out, as `after:` does for a cancelled ticket (`goneWhy`), rather than blocking with a question: an approved ticket has no build running to ask.
 - Reviews measure only the ticket's own change from the base ticket (`ownBase`), so keeping the cancelled work means reviewing it again as part of this ticket.
+- Failing before this build: not checked
 - Waits for the ticket that keeps a ticket waiting on its base ticket out of Needs you: both change `built-on.mjs` and `ship.mjs`.
 
 ## In plain words
