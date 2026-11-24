@@ -51,7 +51,9 @@ speck says the base ticket was cancelled and names a way on that works.
 - Waits for the ticket that keeps a ticket waiting on its base ticket out of Needs you: both change `built-on.mjs` and `ship.mjs`.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+A ticket can start on top of another ticket's approved work. If that other ticket is then cancelled, speck used to tell you to ship the cancelled one first, which could never happen, so the ticket was stuck. Now speck says the ticket it was built on was cancelled and gives two ways on: start it again from scratch, or keep the cancelled ticket's work in it and have the reviewer look at all of it. Shipping, auto-ship, the status list and the panel all say the same, and the panel no longer shows it as waiting to ship after the cancelled ticket.
+
+To see it, cancel a ticket that another was started on, then try to ship the second one: the message names both commands. Worth keeping an eye on: starting again deletes the ticket's old work, though the message prints where it was so it can be brought back.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -61,6 +63,10 @@ speck says the base ticket was cancelled and names a way on that works.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Known limit: `speck built-on --rebuild` deletes the ticket's branch; its message prints the commit and the `git branch` command that brings it back.
+- Known limit: `--keep` on an approved ticket that speck run didn't build (no resumable run record) can't be handed back by itself; the message says to run `/speck-build <id>`.
+- Note: `speck test --related` chose 575 files, as `docs/brief.md` and `scripts/speck.mjs` are named by most tests; 7 browser and timing tests failed under that load and passed on their own.
+- Follow-ups to the inbox: none.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -142,6 +148,89 @@ speck says the base ticket was cancelled and names a way on that works.
     ],
     "escalation_question": "",
     "summary": "The cancellation messages and both recovery paths work in the tested cases, including requiring review of retained work. One restart edge case remains: if the dependency was already removed, rebuilding can delete the old worktree while leaving speck run unable to launch the replacement build."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "caef8a40b585a43ab1ae906a7781534820de719f",
+    "session": "continued",
+    "thread_id": "01a20dcc-949c-7492-aae0-c13eea3d2133",
+    "builder_response": "- Tests run: test/built-on-0710.test.mjs (with commands.checks).\n- F1: fixed. `rebuild` (scripts/built-on-cancelled.mjs) now always adds a dated line to the ticket's Notes on the base branch (\"Rebuilt from <base> … as ticket <id>, which its build started on, was cancelled\"), so there is always a commit, and then always marks the run record with the commit before it (markStillReady), so readyAgain is true. New test `0710 AC2 F1` removes the after: entry on the base branch first, then checks the commit, the Notes line and readyAgain. The brief says it adds that line.\n",
+    "seconds": 20,
+    "usage": {
+      "input_tokens": 388680,
+      "cached_input_tokens": 315520,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1690,
+      "reasoning_output_tokens": 336
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 22423,
+      "cached": 144256,
+      "write": 0,
+      "output": 602
+    },
+    "cost_usd": 0.0652916,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-24T13:47:44.223Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/built-on.mjs: builtOnCheck refuses cancelled bases with the cancellation explanation and recovery commands. Passing AC1 tests cover cancellation on the base branch and the cancelled ticket's branch."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/built-on-cancelled.mjs implements both recovery commands; reviewSince in scripts/review.mjs includes the whole retained change. Passing AC2 tests verify restarting, mandatory re-review and subsequent shipment. The new F1 regression test verifies readyAgain when after: was already cleared."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "autoShipWhyNot, statusData and shipQueue use the cancellation reason. Passing AC3 tests verify both recovery commands, no queue launch, ships_after: null and no panel indication of shipping after the cancelled ticket."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The passing AC4 test verifies the existing refusal for an approved base, then successful shipment after that base is done."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The latest /tmp/speck-0710-tests.txt reports 152 passes, zero failures and three skips, including all nine ticket tests and configured checks. Earlier related-test failures passed on rerun; existing tests were not weakened."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/built-on-cancelled.mjs",
+        "issue": "Rebuild previously omitted the restart signal when the base ticket already had the desired fields. This is fixed: rebuild always appends a Notes entry, commits it and marks the preceding commit in the run record. The passing AC2 F1 regression test covers the original failure.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Approved. Cancelled base tickets now produce useful recovery instructions. Users can rebuild from the base branch or retain the work for a full review. The restart edge case is fixed and covered by a passing regression test."
   }
 }
 ```
