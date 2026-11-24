@@ -2,6 +2,7 @@
 // them doesn't ship by itself, and its review pack shows what changed.
 
 import { SpeckError, sh, git, forkPoint, parseTicket, ticketBranches, padId } from './core.mjs';
+import { cachedShipped } from './closed-board.mjs';
 
 // Each acceptance criterion's full text without its number: a numbered line at the start of a line begins one, and
 // the lines under it (wrapped text, nested lists) belong to it, so a multi-line criterion comes through whole.
@@ -74,16 +75,21 @@ export function criteriaChange(repo, cfg, id) {
 // 0568: whether a shipped ticket's criteria, `now`, differ from the ones it started with. Its branch has gone, but the
 // commit speck start made is in the base branch's history, so the criteria are read from just before it. false when
 // there's no such commit, as for a pull request that was squashed.
+// 0721: kept by the base tip and the criteria text, so an idle check starts no git for an unchanged done ticket.
 export function shippedCriteriaChanged(repo, cfg, id, now = []) {
-  const pad = padId(id);
-  try {
-    const start = git(['log', '-1', '--format=%H', `--grep=^speck(${pad}): start$`, cfg.base_branch], repo).trim();
-    const was = start ? sectionsAt(repo, `${start}^`, pad) : null;
-    return !!was && text(was) !== text(now);
-  } catch (e) {
-    if (e instanceof SpeckError) return false;
-    throw e;
-  }
+  const pad = padId(id), body = text(Array.isArray(now) ? now : []);
+  return cachedShipped(repo, cfg.base_branch, pad, body,
+    () => { try { return git(['rev-parse', '--verify', '-q', cfg.base_branch], repo).trim(); } catch { return ''; } },
+    () => {
+      try {
+        const start = git(['log', '-1', '--format=%H', `--grep=^speck(${pad}): start$`, cfg.base_branch], repo).trim();
+        const was = start ? sectionsAt(repo, `${start}^`, pad) : null;
+        return !!was && text(was) !== body;
+      } catch (e) {
+        if (e instanceof SpeckError) return false;
+        throw e;
+      }
+    });
 }
 
 // 0588: each change in `change`, as criteriaChange gives it: the criterion's number (null for one that names no criterion), the

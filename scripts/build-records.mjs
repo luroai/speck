@@ -13,21 +13,25 @@ import { providerResumeCommand } from './provider-build.mjs';
 import { pidAlive } from './run-switch.mjs';
 import { sessionInUse } from './build-procs.mjs';
 import { logTail } from './build-log.mjs';
+import { cachedBuildExit } from './closed-board.mjs';
 
 export const DEFAULT_RESUME_COMMAND = 'claude --resume {session}';
 
 // How a build launched by `speck run` ended, from its run record and log in the main checkout's speck/.cache/runs/
 // (where speck run keeps them): {at, code, message}, or null when there's no record, it can't be read or the build
 // hasn't exited. message is the last 50 lines of the log, trailing blank lines dropped, or null when it's missing or empty.
+// 0721: kept by the record and log's stats, so an idle check doesn't open an unchanged done ticket's log again.
 export function buildExit(runs, id) {
-  id = String(id ?? '');
-  if (!/^[\w-]+$/.test(id)) return null;
-  let rec;
-  try { rec = JSON.parse(fs.readFileSync(path.join(runs, `${id}.json`), 'utf8')); } catch { return null; }
-  if (!rec || typeof rec !== 'object' || !Object.hasOwn(rec, 'exited')) return null;
-  let message = null;
-  try { message = logTail(path.join(runs, `${id}.log`)); } catch { /* no log */ }
-  return { at: rec.exited ?? null, code: rec.exit_code ?? null, message };
+  return cachedBuildExit(runs, id, () => {
+    id = String(id ?? '');
+    if (!/^[\w-]+$/.test(id)) return null;
+    let rec;
+    try { rec = JSON.parse(fs.readFileSync(path.join(runs, `${id}.json`), 'utf8')); } catch { return null; }
+    if (!rec || typeof rec !== 'object' || !Object.hasOwn(rec, 'exited')) return null;
+    let message = null;
+    try { message = logTail(path.join(runs, `${id}.log`)); } catch { /* no log */ }
+    return { at: rec.exited ?? null, code: rec.exit_code ?? null, message };
+  });
 }
 
 // True while a build launched by `speck run` is paused: `speck pause` left a <id>.paused file beside its run record

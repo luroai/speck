@@ -166,3 +166,34 @@ test('0721 AC4: speck status --json gives the same board for the same repo befor
   // Drop fields that are allowed to differ only by object identity; compare the JSON contract.
   assert.equal(JSON.stringify(b), JSON.stringify(a));
 });
+
+test('0721 AC4 (round 1 F1): a warmed board still takes up a change to shared spend or to the settings', () => {
+  const { dir, runs, g } = closedRepo();
+  // Leave the done ticket's reviewer blank so the board takes it from the settings.
+  fs.writeFileSync(path.join(dir, 'speck', 'tickets', 'done', '0001-t.md'),
+    ticketText('0001', { status: 'done', reviewer: '""' }, `${good}${decidedNotes}`));
+  statusData(dir);
+  const now = new Date().toISOString();
+  fs.appendFileSync(path.join(runs, WATCH_SPEND), `${JSON.stringify({ id: '0001', run: 'r2', ended: now, tokens: 100, cost_usd: 0.5 })}\n`);
+  let board = statusData(dir);
+  assert.equal(board.tickets.find(t => t.id === '0001').watch_tokens, 111, 'watch spend is re-read when the file changes');
+  const cfgFile = path.join(dir, 'speck', 'config.yml');
+  fs.writeFileSync(cfgFile, fs.readFileSync(cfgFile, 'utf8').replace(/^reviewer:.*$/m, 'reviewer: claude'));
+  g('add', '-A'); g('commit', '-qm', 'reviewer');
+  board = statusData(dir);
+  assert.equal(board.tickets.find(t => t.id === '0001').reviewer, 'claude', 'settings still shape a done ticket\'s board entry');
+});
+
+test('0721 AC4 (round 1 F2): recent_spend follows the current seven-day window, not a frozen cached entry', () => {
+  const { dir, runs } = closedRepo();
+  const old = new Date(Date.now() - 8 * 864e5).toISOString();
+  fs.writeFileSync(path.join(runs, WATCH_SPEND), `${JSON.stringify({ id: '0001', run: 'old', ended: old, tokens: 9, cost_usd: 0.09 })}\n`);
+  const first = statusData(dir);
+  assert.ok(!(first.tickets.find(t => t.id === '0001').recent_spend || []).some(p => p.part === 'watch' && p.tokens === 9),
+    'spend older than seven days is not recent');
+  const fresh = new Date().toISOString();
+  fs.writeFileSync(path.join(runs, WATCH_SPEND), `${JSON.stringify({ id: '0001', run: 'new', ended: fresh, tokens: 9, cost_usd: 0.09 })}\n`);
+  const second = statusData(dir);
+  assert.ok((second.tickets.find(t => t.id === '0001').recent_spend || []).some(p => p.part === 'watch' && p.tokens === 9),
+    'the same tokens are recent once their ended time is inside the window');
+});
