@@ -15,9 +15,9 @@ const read = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
 // The skill and the prompt are instructions to agents, so their wording is checked. The brief is a document, so only
 // the names its "Criteria about documents" paragraph gives are: how it reads is checked by review.
 const INSTRUCTIONS = ['skills/speck-ticket/SKILL.md', 'templates/reviewer-prompt.md'];
-const TESTED = ['setup prompt', "status line's version", 'demo pictures', 'links resolve'];
+const TESTED = ['setup prompt', 'terminal install command', "status line's version", 'demo pictures', 'links resolve'];
 
-test('0491 AC1: the ticket skill and the reviewer prompt mark README facts (checked by review), naming the four that are tested', () => {
+test('0491 AC1: the ticket skill and the reviewer prompt mark README facts (checked by review), naming the ones that are tested', () => {
   for (const f of INSTRUCTIONS) {
     const text = read(f);
     assert.match(text, /a fact in the README ends with `\(checked by review\)`/, f);
@@ -26,7 +26,7 @@ test('0491 AC1: the ticket skill and the reviewer prompt mark README facts (chec
   }
 });
 
-test('0491 AC1: the brief\'s Criteria about documents names the README, (checked by review), the four that are tested and the other documents', () => {
+test('0491 AC1: the brief\'s Criteria about documents names the README, (checked by review), the ones that are tested and the other documents', () => {
   const para = read('docs/brief.md').split('\n').find(l => l.includes('**Criteria about documents.**'));
   assert.ok(para, 'the brief has the paragraph');
   for (const name of ['README', '`(checked by review)`', ...TESTED, 'brief', '`docs/`', 'changelog']) assert.ok(para.includes(name), name);
@@ -56,6 +56,7 @@ const ALLOWED = {
   'test/readme-0250.test.mjs': SETUP,
   'test/setup-0107.test.mjs': SETUP,
   'test/install-0253.test.mjs': SETUP,
+  'test/readme-0722.test.mjs': 'the terminal install command against the setup prompt',
   'test/readme-0249.test.mjs': 'the <picture> block and its images',
   'test/readme-links-0491.test.mjs': "that the README's links and anchors resolve",
   ...Object.fromEntries(['0092', '0106', '0210', '0226', '0236', '0243', '0248', '0254', '0282', '0297', '0298', '0307',
