@@ -48,7 +48,11 @@ A tap anywhere on a closed Plan row's title opens the row.
 - Went with the recommendation: Keep each tag's target as it is now (chosen by speck, as watch is decide, 2026-11-25 00:35 UTC).
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+On a phone or other touch screen, tapping the title of a closed ticket in Plan now opens the ticket. Before, the tap could land on one of the small labels under the title.
+
+To see it, open the panel on your phone, go to Plan and tap the lower half of a title, near its left end.
+
+Worth keeping an eye on: this was checked in a simulated phone browser, not on a real phone. There is a touch more space between each title and its labels, and the rows are the same height. The labels' tap areas are the same size as before, but sit slightly lower.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -64,6 +68,12 @@ Clear winner: yes
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+Follow-ups:
+- Saved to the inbox: unsteady tests 0723 AC2, 0067 AC2 and 0160 AC5.
+- Skipped as a duplicate: 0622 AC1 AC2 AC3 unsteady (speck/ideas/done/2026-11-10-steady-the-0622-and-0549-ac1-run-tests-under-load.md).
+- Known limits: unchecked on a real phone; a very wide finger area (22 px radius in headless Chrome) was not required to pass. Size, risk and type targets are 28 px high, not 44 px.
+
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -208,6 +218,79 @@ Clear winner: yes
     ],
     "escalation_question": "Should AC2 preserve the existing non-priority tag targets (28 px high), or require enlarging every tag's target to 44 px?",
     "summary": "The title fix works in the touch tests, and the new tests confirm existing tag targets remain usable. Approval needs one product decision: the ticket says every tag has a 44 px target, but non-priority tags already had smaller targets before this change."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "b0ab382222d97563421c1c53bdee9bf42cf492f7",
+    "session": "continued",
+    "thread_id": "01a2101f-be41-7841-a381-02b9e727248d",
+    "builder_response": "- Tests run: test/panel-0751.test.mjs\n- F1: resolved by the owner's decision, recorded in the ticket's Notes (\"Went with the recommendation: Keep each tag's target as it is now\", chosen by speck under watch: decide). Criterion 2 therefore means each tag keeps the target it already has: 44 px for priority, 28 px high for size, risk and type. The 0751 AC2 tests check both. No code or test change since round 2.\n",
+    "seconds": 10,
+    "usage": {
+      "input_tokens": 270151,
+      "cached_input_tokens": 220800,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1706,
+      "reasoning_output_tokens": 101
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 1897,
+      "cached": 46848,
+      "write": 0,
+      "output": 320
+    },
+    "cost_usd": 0.0116788,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-25T00:36:18.098Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "The unchanged 0751 AC1 browser test passes at 375 px with touch. It samples title positions, including 4 px inside the left edge, and verifies an actual tap opens the row without a menu or note."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The ticket's Notes record the decision to preserve each tag's existing target. The two passing 0751 AC2 tests verify priority's 44 px target and working menu, plus the existing size, risk and type target dimensions and hit areas."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The recorded run has 146 passes, zero failures and three skips. Earlier regression files passed in round 1; no implementation or test changes occurred since round 2."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/panel-0751.test.mjs",
+        "issue": "The missing target coverage was added, and the recorded product decision resolves the discrepancy between AC2's 44 px wording and existing non-priority target sizes.",
+        "suggested_fix": "No further change required under the recorded decision to preserve existing target sizes.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The touch tests confirm that tapping a closed Plan row's title opens it without triggering a tag. The priority menu still works, and all tested tag targets retain their existing sizes, as the recorded decision requests. Approved."
   }
 }
 ```
