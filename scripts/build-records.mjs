@@ -180,7 +180,10 @@ export function clashWaited(runs, t, tipsNow) {
   const file = path.join(runs, `${t.id}.json`);
   let rec;
   try { rec = JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return false; }
-  if (typeof rec?.still_ready_commit !== 'string' || typeof rec?.start_clash !== 'string' || stoppedBySpeck(file)) return false;
+  if (typeof rec?.still_ready_commit !== 'string' || stoppedBySpeck(file)) return false;
+  // A record kept before 0737 has no start_clash: its build's log may still hold speck start's refusal. With no tips
+  // kept, it counts as moved, as speck run asks only once nothing holds the ticket back, and launching it replaces the log.
+  if (typeof rec.start_clash !== 'string') { try { return !!clashOf({}, fs.readFileSync(file.replace(/\.json$/, '.log'), 'utf8')); } catch { return false; } }
   const now = typeof tipsNow === 'function' ? tipsNow(rec.start_clash) : tipsNow;
   return typeof now === 'string' && now !== rec.start_clash_tips;
 }

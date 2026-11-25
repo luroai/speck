@@ -8,6 +8,7 @@ import { afterWait, clashTips } from '../scripts/built-on.mjs';
 import { markStillReady, clashWaited, clashOf } from '../scripts/build-records.mjs';
 import { builtOnRepo, speckIn, gitIn, startedAt, commitFile } from './support/built-on.mjs';
 import { T, boardPage, queueRows, fullViewOf } from './support/panel.mjs';
+import { startRun, stopRun, killAll, until } from './support/run.mjs';
 
 // ---------- 0737: wait to start a dependent build when the approved work it would start on clashes with main ----------
 
@@ -130,4 +131,31 @@ test('0737 AC4: when the approved work merges cleanly into main, the ticket star
   const res = speckIn(r.dir, 'start', '0001');
   assert.equal(res.status, 0, res.stderr);
   assert.match(res.stdout, /Started on ticket 0002's approved work/);
+});
+
+// A build of 0001 that ended still ready before 0737, as its run record and log were left then: no start_clash, and
+// speck start's merge refusal in its log.
+function oldStall(r, log = "Ticket 0002's approved work doesn't merge cleanly with main, so 0001 can't start on it. It can start once 0002 has shipped.") {
+  const runs = path.join(r.dir, 'speck', '.cache', 'runs');
+  fs.mkdirSync(runs, { recursive: true });
+  fs.writeFileSync(path.join(runs, '0001.json'), JSON.stringify({ id: '0001', session: 's', pid: 1, exited: '2026-11-24T10:00:00.000Z', exit_code: 0, still_ready_commit: gitIn(r.dir, 'log', '-1', '--format=%H', '--', 'speck/tickets/0001-t.md') }));
+  fs.writeFileSync(path.join(runs, '0001.log'), `${JSON.stringify({ type: 'result', result: log })}\n`);
+  return runs;
+}
+
+test('0737 AC3: a record left before this change, with speck start\'s refusal in its log, counts too; one without it doesn\'t', () => {
+  const r = clashing(), runs = oldStall(r), t = { id: '0001' };
+  assert.equal(clashWaited(runs, t, 'any'), true);
+  oldStall(r, 'The build stopped for another reason.');
+  assert.equal(clashWaited(runs, t, 'any'), false);
+});
+
+test('0737 AC3: speck run carrying a build that ended unstarted on clashing work launches it once that ticket has shipped, without it being set ready again', async () => {
+  const r = clashing();
+  oldStall(r);
+  shipped(r);
+  const run = startRun(r.dir, { SPECK_RUN_LAUNCHED: '["0001"]' }); // as a switch to new code hands it over
+  try {
+    assert.ok(await until(() => r.calls().some(c => c.args[0] === '0001')), run.out());
+  } finally { await stopRun(run); killAll(r.calls().map(c => c.pid)); }
 });
