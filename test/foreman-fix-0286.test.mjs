@@ -82,11 +82,11 @@ test('0286 AC1: the Settings view shows watch in its Foreman group, under the sp
   assert.match(foreman.className, /\bteam\b/, 'first');
   assert.equal(p.all(foreman).filter(n => /\bmember\b/.test(n.className || '') && n.attrs['data-member'] === 'manager').length, 1, 'one card for it');
   assert.ok(p.all(groups.find(n => n.className === 'switches')).some(n => n.id === 'run-switch'), 'the speck run switch is still there (0396)');
-  const pick = p.all(foreman).find(n => n.tagName === 'select' && n.attrs['aria-label'] === 'watch');
+  const pick = p.all(foreman).find(n => n.tagName === 'select' && n.attrs['data-setting'] === 'watch');
   assert.ok(pick, 'a list to pick from');
   assert.deepEqual(p.all(pick).filter(n => n.tagName === 'option').map(o => o.value), ['off', 'tell', 'fix']);
   assert.ok(p.all(foreman).some(n => n.className === 'explain' && n.textContent === 'What the Foreman does.'), 'explained');
-  assert.ok(!p.all(groups[1]).some(n => n.attrs?.['aria-label'] === 'watch'), 'not in another group');
+  assert.ok(!p.all(groups[1]).some(n => n.attrs?.['data-setting'] === 'watch'), 'not in another group');
 });
 
 test('0286 AC2: with fix, speck run takes the recommendation on its check, notes that the Foreman chose it and resumes the build saying so', () => {

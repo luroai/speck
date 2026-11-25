@@ -41,6 +41,8 @@ Every Settings control's accessible name is its setting's plain name.
 
 ## Notes
 Failing before this build: not checked
+Self-check: a control kept while its row is drawn again (as when picking another agent shows or hides its effort) is named again, so its name follows whether the row holds one control or two.
+Pictures: none, because the change is only to controls' accessible names, which nothing on screen shows.
 - From 0729's own note: tests find controls by their key labels; a data attribute holding the key would keep them findable.
 - Waits for the machine-wide build limit ticket, which adds a Settings row.
 

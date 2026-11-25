@@ -100,14 +100,14 @@ test('0593 AC1, AC4: at 320 px, in both looks, the groups are drawn with no box,
     await b.send('Emulation.setDeviceMetricsOverride', { width: 320, height: 640, deviceScaleFactor: 1, mobile: true });
     await b.until(`document.readyState === 'complete' && !!document.getElementById('settings-open')`, 'the panel');
     await b.js(`document.getElementById('settings-open').click(), true`);
-    await b.until(`!!document.querySelector('#settings .speck-face') && !!document.querySelector('#settings input[aria-label="speck_name"]')`, 'the settings');
+    await b.until(`!!document.querySelector('#settings .speck-face') && !!document.querySelector('#settings input[data-setting="speck_name"]')`, 'the settings');
     for (const look of ['light', 'dark']) {
       await b.js(`document.getElementById('look-${look}').click(), true`);
       await b.until(`document.documentElement.dataset.theme === '${look}'`, 'the look');
       const d = await b.js(`(() => {
         const pane = document.getElementById('settings'), right = Math.min(innerWidth, pane.getBoundingClientRect().right);
         const wide = [...pane.querySelectorAll('*')].filter(n => n.getClientRects().length && !n.closest('p.explain') && n.getBoundingClientRect().right > right + 0.5).map(n => n.tagName + '.' + n.className);
-        const face = pane.querySelector('.speck-face'), box = face.parentNode.querySelector('h5'), f = face.getBoundingClientRect(), i = box.getBoundingClientRect(), input = pane.querySelector('input[aria-label="speck_name"]').getBoundingClientRect();
+        const face = pane.querySelector('.speck-face'), box = face.parentNode.querySelector('h5'), f = face.getBoundingClientRect(), i = box.getBoundingClientRect(), input = pane.querySelector('input[data-setting="speck_name"]').getBoundingClientRect();
         const boxed = [...pane.querySelectorAll('.sgroup, .switches')].filter(g => { const c = getComputedStyle(g); return ['Top', 'Right', 'Bottom', 'Left'].some(d => parseFloat(c['border' + d + 'Width']) > 0) || c.boxShadow !== 'none' || parseFloat(c.borderTopLeftRadius) > 0; }).map(g => g.className);
         return { boxed, wide, sw: pane.scrollWidth, cw: pane.clientWidth, sameLine: f.top < i.bottom && i.top < f.bottom, inputWidth: input.width,
           bg: getComputedStyle(pane).backgroundColor };

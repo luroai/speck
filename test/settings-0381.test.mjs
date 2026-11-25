@@ -62,7 +62,7 @@ test('0381 AC1: each agent and its model are two lists on one row, the agent\'s 
     assert.ok(!rows.includes(model), `${model} has no row of its own: ${rows.join(', ')}`);
     const row = topRows(p).find(r => nameOf(p, r) === agent);
     const lists = p.all(row).filter(n => n.tagName === 'select' || n.tagName === 'input');
-    assert.deepEqual(lists.map(n => n.attrs['aria-label']), [agent, model], `${agent}'s row has its list, then its model's`);
+    assert.deepEqual(lists.map(n => n.attrs['data-setting']), [agent, model], `${agent}'s row has its list, then its model's`);
     assert.ok(inside(p, row, controlOf(p, model)), `${model}'s list is in ${agent}'s row`);
   }
   assert.deepEqual(options(p, 'builder'), ['claude', 'codex', 'cursor']);
