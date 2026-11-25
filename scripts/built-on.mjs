@@ -82,12 +82,37 @@ export function startWaits(repo, cfg, t, tickets) {
     else waiting.push({ id, s });
   }
   const branch = waiting.length === 1 && waiting[0].s === 'approved' && !gone.length && ticketBranches(repo, cfg, waiting[0].id)[0];
-  if (branch && ticketAt(repo, branch, waiting[0].id)?.fm.status === 'approved') return { on: { id: waiting[0].id, branch } };
+  if (branch && ticketAt(repo, branch, waiting[0].id)?.fm.status === 'approved') {
+    if (mergesCleanly(repo, cfg.base_branch, branch)) return { on: { id: waiting[0].id, branch } };
+    // 0737: approved work that clashes with the base branch can't be started on: it waits for that ticket to ship.
+    const clash = { id: waiting[0].id, base: cfg.base_branch };
+    return { why: `Ticket ${t.fm.id} waits for ${clash.id} to ship, as ${clash.id}'s approved work clashes with ${clash.base}. It starts from ${clash.base} once ${clash.id} has shipped.`, clash };
+  }
   const why = [];
   if (waiting.length) why.push(`Ticket ${t.fm.id} waits on ${waiting.map(w => `${w.id} (${w.s})`).join(', ')}. It can start once ${waiting.length > 1 ? 'they\'ve' : 'it\'s'} shipped.`);
   if (gone.length) why.push(goneWhy(t.fm.id, gone));
   return { why: why.length ? why.join('\n') : null };
 }
+
+// 0737: whether `branch` merges into `base` without a conflict, as speck start's merge would. git merge-tree exits 0 on
+// a clean merge and 1 on a conflict; anything else (a branch git doesn't know) counts as not clean.
+export function mergesCleanly(repo, base, branch) {
+  return sh('git', ['merge-tree', '--write-tree', '--no-messages', base, branch], { cwd: repo }).status === 0;
+}
+
+// 0737: the tips of the base branch and of ticket `id`'s branch, as one string, so speck run can tell once either has
+// moved since a build couldn't start on that ticket's work: it shipped, or its work was changed.
+export function clashTips(repo, cfg, id) {
+  const tip = ref => { const r = ref ? sh('git', ['rev-parse', '-q', '--verify', `${ref}^{commit}`], { cwd: repo }) : null; return r?.status === 0 ? r.stdout.trim() : ''; };
+  return `${tip(`refs/heads/${cfg.base_branch}`)} ${tip(ticketBranches(repo, cfg, padId(id))[0])}`;
+}
+
+// 0737: what a ready ticket says while the approved work it would start on clashes with the base branch, from a row of
+// `speck status --json` with start_clash, or null.
+export const clashWait = t => {
+  const c = t?.start_clash;
+  return c && typeof c.id === 'string' && typeof c.base === 'string' ? `waiting for ${c.id} to ship, as its approved work clashes with ${c.base}` : null;
+};
 
 // 0675: why speck run doesn't start a ready ticket because of its after: list, or null when nothing there holds it
 // back: a row of `speck status --json` with starts_on can start on that approved ticket's work, as speck start allows.
@@ -96,7 +121,7 @@ export function afterWait(t) {
   if (!(Array.isArray(t.waiting_on) && t.waiting_on.length) || t.starts_on) return null;
   const cancelled = Array.isArray(t.after_cancelled) ? t.after_cancelled : [];
   const waiting = t.waiting_on.filter(id => !cancelled.includes(id)), gone = t.waiting_on.filter(id => cancelled.includes(id));
-  const wait = waiting.length ? `waiting for ${waiting.join(', ')}` : '';
+  const wait = waiting.length ? clashWait(t) ?? `waiting for ${waiting.join(', ')}` : '';
   return gone.length ? `${wait ? `${wait}. ` : ''}${goneWhy(t.id, gone.map(id => `${id}, which was cancelled`))}` : wait;
 }
 
