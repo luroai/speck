@@ -47,6 +47,7 @@ A tap anywhere on a closed Plan row's title opens the row.
 - The one full related-tests run had 4 failures that passed on rerun with no code change: 0723 AC2, 0067 AC2, 0160 AC5 and 0622 AC1 AC2 AC3.
 - From 0739's own note: a tap 4 px inside the title's left end landed on the "low" tag below it in headless Chrome; unchecked on a real phone.
 - Went with the recommendation: Keep each tag's target as it is now (chosen by speck, as watch is decide, 2026-11-25 00:35 UTC).
+- speck (2026-11-25 00:37 UTC) told you: Nothing is stuck: the build has finished its fix and is writing its notes. Most of the time went on test runs on a very busy machine: about 10 minutes for its own tests, about 26 for a wide run of 4,338 tests, then 7 more to rerun the four tests that failed there, which all passed with no code change. Why: The build's log shows those three test runs taking about 43 of its 54 minutes while the machine's load was over 40, and the four failing tests passed when rerun, so the base branch isn't broken.
 
 ## In plain words
 On a phone or other touch screen, tapping the title of a closed ticket in Plan now opens the ticket. Before, the tap could land on one of the small labels under the title.
