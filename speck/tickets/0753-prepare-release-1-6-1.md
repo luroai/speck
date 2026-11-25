@@ -53,6 +53,8 @@ speck is ready to be released as 1.6.1.
 - Checked 2026-11-24: `v1.6.0` is tagged on origin.
 - 0732's checks that name 1.6.0 as the current version should check the current version, as 0732 did for 0695's.
 - Failing before this build: not checked
+- Built from main at `speck(0754): ship` (the 0754 fix's ship), with 0737's approved work under it: `speck start` started this on 0737, so 0737 ships first and is in the changelog. 0754 is a test-only fix, so it's only in the changelog's Tests line. `npm run prices` ran on 2026-11-25. The README's demo pictures show the Build lane, which these tickets don't change apart from a row that appears only when the main checkout is bare, so they weren't taken again.
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

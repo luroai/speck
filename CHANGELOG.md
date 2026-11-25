@@ -1,5 +1,44 @@
 # Changelog
 
+## 1.6.1 · 25 November 2026
+
+What's new since 1.6.0. A patch release that keeps the line moving on a busy machine and finishes off the new Settings. A ticket waiting on approved work that no longer fits main waits for it to ship rather than stalling, a test run steps out of the queue before a builder's command limit cuts it off, and a fix ticket names only the tests that really still fail. Settings shows the machine-wide build limit, lets you swap the builder's and the reviewer's agents in one step and names each control for screen readers. speck tells you under Needs you when the main checkout stops being a working checkout, and builds file far fewer duplicate notes in Capture. Costs speck works out itself are still estimates at API list prices.
+
+### Getting started
+
+- Install this release with `npx github:luroai/speck#v1.6.1 init`.
+
+### Builds and shipping
+
+- When a ticket waits for another ticket that's approved but not shipped, and that approved work no longer merges cleanly into main, `speck run` no longer starts the ticket on it, where the build couldn't start and the ticket sat stuck until someone set it ready again. It waits for the other ticket to ship, then starts from main by itself. Meanwhile `speck status` and the panel's Build lane say which ticket it's waiting for and that its approved work clashes with main. A ticket already stuck this way starts by itself once it can. Approved work that still merges cleanly is built on as before.
+- When `speck test` has waited 8 minutes for a turn behind other builds' test runs, it gives up its place, says no tests ran and prints the same command to run again, and the build runs it again. So a busy machine no longer stops a build partway because its agent's command limit cut off a test run that was still queuing. Shipping and the full suite still wait as long as they need to.
+- When the full suite fails on main and its retry passes some of the failed tests, the panel's note about the failing suite and the fix ticket `speck run` writes name only the tests that failed again. A busy machine no longer turns one real failure into a fix ticket listing twenty. When everything fails again, they're all named, as before.
+- When the main checkout stops being a working checkout, because git's `core.bare` setting was switched on there, speck now says so even while `speck run` is off. `speck status` lists it first under what needs you, the panel shows it as the first Needs you row in Build and counts it in the bar, and All projects counts it for that project, each with the one command that sets it back, `git -C <main checkout> config core.bare false`. It goes once that's done.
+- When speck ships through pull requests and the main checkout has been switched to bare, `speck run` holds merging, says so once with the command that sets it back, and counts no try against any ticket. Once it's set back, waiting tickets merge on the next check, rather than sitting stuck until something about them changed.
+
+### Settings
+
+- A "Builds at once on this machine" row, right under "Builds at once", shows and sets `machine_parallel_builds`, the limit on builds across every project on this machine, which you could only set from the command line before. It saves to your home folder when you press Enter or leave the box, changing nothing in the project, and clearing the box removes the limit. A value speck can't use, such as 0, is refused with the reason the command line gives.
+- You can swap the builder and the reviewer between agents, such as from a Claude Code builder and a Codex reviewer to the other way round. Pick the new agent for one of them: when it's the other's family, Settings asks whether to give the other the first one's old agent and model, and on yes saves both at once. Say no and nothing changes. Each keeps its own effort, so check it after a swap. A clash a swap can't fix is refused, saying why, as before.
+- Screen readers and voice control know each list, box and switch by the plain name Settings shows for it, such as "Name" or "Builds at once", rather than its key. Where one row has two controls, each says which it is, such as "Builder" and "Builder effort". Nothing on screen looks different.
+
+### The panel
+
+- On a touch screen, a tap anywhere on a closed Plan row's title opens the ticket, rather than sometimes landing on the priority tag under it. The tags keep their 44 px tap targets.
+
+### Follow-up notes
+
+- Builds save far fewer notes to Capture. A build saves a note only for something you'd notice using speck, a bug or a change in how it behaves, or for a test that fails or is unsteady on main, and keeps tidy-ups, missing checks and wording in the ticket's Delivery log. Before saving one, it checks the notes and tickets on main and in the other builds running beside it, so the same problem isn't saved several times over, and a failing test a note or open ticket already names is never saved again.
+
+### Tests
+
+- Several of speck's own tests are steady: a check that failed on every build on newer versions of Node, and three that failed now and then on a busy machine, around a killed Codex build, a test browser closing after a time limit, and swipes in the panel.
+
+### Prices
+
+- The shipped price table has been refreshed with this release's rates, taken on 25 November 2026.
+
+
 ## 1.6.0 · 24 November 2026
 
 What's new since 1.5.0. A minor release that makes the panel look and work like part of Cursor. Settings is laid out like Cursor's own settings, with switches and compact menus, and saves each change as soon as you make it. A hovered ticket's chain lights with a soft fill, and you can try an approved ticket's app from its review pack before you ship it. You can cap builds across every project on your machine, the bridge warns when an agent nears its usage limit, and tickets built on others stall less. Choosing Sonnet now really means Sonnet. Costs speck works out itself are still estimates at API list prices.

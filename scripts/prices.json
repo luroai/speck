@@ -1,6 +1,6 @@
 {
   "source": "https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json",
-  "taken": "2026-11-24",
+  "taken": "2026-11-25",
   "models": {
     "abliteration/abliterated-model": [0.000001,1e-7,null,0.000003],
     "abliteration/abliterated-model-large": [0.000003,3e-7,null,0.000005],
@@ -2851,6 +2851,10 @@
     "groq/qwen/qwen3.8-27b": [8e-7,null,null,0.000004],
     "hostinger_router/claude-sonnet-5": [0.00000264,2.64e-7,0.0000033,0.0000132],
     "hostinger_router/gpt-5.2": [0.0000021,2.1e-7,null,0.0000168],
+    "huawei_maas/deepseek-v4.1-flash": [3e-7,3e-8,null,0.0000012],
+    "huawei_maas/deepseek-v4.1-flash-1017": [3e-7,6e-9,null,0.0000012],
+    "huawei_maas/glm-5.2": [0.0000014,2.6e-7,null,0.0000044],
+    "huawei_maas/glm-5.3": [0.0000014,2.6e-7,null,0.0000044],
     "hyperbolic/NousResearch/Hermes-3-Llama-3.1-70B": [1.2e-7,null,null,3e-7],
     "hyperbolic/Qwen/QwQ-32B": [2e-7,null,null,2e-7],
     "hyperbolic/Qwen/Qwen2.5-72B-Instruct": [1.2e-7,null,null,3e-7],
@@ -4099,6 +4103,7 @@
     "us-gov.nvidia.nemotron-nano-9b-v2": [7.2e-8,null,null,2.76e-7],
     "us-gov.nvidia.nemotron-super-3-120b": [1.8e-7,null,null,7.8e-7],
     "us-gov.openai.gpt-5.4": [0.0000033,3.3e-7,null,0.0000198],
+    "us-gov.openai.gpt-5.6-cyber": [0.000016875,0.0000016875,0.00002109375,0.00010125],
     "us-gov.openai.gpt-5.6-luna": [2.64e-7,2.64e-8,3.3e-7,0.000001584],
     "us-gov.openai.gpt-5.6-terra": [0.00000264,2.64e-7,0.0000033,0.00001584],
     "us-gov.openai.gpt-oss-120b-1:0": [1.8e-7,null,null,7.2e-7],
