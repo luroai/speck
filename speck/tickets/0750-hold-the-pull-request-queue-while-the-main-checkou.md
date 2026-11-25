@@ -1,7 +1,7 @@
 ---
 id: "0750"
 title: "Hold the pull request queue while the main checkout is bare"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 4              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: "speck/ideas/done/2026-11-24-hold-the-pull-request-queue-while-the-main-
 after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T23:49:48.252Z"
+approved: "2026-11-25T00:03:41.470Z"
 
 ---
 # 0750 · Hold the pull request queue while the main checkout is bare
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 In pull request mode, a ship refused because the main checkout is bare counts as a try, so once it's set back the ticket waits until its pull request, the base branch or its branch changes, and auto-ship looks stuck. The local ship queue doesn't count it (0740).
@@ -52,9 +53,14 @@ To see it, set `core.bare` to true in the main folder while speck run is shippin
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 130,275
+- Elapsed since build started: 14 min
+- Changed lines: 16 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none to the inbox. Only in this log: in pull request mode, speck status and the panel may not show the bare-main hold as the local ship queue's status does; that wasn't checked here.
 
