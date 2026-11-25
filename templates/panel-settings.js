@@ -353,6 +353,7 @@ function redrawSettings(keys, kept = null) {
     const row = settingRow(x, drawn.n), made = settingControls.get(key);
     if (key === kept && had && made && made.tagName === had.tagName) {
       if (hadInfo) settingInfos.set(key, hadInfo); // 0395: its name, which shows its explanation, stays as it was
+      nameControl(had, x); // 0747: named for its row as it is now, with or without an effort beside it
       drawn.row.hidden = row.hidden; // 0407: an effort, shown only for an agent that takes one
       for (const c of [...drawn.row.children].slice(1)) drawn.row.removeChild(c);
       for (const c of [...row.children].slice(1)) drawn.row.appendChild(c);
@@ -383,6 +384,25 @@ const SETTING_AFFECTS = { reviewer: ['reviewer', 'reviewer_model', 'reviewer_eff
 // 0729: a setting's plain name, as speck panel gives it, or else words made from its key ("Max parallel builds"), never
 // the key itself; and its short line saying what it does, or none.
 const settingWords = x => ({ name: typeof x.label === 'string' && x.label ? x.label : keyWords(x.key), line: typeof x.summary === 'string' ? x.summary : '' });
+// 0747: a setting's control's accessible name, as a screen reader reads it and voice control finds it: its row's plain
+// name, or, in a row with two controls, the member's name for the agent's ("Builder") and with "model" or "effort" for
+// the one beside it ("Builder effort"). Its key is kept in its data-setting.
+function controlName(x) {
+  const host = pairedWith(x.key);
+  if (host !== null) return `${memberWords(host)} ${/_effort$/.test(x.key) ? 'effort' : 'model'}`;
+  return hostsPartner(x.key) ? memberWords(x.key) : settingWords(x).name;
+}
+// Whether the row of agent `key` holds its model's or effort's control too, as settingRow draws it.
+function hostsPartner(key) {
+  const pairs = settingPairs(), partnerKey = Object.keys(pairs).find(k => pairs[k] === key && pairedWith(k) !== null);
+  return partnerKey !== undefined && !(yourModels() !== null && !takesEffort(key)) && settingRows().some(r => r.key === partnerKey);
+}
+// The name of the team member whose agent setting is `key`: the engineering manager's as you named it.
+function memberWords(key) {
+  const m = TEAM.find(t => t.agent === key), x = settingRows().find(r => r.key === key);
+  return m ? (m.member === 'manager' ? managerName() : m.name) : settingWords(x ?? { key }).name;
+}
+const nameControl = (c, x, name = controlName(x)) => { c.setAttribute('aria-label', name); c.setAttribute('data-setting', x.key); return c; };
 const keyWords = key => { const w = String(key).split('.').filter(Boolean).pop()?.replace(/_+/g, ' ').trim() || 'Setting'; return w.charAt(0).toUpperCase() + w.slice(1); };
 // 0268: a setting's explanation, which a screen reader reads with what shows it. 0729: shown from the setting's plain
 // name over its short muted line, as Cursor's settings have them: the name is a button that shows it on a press and
@@ -440,7 +460,7 @@ function settingEditor(x) {
     shown.type = 'text';
     shown.value = String(x.repo_value ?? '');
     shown.disabled = true;
-    shown.setAttribute('aria-label', x.key);
+    nameControl(shown, x);
     return [shown];
   }
   if (x.key === 'auto_ship_risk' && Array.isArray(x.choices)) {
@@ -449,7 +469,7 @@ function settingEditor(x) {
       box.type = 'checkbox';
       box.value = c;
       box.checked = typed.split(',').includes(c);
-      box.setAttribute('aria-label', `${x.key} ${c}`);
+      nameControl(box, x, `${controlName(x)}: ${c}`);
       // What's ticked, as the server reads it: "low,high".
       box.addEventListener('change', () => save(boxes.filter(b => b.checked).map(b => b.value).join(',')));
       return box;
@@ -461,7 +481,7 @@ function settingEditor(x) {
   // 0730: an on/off setting (true/false only) is a green/grey switch, as Auto-build's is, not a list of true and false.
   if (choices !== null && choices.length === 2 && choices.includes('true') && choices.includes('false')) {
     const on = typed === 'true';
-    const sw = toggleSwitch(null, x.key); // keep class "switch": .edit's border and 8px corners are for boxes, and 0453 expects every bordered button's 10px
+    const sw = nameControl(toggleSwitch(null, x.key), x); // keep class "switch": .edit's border and 8px corners are for boxes, and 0453 expects every bordered button's 10px
     drawToggle(sw, on, on ? 'On' : 'Off');
     sw.addEventListener('click', e => {
       e.stopPropagation?.();
@@ -495,7 +515,7 @@ function settingEditor(x) {
     input.addEventListener('keydown', e => { if (e.key === 'Enter') save(String(input.value ?? '')); });
   }
   input.value = typed;
-  input.setAttribute('aria-label', x.key);
+  nameControl(input, x);
   settingControls.set(x.key, input);
   if (choices === null) input.addEventListener('input', () => typing(String(input.value ?? ''))); // a list saves on change alone
   // A box drawn again while typed in, as after another setting's save, has no change to send when it's left, so leaving it saves too.
@@ -762,7 +782,7 @@ function roleEditor(x) {
     shown.type = 'text';
     shown.value = roleWords(role, roleValue(role, projectValue));
     shown.disabled = true;
-    shown.setAttribute('aria-label', role);
+    nameControl(shown, x);
     return [shown];
   }
   const entries = roleEntries(role), picked = asEntry(roleValue(role, settingChosen));
@@ -792,7 +812,7 @@ function roleEditor(x) {
     select.appendChild(o);
   }
   select.value = picked;
-  select.setAttribute('aria-label', role);
+  nameControl(select, x);
   settingControls.set(role, select);
   select.addEventListener('change', () => { // 0731: saved at once, the agent and its model together
     const v = String(select.value ?? ''), at = v.indexOf('|');
