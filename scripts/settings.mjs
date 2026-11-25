@@ -141,7 +141,7 @@ export function panelSettings(repo, { models, builderModels, foremanModels, agen
       : Object.hasOwn(mine, s.key) ? { for_machine: true, from: 'machine', repo_value: value } : { for_machine: true, from: 'repo', repo_value: value };
     return { key: s.key, label: s.label, summary: namedText(s, s.summary, speckNameOf(file)), value: machine.from === 'machine' ? mine[s.key] : value, default: !inFile, explain: explainFully(s, speckNameOf(file)), // 0729: and its plain name and short line
       editable: EDITABLE.includes(s.key), ...(choices ? { choices } : {}), ...(missing ? { missing } : {}), ...build, ...machine };
-  }).flatMap(row => (row.key === 'max_parallel_tests' ? [row, homeRow()] : [row])) })), /* 0707: yours for every project, after this project's */ ...(models ? { reviewer_models: models } : {}), ...(builderModels ? { builder_models: builderModels } : {}),
+  }).flatMap(row => (HOME_AFTER.has(row.key) ? [row, homeRow(HOME_AFTER.get(row.key))] : [row])) })), /* 0707: yours for every project, after this project's */ ...(models ? { reviewer_models: models } : {}), ...(builderModels ? { builder_models: builderModels } : {}),
     ...(foremanModels ? { foreman_models: foremanModels } : {}), claude_models: CLAUDE_MODELS, providers: providersShown(repo, providers), levels: levelsShown(file) }; // 0661
 }
 
@@ -167,6 +167,9 @@ function providersShown(repo, providers) {
   return providers.map(p => ({ name: p.name, label: p.label, models: providerModels(p), default_model: p.defaultModel,
     key_set: set ? set.get(p.name) === true : false, ...(why ? { key_why: why } : {}) }));
 }
+
+// 0707, 0746: each home-folder setting's row goes right after this project's own.
+const HOME_AFTER = new Map([['max_parallel_builds', 'machine_parallel_builds'], ['max_parallel_tests', 'machine_parallel_tests']]);
 
 // 0278: the model names a claude-subagent reviewer (or 0292's claude) takes, each meaning the newest model of its kind. Claude Code has no
 // command that lists them, so they're written here. With no `efforts`, reviewer_effort offers speck's own.
