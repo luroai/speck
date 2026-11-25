@@ -154,6 +154,9 @@
   .item.row .head .star, .item.row .head .set-ready { grid-column: 2; grid-row: 1 / span 2; align-self: center; margin: 0; }
   .item.row > .bad, .item.row > .bad.refused { margin: 0; padding: 0 0 8px; font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
   .item.row .detail { margin: 0; padding: 8px 0 10px; }
+  /* 0751: room between a closed Plan row's title and its tags, so a finger on the title isn't on a tag; the padding gives
+     it back, so the row is no taller */
+  .item.ticket.row:not(.open) .head { row-gap: 4px; padding-bottom: 4px; }
   /* 0614: an open row's raised fill reaches 12 px past its sides, into the lane's margins, so its text has room inside
      the fill without moving, and the row's own box still spans its list. 0728: lighting it adds no ring — the fill is
      already there. */
