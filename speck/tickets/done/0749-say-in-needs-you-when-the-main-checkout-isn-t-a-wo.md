@@ -1,7 +1,7 @@
 ---
 id: "0749"
 title: "Say in Needs you when the main checkout isn't a work tree"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T23:40:46.626Z"
 approved: "2026-11-25T00:35:52.360Z"
+finished: "2026-11-25T00:53:27.975Z"
 
 ---
 # 0749 · Say in Needs you when the main checkout isn't a work tree
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 When the main checkout's `core.bare` is true, builds fail before starting and the panel can't load its data, as on 2026-11-24. Since 0740 speck run says so only in its log and as the ship queue's hold, so nothing tells you it needs you.
