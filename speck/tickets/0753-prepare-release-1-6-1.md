@@ -1,7 +1,7 @@
 ---
 id: "0753"
 title: "Prepare release 1.6.1"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,13 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0741","0742","0743","0744","0745","0746","0747","0748","0749","0750","0751","0752","0737"]                # ticket ids that must be done first
 created: 2026-11-24
+built_on: "0737"
+started: "2026-11-25T07:54:47.119Z"
 
 ---
 # 0753 · Prepare release 1.6.1
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Since 1.6.0, 0737 and 0741 to 0752 start a waiting ticket only on approved work that merges cleanly, fix a test that failed every build on current Node, steady two timing tests, let a waiting test run hand back before the builder's shell limit, name only tests that still fail after a full-suite retry, show the machine-wide build limit in Settings, name Settings controls for screen readers, swap the builder's and reviewer's agents in one step, say under Needs you when the main checkout is bare, and file fewer duplicate follow-ups. Anyone updating speck still gets 1.6.0.
