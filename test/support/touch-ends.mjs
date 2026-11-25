@@ -11,10 +11,24 @@ export async function countEnds(b) {
   await b.js(COUNT_ENDS);
 }
 
+// 0754: the page has caught up once it has drawn two frames, waited for in the page itself: everything sent to it
+// before has been handled by then.
+export const CAUGHT_UP = 'new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(1))))';
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+// For delivered()'s `ready`, 0754: a busy page that is still behind with the gesture before is the one whose next
+// gesture Chromium drops, so each try waits for the page to catch up first, giving it up to 30 s, and a retry waits a
+// second longer each time before that (1 s before the 2nd try, 2 s before the 3rd).
+export async function steady(b, n, { pause = sleep } = {}) {
+  if (n > 1) await pause(1000 * (n - 1));
+  await b.js(CAUGHT_UP, 30000);
+}
+
 // Runs `gesture`, which ends with the finger lifting, then waits up to `ms` for the page to get its touchend. When it
 // doesn't, the browser dropped it, so the gesture runs again, up to `tries` times in all, and then fails saying so.
-export async function delivered(b, gesture, { ms = 10000, tries = 3 } = {}) {
+// `ready(b, n)` runs before the nth try (0754: steady() above).
+export async function delivered(b, gesture, { ms = 10000, tries = 3, ready = async () => {} } = {}) {
   for (let n = 1; ; n++) {
+    await ready(b, n);
     const before = await b.js('window.touchEnds || 0');
     await gesture();
     try {
