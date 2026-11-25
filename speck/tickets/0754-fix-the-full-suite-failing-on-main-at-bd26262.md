@@ -1,7 +1,7 @@
 ---
 id: "0754"
 title: "Fix the full suite failing on main at bd26262"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-25
 started: "2026-11-25T01:07:30.804Z"
+approved: "2026-11-25T01:31:28.523Z"
 
 ---
 # 0754 · Fix the full suite failing on main at bd26262
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The full suite fails on main at commit bd26262 (bd26262f02cf4a7a8d1b96dd8e47822d9d5edd83). Failing tests:
@@ -53,9 +54,14 @@ Nothing changes in speck itself. One of the panel's swipe tests kept failing in 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 138,850
+- Elapsed since build started: 24 min
+- Changed lines: 0 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (Delivery log only):
 - The dropped touchend wasn't reproduced here, so the cause is still unproven. If 0476 fails the same way again, record which events the page got (touchcancel as well as touchend) when a try is dropped, to tell Chromium's touch ack time-out apart from other causes.
