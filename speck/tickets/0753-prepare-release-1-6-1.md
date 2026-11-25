@@ -1,7 +1,7 @@
 ---
 id: "0753"
 title: "Prepare release 1.6.1"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -23,7 +23,7 @@ started: "2026-11-25T07:54:47.119Z"
 ---
 # 0753 · Prepare release 1.6.1
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Since 1.6.0, 0737 and 0741 to 0752 start a waiting ticket only on approved work that merges cleanly, fix a test that failed every build on current Node, steady two timing tests, let a waiting test run hand back before the builder's shell limit, name only tests that still fail after a full-suite retry, show the machine-wide build limit in Settings, name Settings controls for screen readers, swap the builder's and reviewer's agents in one step, say under Needs you when the main checkout is bare, and file fewer duplicate follow-ups. Anyone updating speck still gets 1.6.0.
@@ -67,3 +67,89 @@ speck is ready to be released as 1.6.1.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "2820d1fa641efd1b487a41649cda8eb9f4904b2d",
+    "session": "fresh",
+    "thread_id": "01a211be-6a1a-7c90-b4b4-b80bef75b137",
+    "builder_response": "- Tests run: test/release-0753.test.mjs test/release-0732.test.mjs test/docs-0491.test.mjs test/build-log-0176.test.mjs\n- Round 1. `speck test --related` ran first (5377 pass, 1 fail: \"0176: the board stays quick to read however many tickets are built\", a timing check in test/build-log-0176.test.mjs during a 530 s run on a loaded machine). Re-run with the ticket's own files as speck suggested, it passed (179 pass, 0 fail): that output is attached.\n- This build was started by `speck start` on 0737's approved work (0753's `after:` names 0737), so the diff against main includes 0737's commits (scripts/build-records.mjs, built-on.mjs, run.mjs, speck.mjs, templates/panel*.js, docs/brief.md lines). 0737 is in the changelog because it ships first.\n- Tickets covered: 0737, 0741–0752 and the 0754 fix (test-only, in the Tests line). 0741, 0742, 0743 are test-only and summarised in one line.\n- `npm run prices` ran on 2026-11-25; Built with speck figures from `speck(0754): ship`: 734 shipped, 18 cancelled, 16 min median, 2 rounds median, 351 first-round.\n- 0732's checks that named 1.6.0 as the current version now check the current version, as the ticket's Notes ask.\n",
+    "seconds": 68,
+    "usage": {
+      "input_tokens": 277458,
+      "cached_input_tokens": 232448,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1790,
+      "reasoning_output_tokens": 120
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 45010,
+      "cached": 232448,
+      "write": 0,
+      "output": 1790
+    },
+    "cost_usd": 0.1311648,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-25T08:08:09.503Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "package.json names 1.6.1. Both 0753 AC1 tests passed, including invoking speck init and checking its output."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "CHANGELOG.md puts 1.6.1 above 1.6.0 and describes the changes covered by 0737, 0741–0752 and 0754. The diff only inserts the new section; earlier sections are unchanged."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "README.md and docs/brief.md status lines name 1.6.1. AC3 tests passed for both lines, the latest-release setup prompt and the price table date. scripts/prices.json records 2026-11-25 and includes refreshed rates."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/releases/v1.6.1.md covers the release, individual changes, updating each project, upgrade implications and the changelog link. Claims match the dependency tickets; no person's name appears. AC4 tests passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The figures test passed against done tickets at speck(0754): ship, matching the README's 734 shipped, 18 cancelled, 16 minutes, 2 rounds and 351 first-round approvals. Version consistency passed. The final selected-file run passed 179 tests with no failures, including the previously failing timing test."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/release-0753.test.mjs:49",
+        "issue": "The new AC2 test asserts the order of document headings with indexOf. The review rules explicitly prohibit added tests that check heading order; this requirement is marked checked by review.",
+        "suggested_fix": "Remove the heading-order assertion and verify placement by review. Keep the permitted checks that the version sections exist.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The release documents, version and refreshed figures meet the ticket, and the reported tests pass. One new test checks document heading order, which the review rules prohibit. Remove that assertion before approval."
+  }
+}
+```
+
+</details>
