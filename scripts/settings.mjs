@@ -15,7 +15,7 @@ import { codexModelsAsync } from './codex-models.mjs';
 import { agentModelsAsync, offeredModels, offeredModelsAsync, findAgentsAsync } from './agents.mjs';
 import { OWN_BUILD_COMMANDS, ownBuildCommand, handSetBuildCommand, otherFamilyReviewer, describeBuildCommand, clearsBuilderModel } from './builder-switch.mjs';
 import { buildsEachTicket } from './build-model.mjs'; import { levelsShown } from './levels.mjs'; // 0661
-import { knownProviders } from './custom-providers.mjs'; import { providerNamed } from './provider-review.mjs'; import { addHomeSettingRow } from './home-settings.mjs'; import { homeRow, panelSaveSettings } from './settings-home.mjs'; export { panelSaveSettings }; // 0678, 0707
+import { knownProviders } from './custom-providers.mjs'; import { providerNamed } from './provider-review.mjs'; import { addHomeSettingRow } from './home-settings.mjs'; import { withHomeRow, panelSaveSettings } from './settings-home.mjs'; export { panelSaveSettings }; // 0678, 0707
 import { keysStatus, saveProviderKey } from './keys.mjs';
 import { yourAgentsView, addAgent, removeAgent } from './your-agents.mjs'; import { APP_SETTINGS } from './app.mjs'; import { benchRows, newBenchProblem } from './bench.mjs'; import { qaRows } from './app-check.mjs'; import { TEAM_GROUP, TEAM_KEYS, teamShown } from './team.mjs'; // 0634, 0645, 0651, 0652
 export { panelProviderAddRequest } from './provider-form.mjs'; // 0401
@@ -141,7 +141,7 @@ export function panelSettings(repo, { models, builderModels, foremanModels, agen
       : Object.hasOwn(mine, s.key) ? { for_machine: true, from: 'machine', repo_value: value } : { for_machine: true, from: 'repo', repo_value: value };
     return { key: s.key, label: s.label, summary: namedText(s, s.summary, speckNameOf(file)), value: machine.from === 'machine' ? mine[s.key] : value, default: !inFile, explain: explainFully(s, speckNameOf(file)), // 0729: and its plain name and short line
       editable: EDITABLE.includes(s.key), ...(choices ? { choices } : {}), ...(missing ? { missing } : {}), ...build, ...machine };
-  }).flatMap(row => (HOME_AFTER.has(row.key) ? [row, homeRow(HOME_AFTER.get(row.key))] : [row])) })), /* 0707: yours for every project, after this project's */ ...(models ? { reviewer_models: models } : {}), ...(builderModels ? { builder_models: builderModels } : {}),
+  }).flatMap(withHomeRow) })), /* 0707: yours for every project, after this project's */ ...(models ? { reviewer_models: models } : {}), ...(builderModels ? { builder_models: builderModels } : {}),
     ...(foremanModels ? { foreman_models: foremanModels } : {}), claude_models: CLAUDE_MODELS, providers: providersShown(repo, providers), levels: levelsShown(file) }; // 0661
 }
 
@@ -167,9 +167,6 @@ function providersShown(repo, providers) {
   return providers.map(p => ({ name: p.name, label: p.label, models: providerModels(p), default_model: p.defaultModel,
     key_set: set ? set.get(p.name) === true : false, ...(why ? { key_why: why } : {}) }));
 }
-
-// 0707, 0746: each home-folder setting's row goes right after this project's own.
-const HOME_AFTER = new Map([['max_parallel_builds', 'machine_parallel_builds'], ['max_parallel_tests', 'machine_parallel_tests']]);
 
 // 0278: the model names a claude-subagent reviewer (or 0292's claude) takes, each meaning the newest model of its kind. Claude Code has no
 // command that lists them, so they're written here. With no `efforts`, reviewer_effort offers speck's own.

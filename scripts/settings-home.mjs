@@ -17,7 +17,7 @@ export const PANEL_HOME_SETTINGS = Object.freeze(Object.keys(HOME_ROWS));
 
 // A home setting's row, with its value from the home folder's file, blank when it isn't set. A file that can't be read
 // leaves it blank, saying why in its explanation.
-export function homeRow(key) {
+function homeRow(key) {
   let value = '', why = '';
   try { const v = homeSettings()[key]; value = v === undefined || v === null ? '' : v; }
   catch (e) { if (!(e instanceof SpeckError)) throw e; why = ` ${e.message}`; }
@@ -25,6 +25,10 @@ export function homeRow(key) {
   return { key, label, summary, value, default: value === '', every_project: true, editable: true,
     explain: `${explain}${why} A change here is saved in ${homeSettingsShown()} for every project on this machine, without a commit.` };
 }
+
+// 0707, 0746: each home-folder setting's row goes right after this project's own.
+const HOME_AFTER = new Map([['max_parallel_builds', 'machine_parallel_builds'], ['max_parallel_tests', 'machine_parallel_tests']]);
+export const withHomeRow = row => (HOME_AFTER.has(row.key) ? [row, homeRow(HOME_AFTER.get(row.key))] : [row]);
 
 const refusal = (status, refused) => ({ status, body: { error: [...new Set(Object.values(refused))].join('\n'), refused } });
 
