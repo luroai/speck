@@ -1,7 +1,7 @@
 ---
 id: "0747"
 title: "Name each Settings control by its setting's plain name"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -20,11 +20,12 @@ created: 2026-11-24
 built_on: "0746"
 started: "2026-11-25T00:01:50.120Z"
 approved: "2026-11-25T00:35:42.219Z"
+finished: "2026-11-25T00:47:31.779Z"
 
 ---
 # 0747 · Name each Settings control by its setting's plain name
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Since 0729, Settings shows each setting by a plain name, but its list, box or switch is still labelled with the key. A screen reader reads the Name box out as "speck_name", and voice control can't find a control by the name on screen.
