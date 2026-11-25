@@ -15,7 +15,7 @@ const GROUPS = [
   ['Shipping', ['auto_ship', 'auto_ship_risk', 'ship_mode']], // 0295 added ship_mode
   ['Building and reviewing', ['builder', 'builder_model', 'builder_effort', 'reviewer', // 0402 added builder_effort
     'reviewer_model', 'reviewer_effort', 'allow_same_model_review', // 0406 folded in the parallel and size-limit settings
-    'max_parallel_builds', 'max_parallel_tests', 'machine_parallel_tests', // 0707: yours for every project, from the home folder
+    'max_parallel_builds', 'machine_parallel_builds', 'max_parallel_tests', 'machine_parallel_tests', // 0707: yours for every project, from the home folder
     'limits.max_acceptance_criteria', 'limits.max_changed_lines', 'limits.max_review_rounds']],
   ['Your team', ['watch_bench', 'builder_bench', 'reviewer_bench', 'qa_agent', 'qa_model', 'qa_effort', 'qa_bench']], // 0652: the settings only its cards show
 ];

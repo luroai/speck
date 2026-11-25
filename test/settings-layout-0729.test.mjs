@@ -41,7 +41,7 @@ const tipOf = (p, r) => p.all(r).find(n => n.tagName === 'p' && cls(n, 'explain'
 // ---------- AC1: a plain name over a short muted line, the control on the right, the key in the tooltip ----------
 
 test('0729 AC1: speck panel gives every setting a plain name and a short line saying what it does, neither of them a key', () => {
-  assert.equal(SERVED.length, 28, 'every setting Settings shows'); // 0707: and machine_parallel_tests
+  assert.equal(SERVED.length, 29, 'every setting Settings shows'); // 0707: and machine_parallel_tests. 0746: and machine_parallel_builds
   for (const s of SERVED) {
     assert.match(s.label, /^[A-Z][a-z]*(?:[ -][a-z]+)*$/, `${s.key}: a name in plain words, ${s.label}`);
     assert.match(s.summary, /^[A-Z][^_]*\.$/, `${s.key}: one sentence, ${s.summary}`);
