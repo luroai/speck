@@ -46,7 +46,9 @@ A bare main checkout shows under Needs you, in the panel and `speck status`, wit
 - Self-check: narrowed the real panel test's name to what it checks (its state, not the bridge summary, which the summary tests cover)
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When your project's main folder stops working as an ordinary checkout (a git setting gets switched so that git treats it as bare), speck now tells you straight away instead of only noting it in its log. It shows first under Needs you in `speck status`, as the first row under Needs you in the panel's Build lane and in the black bar's count, and on the All projects view for that project, each time with the one command that puts it right. This happens even while speck run is off, because nothing can be built or shipped until it's fixed.
+
+To see it, run that git setting on a spare project, open its panel or run `speck status`, then switch it back: the warning goes away. The panel's row shows the whole command, wrapping onto a second line on a narrow screen rather than cutting it off.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -56,6 +58,9 @@ A bare main checkout shows under Needs you, in the panel and `speck status`, wit
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups, not saved to the inbox:
+  - 0476 AC2 (the real-browser swipe test) failed once in this build's related run with "the browser dropped the end of the touch 3 times in a row" at a load average over 50, and passed on its own. Skipped as a duplicate: it's already named in speck/ideas/done/2026-10-26-steady-two-browser-tests-under-a-busy-run.md and tickets 0542 and 0738.
+  - The panel picks up a change to core.bare at its keep-alive's next board check, as nothing it watches changes. Quick enough for something this rare.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -132,6 +137,84 @@ A bare main checkout shows under Needs you, in the panel and `speck status`, wit
     ],
     "escalation_question": "",
     "summary": "The warning appears in the panel and bridge and clears when the checkout is repaired. Tests pass, but terminal status still hides the warning in projects with no tickets. Fix that missing case before merge."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "712bc86d0a7ea1089915611b715143dc6ed0d305",
+    "session": "continued",
+    "thread_id": "01a2101e-f1a4-7e01-82a6-248c91dc3365",
+    "builder_response": "- Tests run: test/bare-needs-0749.test.mjs (plus the commands.checks files speck adds).\n- F1: fixed. cmdStatus in scripts/speck.mjs reads bareMain(repo) before the no-tickets return and returns early only when the checkout isn't bare; with no tickets and a bare checkout it prints the SPECK lines (Needs you 1, then the bare line with the command) and then \"No tickets yet\". New test \"0749 AC1 AC3: with no tickets yet, speck status still says it, and only says there are none once it's set back\" removes every ticket, sets core.bare true, checks the warning, then sets it false and checks the output is only the no-tickets line.\n",
+    "seconds": 18,
+    "usage": {
+      "input_tokens": 263187,
+      "cached_input_tokens": 221952,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1201,
+      "reasoning_output_tokens": 85
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 6575,
+      "cached": 97536,
+      "write": 0,
+      "output": 497
+    },
+    "cost_usd": 0.0278736,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-25T00:35:16.656Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs: cmdStatus now checks bareMain before returning for no tickets. Passing status tests cover warning order, the repair command, run being off and an empty project."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "foremanView counts bare_main; panel.js renders its Build Needs you row; projectSummary counts it for the bridge. Passing 0749 tests cover these behaviours and bridge navigation."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing 0749 AC3 tests verify removal from real status and panel state, rendered Build rows, the bar count and bridge summary after core.bare becomes false."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The recorded round reports 152 passed, 0 failed and 3 skipped. The previous round also passed the existing test files affected by earlier failures; this round introduces only the focused status fix and regression test."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "Terminal status previously hid the bare checkout warning when the project had no tickets.",
+        "suggested_fix": "Completed: cmdStatus checks the checkout before its empty-project return, and a passing integration test covers the warning and its removal.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The warning now appears in terminal status, the panel and bridge, including projects with no tickets. It includes the repair command and disappears once repaired. All criteria pass, with no blocking concerns remaining."
   }
 }
 ```
