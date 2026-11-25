@@ -40,6 +40,7 @@ Every Settings control's accessible name is its setting's plain name.
 - The rows' look.
 
 ## Notes
+Failing before this build: not checked
 - From 0729's own note: tests find controls by their key labels; a data attribute holding the key would keep them findable.
 - Waits for the machine-wide build limit ticket, which adds a Settings row.
 
