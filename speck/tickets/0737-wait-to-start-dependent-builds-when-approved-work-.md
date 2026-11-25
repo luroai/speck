@@ -44,6 +44,7 @@ A waiting ticket starts on approved work only when that work merges cleanly into
 - Made by speck's watch agent on 2026-11-24 when 0730 couldn't start; filled in the same day at the user's say-so.
 - Starting on approved work is 0674/0675 (`startsOn`, `afterWait` in `scripts/built-on.mjs`); the "ended without starting" hold is `ownWait` in `scripts/run.mjs`, cleared by `readyAgain` in `scripts/build-records.mjs`.
 - `speck merge-check` can tell whether a branch merges cleanly into the base branch.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
