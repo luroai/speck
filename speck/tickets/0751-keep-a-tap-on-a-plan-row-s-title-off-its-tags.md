@@ -1,7 +1,7 @@
 ---
 id: "0751"
 title: "Keep a tap on a Plan row's title off its tags"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -20,11 +20,12 @@ created: 2026-11-24
 started: "2026-11-24T23:42:36.610Z"
 blocked_at: ""
 waited_seconds: 15
+approved: "2026-11-25T00:36:38.993Z"
 
 ---
 # 0751 · Keep a tap on a Plan row's title off its tags
 
-**Status:** 🔨 building
+**Status:** 👍 approved
 
 ## Problem
 Since 0727 took Set ready off a closed Plan row, its title sits 2 px above its tags. On a touch screen a tap near the start of the title can land on the priority tag below, as 0739's build saw at 375 px with touch, so someone opening a ticket gets a menu instead.
@@ -64,16 +65,22 @@ Changes what you'd notice: yes
 Clear winner: yes
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 AC2 explicitly requires every tag to retain its 44 px target, but the test checks only priority.
+Round 2 (codex): escalate.
+Round 3 (codex): approve.
 
 ## Delivery log
+- Review rounds: 3
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 271,857
+- Elapsed since build started: 54 min
+- Changed lines: 9 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 Follow-ups:
 - Saved to the inbox: unsteady tests 0723 AC2, 0067 AC2 and 0160 AC5.
 - Skipped as a duplicate: 0622 AC1 AC2 AC3 unsteady (speck/ideas/done/2026-11-10-steady-the-0622-and-0549-ac1-run-tests-under-load.md).
 - Known limits: unchecked on a real phone; a very wide finger area (22 px radius in headless Chrome) was not required to pass. Size, risk and type targets are 28 px high, not 44 px.
-
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
