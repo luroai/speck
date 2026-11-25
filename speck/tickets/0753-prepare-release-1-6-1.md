@@ -15,7 +15,7 @@ reviewer: ""             # blank: the reviewer your settings give when each revi
 reviewer_model: ""       # blank: your settings' reviewer_model (blank there too: the reviewer's default)
 reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low | medium | high | xhigh | max
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
-after: ["0741","0742","0743","0744","0745","0746","0747","0748","0749","0750","0751","0752"]                # ticket ids that must be done first
+after: ["0741","0742","0743","0744","0745","0746","0747","0748","0749","0750","0751","0752","0737"]                # ticket ids that must be done first
 created: 2026-11-24
 
 ---
@@ -24,7 +24,7 @@ created: 2026-11-24
 **Status:** 📋 ready
 
 ## Problem
-Since 1.6.0, 0741 to 0752 fix a test that failed every build on current Node, steady two timing tests, let a waiting test run hand back before the builder's shell limit, name only tests that still fail after a full-suite retry, show the machine-wide build limit in Settings, name Settings controls for screen readers, swap the builder's and reviewer's agents in one step, say under Needs you when the main checkout is bare, and file fewer duplicate follow-ups. Anyone updating speck still gets 1.6.0.
+Since 1.6.0, 0737 and 0741 to 0752 start a waiting ticket only on approved work that merges cleanly, fix a test that failed every build on current Node, steady two timing tests, let a waiting test run hand back before the builder's shell limit, name only tests that still fail after a full-suite retry, show the machine-wide build limit in Settings, name Settings controls for screen readers, swap the builder's and reviewer's agents in one step, say under Needs you when the main checkout is bare, and file fewer duplicate follow-ups. Anyone updating speck still gets 1.6.0.
 
 ## Outcome
 speck is ready to be released as 1.6.1.

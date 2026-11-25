@@ -4,7 +4,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { SpeckError, sh, loadConfig, parseConfig, findRepoRoot, EFFORTS, speckNameOf } from './core.mjs';
-import { sameModelProblem } from './same-model.mjs';
+import { sameModelProblem } from './same-model.mjs'; import { swapOffer } from './settings-swap.mjs'; // 0748
 import { checkConfigValue, setConfigText, yamlValue } from './config.mjs';
 import { commitTicketOnly } from './close.mjs';
 import { FIXING } from './foreman.mjs';
@@ -445,8 +445,10 @@ export function saveRepoSettings(repo, changes, { confirmed = null, replace = nu
   if (models.length && will.allow_same_model_review !== true) {
     const problem = sameModelProblem(String(will.builder ?? ''), String(will.reviewer ?? ''), will, will.reviewer_model);
     const switching = models.some(c => c.key === 'builder' && !c.same);
+    // 0748: with the other role's agent and model to swap in, when that would fix it, for the view to offer.
+    const swap = problem ? swapOffer(checked, cfg, will, (key, value) => checkChange(repo, text, cfg, { key, value, machine: false }).error ?? null) : null;
     if (problem) return refusal(422, each(models, switching
-      ? `${problem} For a ${will.builder} builder, a reviewer from another family is ${otherFamilyReviewer(String(will.builder))}.` : problem)); // 0731: each setting saves by itself, so there's no Save to pick it in too
+      ? `${problem} For a ${will.builder} builder, a reviewer from another family is ${otherFamilyReviewer(String(will.builder))}.` : problem), swap ? { swap } : {}); // 0731: each setting saves by itself, so there's no Save to pick it in too
   }
   const toFile = checked.filter(c => !c.own && !c.same), toMachine = checked.filter(c => c.own && !c.same);
   if (toFile.length) {

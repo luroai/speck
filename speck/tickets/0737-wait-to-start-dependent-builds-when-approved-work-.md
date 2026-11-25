@@ -2,7 +2,7 @@
 id: "0737"
 title: "Wait to start dependent builds when approved work conflicts with main"                # one outcome, no "and"
 status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
-priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
+priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
 kind: code               # code | task (what the build does: changes the project's code, or does a task and leaves its result in outputs/)
@@ -24,20 +24,25 @@ created: 2026-11-24
 **Status:** 📝 draft
 
 ## Problem
-0730 was launched because 0729 is approved, but its approved branch conflicts with main, so the scheduler needs to wait for that conflict to clear rather than launch a build that cannot start.
+Since 1.4, speck run starts a waiting ticket on the approved work of the ticket it waits for. When that approved work no longer merges cleanly into `main`, the build can't start and stops at once, and speck run then leaves the ticket as "ended without starting" until someone sets it ready again. On 2026-11-24, 0707 and 0730 both stalled this way behind 0729.
 
 ## Outcome
-<!-- What is true when this ships. One outcome. -->
+A waiting ticket starts on approved work only when that work merges cleanly into `main`, and otherwise waits for it to ship and starts by itself.
 
 ## Acceptance criteria
-<!-- 1–5 testable statements. Each one becomes a test before any code is written. `speck check <id>` runs the ready check on the ticket. -->
-1.
+1. speck run doesn't start a ticket on another ticket's approved work when that work doesn't merge cleanly into `main`; it waits until that ticket has shipped, then starts it from `main` as usual.
+2. While it waits for this reason, `speck status` and the panel say it is waiting for that ticket to ship because its approved work clashes with `main`, naming the ticket.
+3. A ticket whose build stopped before starting for this reason is started again by speck run once it can start, without being set ready again.
+4. When the approved work merges cleanly into `main`, the ticket starts on it as today.
+5. No test that passed before this change fails.
 
 ## Out of scope
--
+- Settling the clash itself: that happens at the approved ticket's ship, as today.
 
 ## Notes
-<!-- Constraints, links and decisions. Optional. -->
+- Made by speck's watch agent on 2026-11-24 when 0730 couldn't start; filled in the same day at the user's say-so.
+- Starting on approved work is 0674/0675 (`startsOn`, `afterWait` in `scripts/built-on.mjs`); the "ended without starting" hold is `ownWait` in `scripts/run.mjs`, cleared by `readyAgain` in `scripts/build-records.mjs`.
+- `speck merge-check` can tell whether a branch merges cleanly into the base branch.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
