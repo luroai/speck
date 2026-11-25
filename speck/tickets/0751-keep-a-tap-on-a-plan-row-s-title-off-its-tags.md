@@ -1,7 +1,7 @@
 ---
 id: "0751"
 title: "Keep a tap on a Plan row's title off its tags"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: "speck/ideas/done/2026-11-24-keep-a-tap-on-a-plan-row-s-title-off-its-ta
 after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T23:42:36.610Z"
+blocked_at: "2026-11-25T00:35:44.350Z"
 
 ---
 # 0751 · Keep a tap on a Plan row's title off its tags
 
-**Status:** 🔍 reviewing
+**Status:** ⛔ blocked
 
 ## Problem
 Since 0727 took Set ready off a closed Plan row, its title sits 2 px above its tags. On a touch screen a tap near the start of the title can land on the priority tag below, as 0739's build saw at 375 px with touch, so someone opening a ticket gets a menu instead.
@@ -41,6 +42,7 @@ A tap anywhere on a closed Plan row's title opens the row.
 ## Notes
 - Failing before this build: none
 - Self-check: no changes
+- The one full related-tests run had 4 failures that passed on rerun with no code change: 0723 AC2, 0067 AC2, 0160 AC5 and 0622 AC1 AC2 AC3.
 - From 0739's own note: a tap 4 px inside the title's left end landed on the "low" tag below it in headless Chrome; unchecked on a real phone.
 
 ## In plain words
@@ -48,6 +50,12 @@ A tap anywhere on a closed Plan row's title opens the row.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
+Criterion 2 says every tag keeps its 44 px target, but only the priority tag has ever had one: the size, risk and type labels have 28 px high targets, and this change keeps them as they are. Should criterion 2 mean "keep each tag's target as big as it is now" (recommended: the fix is then done), or should size, risk and type be enlarged to 44 px, which needs taller closed rows or targets that overlap the rows next to them?
+
+Recommended: Keep each tag's target as it is now
+Other options: Enlarge size, risk and type targets to 44 px
+Changes what you'd notice: yes
+Clear winner: yes
 
 ## Review log
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
@@ -125,6 +133,79 @@ A tap anywhere on a closed Plan row's title opens the row.
     ],
     "escalation_question": "",
     "summary": "The title fix passes realistic touch tests and the priority menu still works. Approval needs one coverage gap closed: the tests do not establish that the other tags retain their required 44 px tap targets."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · escalate</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "7717f8e4325113128739814243de9e6a099d0178",
+    "session": "continued",
+    "thread_id": "01a2101f-be41-7841-a381-02b9e727248d",
+    "builder_response": "- Tests run: test/panel-0751.test.mjs\n- F1: fixed. A new `0751 AC2` test checks, in the real touch browser, every size, risk and bug tag on all three rows: its ::after area is at least 28 px high and 2 px past each side, covers its edges (elementFromPoint), and a tap on it reaches that tag. About \"44 px\": only the priority tag ever had a 44 px target. The others' area is `.item.ticket:not(.open) .head .checks .tag:not(.pick)::after { inset: -3.5px -2px -10.5px }` (0519), 14 px + 14 px = 28 px high, unchanged from main. \"every tag keeps its 44 px target\" means the change must not shrink targets; enlarging the labels' targets is not in this ticket. No CSS for those areas changed.\n",
+    "seconds": 17,
+    "usage": {
+      "input_tokens": 221406,
+      "cached_input_tokens": 173952,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1386,
+      "reasoning_output_tokens": 101
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 6099,
+      "cached": 84224,
+      "write": 0,
+      "output": 565
+    },
+    "cost_usd": 0.0262704,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-25T00:35:38.870Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "escalate",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "test/panel-0751.test.mjs AC1 passes in real Chromium at 375 px with touch, sampling title positions including 4 px inside the left edge and verifying a real tap opens the row without a menu or note."
+      },
+      {
+        "id": 2,
+        "status": "unclear",
+        "evidence": "The priority dimensions and menu test passes. The new test verifies preserved targets for size, risk and bug tags, but those targets are 28 px high rather than the criterion's explicit 44 px. The same ::after override exists in the pre-build commit 1c1c2cb3, confirming the builder's account of existing behaviour."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The latest recorded run has 146 passes, zero failures and three skips. All three 0751 tests passed. Since round 1 only the ticket and its new test changed; the earlier regression test files passed in round 1."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/panel-0751.test.mjs",
+        "issue": "The added tests close the coverage gap for existing tag targets, but reveal a conflict in AC2: it requires every tag to keep a 44 px target, while the existing non-priority targets are only 28 px high. Preserving them does not establish the stated 44 px requirement, and the builder cannot redefine that requirement.",
+        "suggested_fix": "Have the owner decide whether AC2 means preserving existing target sizes or requiring every tag to have a 44 px target. Then align the criterion, implementation and tests with that decision.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "Should AC2 preserve the existing non-priority tag targets (28 px high), or require enlarging every tag's target to 44 px?",
+    "summary": "The title fix works in the touch tests, and the new tests confirm existing tag targets remain usable. Approval needs one product decision: the ticket says every tag has a 44 px target, but non-priority tags already had smaller targets before this change."
   }
 }
 ```
