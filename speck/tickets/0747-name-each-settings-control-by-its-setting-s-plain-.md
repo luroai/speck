@@ -1,7 +1,7 @@
 ---
 id: "0747"
 title: "Name each Settings control by its setting's plain name"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,13 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-11-24-name-each-settings-control-by-its-setting-s-plain-name.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0746"]                # ticket ids that must be done first
 created: 2026-11-24
+built_on: "0746"
+started: "2026-11-25T00:01:50.120Z"
 
 ---
 # 0747 · Name each Settings control by its setting's plain name
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Since 0729, Settings shows each setting by a plain name, but its list, box or switch is still labelled with the key. A screen reader reads the Name box out as "speck_name", and voice control can't find a control by the name on screen.
