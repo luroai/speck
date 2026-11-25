@@ -1,7 +1,7 @@
 ---
 id: "0754"
 title: "Fix the full suite failing on main at bd26262"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-25
+started: "2026-11-25T01:07:30.804Z"
 
 ---
 # 0754 · Fix the full suite failing on main at bd26262
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 The full suite fails on main at commit bd26262 (bd26262f02cf4a7a8d1b96dd8e47822d9d5edd83). Failing tests:
