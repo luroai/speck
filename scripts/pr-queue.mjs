@@ -7,6 +7,8 @@
 // 0323: a ship refused because its pull request conflicts (exit 13) is handed back to its build with `handBack`, as the
 // ship queue's is, and a ticket for which `waiting(id)` is true has that hand-back still to run, so it isn't shipped.
 // 0552: so is one refused because a file under speck/ holds a private word or the home folder's path (exit 17).
+// 0750: while the main checkout isn't a work tree it merges nothing, as the ship queue doesn't ship (0740), and a ship
+// refused for it isn't a try, so once it's set back the next check carries on as if nothing had happened.
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
@@ -16,6 +18,7 @@ import { otherShipRunning, shipState } from './ship.mjs';
 import { prLook } from './pr-ship.mjs';
 import { readPrRecord } from './pull-request.mjs';
 import { sharedCacheDir } from './turns.mjs';
+import { bareMain, bareMainHold } from './bare-main.mjs';
 
 const CLI = fileURLToPath(new URL('./speck.mjs', import.meta.url));
 
@@ -44,6 +47,15 @@ export function prQueue(repo, cfg, { say = console.log, launch = launchPr, ship 
   const last = new Map(); // each ticket's refs at its last try
   const looked = new Map(), shipped = new Map(); // 0296: when each pull request was last looked at, and how it was at its last ship
   let current = null;
+  let bare = null; // 0750: the main checkout's path while it isn't a work tree, once a check has found it
+  // Checks the main checkout again, saying once when it stops being a work tree and when it's one again.
+  const checkBare = () => {
+    const now = bareMain(repo);
+    if (now && now !== bare) say(`Shipping is ${bareMainHold(now, base)}`);
+    else if (!now && bare) say(`The main checkout at ${bare} is a work tree again, so speck run is shipping again.`);
+    bare = now;
+    return bare;
+  };
   const check = tickets => {
     if (current) return;
     for (const t of tickets) {
@@ -63,9 +75,11 @@ export function prQueue(repo, cfg, { say = console.log, launch = launchPr, ship 
       });
       return;
     }
+    let held;
     for (const t of tickets) {
       if (t.status !== 'approved' || t.build_running || !t.pull_request?.url || t.pull_request.error) continue;
       if (waiting(t.id)) continue;
+      if (held ??= checkBare() !== null) return; // 0750: nothing is looked at or merged until it's set back
       if (now() - (looked.get(t.id) ?? -Infinity) < lookMs) continue;
       looked.set(t.id, now());
       const v = look(t.id);
@@ -83,6 +97,8 @@ export function prQueue(repo, cfg, { say = console.log, launch = launchPr, ship 
         if (code === 0) return say(`Shipped ${t.id}.`);
         if (code === 15) { shipped.delete(t.id); looked.delete(t.id); return; } // another ship started just before it: not a try
         if (!error && shipState(runs, t.id)?.unpushed) return say(`${t.id}'s pull request is merged, but its done ticket wasn't pushed: ${lastLine(log)}`);
+        // 0750: nor is one refused while the main checkout is bare: it's tried again once that's set back.
+        if (checkBare()) { shipped.delete(t.id); looked.delete(t.id); return say(`${t.id} didn't ship: ${error || lastLine(log) || `it exited with ${code}`}`); }
         if (!error && HAND_BACK[code]) handBack({ id: t.id, kind: HAND_BACK[code], why: lastLine(log), head: refs.head });
         say(`${t.id} didn't ship: ${error || lastLine(log) || (code === null ? 'it was stopped' : `it exited with ${code}`)} speck run tries again once its pull request, ${base} or its branch changes.`);
       });

@@ -41,6 +41,7 @@ The pull request queue holds while the main checkout is bare and tries again onc
 ## Notes
 - `scripts/pr-queue.mjs`; the check is `bareMain()` in `scripts/bare-main.mjs`.
 - Failing before this build: none
+- Self-check: a ship refused as the main checkout went bare is now checked after the merged-but-not-pushed case, so that message still shows; the refusal line falls back to the exit code when the log is empty.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
