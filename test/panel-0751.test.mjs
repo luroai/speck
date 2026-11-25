@@ -71,3 +71,26 @@ test('0751 AC2: the priority tag keeps its 44 px target and still opens its menu
   await b.until(`!!document.querySelector('.prio-menu')`, 'the menu');
   assert.equal(await b.js(`document.querySelector('.item.row').classList.contains('open')`), false, 'the row stays closed');
 }));
+
+// Size, risk and type have no menu: their target is their label's ::after area (0519), 28 px high and 2 px past each side.
+test('0751 AC2: size, risk and type keep their whole tap areas, and a tap at each edge of one reaches it, on every row', skip, () => inPanel(async (b) => {
+  const tags = await b.js(`[...document.querySelectorAll('.item.row')].flatMap((row, i) => [...row.querySelectorAll('.checks .tag:not(.pick)')].map(e => {
+    const r = e.getBoundingClientRect(), a = getComputedStyle(e, '::after');
+    return { row: i, text: e.textContent, left: r.left + parseFloat(a.left), right: r.right - parseFloat(a.right), top: r.top + parseFloat(a.top), width: parseFloat(a.width), height: parseFloat(a.height), own: r.width };
+  }))`);
+  assert.deepEqual(tags.map(t => `${t.row} ${t.text}`), ['0 S', '0 low', '1 S', '1 low', '1 bug', '2 S', '2 low']);
+  await b.js(`window.__hits = []; addEventListener('click', e => { const row = e.target.closest('.item.row'); __hits.push([[...document.querySelectorAll('.item.row')].indexOf(row), e.target.textContent]); e.stopPropagation(); e.preventDefault(); }, true); true`);
+  for (const t of tags) {
+    const how = `row ${t.row}'s ${t.text}`;
+    assert.ok(t.height >= 27.9, `${how}: its area is ${t.height} px high`);
+    assert.ok(t.width >= t.own + 3.9, `${how}: its area is ${t.width} px wide`);
+    const x = (t.left + t.right) / 2, y = t.top + t.height / 2;
+    for (const [px, py] of [[x, y], [t.left + 1, y], [t.right - 1, y], [x, t.top + 1], [x, t.top + t.height - 1]]) {
+      assert.equal(await b.js(`document.elementFromPoint(${px}, ${py}).textContent`), t.text, `${how}: its area covers ${px}, ${py}`);
+    }
+    await b.js(`__hits.length = 0`);
+    await tap(b, x, y, 1);
+    await b.until(`__hits.length > 0`, 'the tap');
+    assert.deepEqual(await b.js(`__hits[0]`), [t.row, t.text], `${how}: a tap on it`);
+  }
+}));
