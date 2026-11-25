@@ -451,10 +451,12 @@ function cmdStatus(args = []) {
   if (args.includes('--json')) return console.log(JSON.stringify(statusData(repo), null, 2));
   const cfg = loadConfig(repo), runs = runsOf(repo);
   const tickets = statusTickets(repo, cfg), name = speckNameOf(cfg); // 0576
-  if (!tickets.length) return console.log('No tickets yet. Capture an idea, then run /speck-ticket.');
+  const bare = bareMain(repo); // 0749: said even with no tickets yet
+  if (!tickets.length && !bare) return console.log('No tickets yet. Capture an idea, then run /speck-ticket.');
   // 0285: the Foreman, as the panel's header shows it, from speck run's own record. Blocked tickets are listed below.
   const board = foremanBoard(tickets, cfg, runs, watchAgentOf(runs, tickets)), foremanOn = new Map(board.map(b => [b.id, b])); // 0317
-  for (const line of foremanLines(foremanView({ run: runState(runs), record: readForeman(runs), tickets: board, fixing: fixingOf(cfg), agent: agentView(runs, board, name), name, bare: bareMain(repo) }))) console.log(line); // 0749: bare
+  for (const line of foremanLines(foremanView({ run: runState(runs), record: readForeman(runs), tickets: board, fixing: fixingOf(cfg), agent: agentView(runs, board, name), name, bare }))) console.log(line);
+  if (!tickets.length) return console.log('No tickets yet. Capture an idea, then run /speck-ticket.');
   const order = ['approved', 'blocked', 'reviewing', 'building', 'ready', 'draft', 'done', 'cancelled'];
   for (const s of order) {
     const group = tickets.filter(t => t.fm.status === s).map(t => ({ t, id: t.fm.id, type: ticketType(t), priority: ticketPriority(t) })).sort(byPriority);

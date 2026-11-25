@@ -3,6 +3,8 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
 import { T, boardPage, fakePage, panelRepo, startPanel, stop, request, freePort } from './support/panel.mjs';
 import { foremanView, foremanLines } from '../scripts/foreman.mjs';
 import { projectSummary } from '../scripts/panel-summary.mjs';
@@ -46,6 +48,21 @@ test('0749 AC1 AC3: the real speck status says it while core.bare is true, and n
   const off = r.run('status');
   assert.equal(off.stdout.split('\n')[0], 'SPECK: Off');
   assert.doesNotMatch(off.stdout, /core\.bare/);
+});
+
+test('0749 AC1 AC3: with no tickets yet, speck status still says it, and only says there are none once it\'s set back', () => {
+  const r = panelRepo();
+  for (const f of fs.readdirSync(path.join(r.dir, 'speck', 'tickets')).filter(f => f.endsWith('.md'))) fs.rmSync(path.join(r.dir, 'speck', 'tickets', f));
+  r.g('config', 'core.bare', 'true');
+  const on = r.run('status');
+  assert.equal(on.status, 0, on.stderr);
+  const lines = on.stdout.split('\n');
+  assert.equal(lines[0], 'SPECK: Needs you 1');
+  assert.match(lines[1], /config core\.bare false/);
+  assert.match(on.stdout, /No tickets yet/);
+  r.g('config', 'core.bare', 'false');
+  const off = r.run('status');
+  assert.equal(off.stdout.trim(), 'No tickets yet. Capture an idea, then run /speck-ticket.');
 });
 
 // ---------- AC2: the panel and the bridge ----------
