@@ -33,14 +33,14 @@ No lane's list ever scrolls sideways, so a sideways swipe on any list always cha
 1. No lane's list (Capture, Plan, Build or Shipped) can be scrolled sideways, by touch, trackpad or script, even when something in it is wider than the list: what sticks out is cut off at the list's edges rather than scrolled to.
 2. With an element in the Plan list wider than the list, a sideways swipe that starts on the list changes lane, as it does on a list with nothing wider.
 3. Everything that scrolls sideways on purpose inside a list, such as a code block or a table cell in an open ticket, still scrolls sideways, and a swipe that starts on it still scrolls it rather than changing lane.
-4. At 375 and 390 px wide, no row in Plan, open or closed, hovered, lit or not, is wider than its list.
+4. At 375 and 390 px wide, no row in Plan, open or closed, is wider than its list: in an open row's facts, a long value such as the Builder fact's "Claude Code · Opus · medium" wraps inside its cell rather than running past it.
 5. No test that passed before this change fails.
 
 ## Out of scope
 - How a swipe is measured (0517).
 
 ## Notes
-- Raised by the user on 2026-11-25 with a screenshot of a project's Plan list in Safari on an iPhone: rows scrolled left, a horizontal scrollbar, and swipes not changing lane. In Chromium with touch at 390 px the same list doesn't overflow and a swipe changes lane, so the element that sticks out in Safari isn't known; the last row in the screenshot had a grey fill (an open, lit or hovered row's 12 px fill is a likely suspect: 0614, 0701, 0728).
+- Raised by the user on 2026-11-25 with a screenshot of a project's Plan list in Safari on an iPhone: rows scrolled left, a horizontal scrollbar, and swipes not changing lane. In Chromium with touch at 390 px the same list doesn't overflow and a swipe changes lane, and a second screenshot showed the cause: an open Plan row's Builder fact ("Claude Code · Opus · medium", 0662's picker) runs past its cell and the row, as it doesn't wrap.
 - `.lane-list` in `templates/panel-cards.css` has `overflow-y: auto`, so its `overflow-x` computes to `auto`; `scrollsSideways` in `templates/panel-header.js` then keeps the touch for the list.
 - Unverified: Safari's behaviour, as no WebKit browser is available on this machine; check in Chromium with touch, and by forcing an over-wide element in a test.
 
