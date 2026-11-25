@@ -217,7 +217,11 @@ function ticketItem(t) {
 // an open draft's row (and in its full view), so a closed row gives its title the room.
 function ticketHead(t) {
   const isOpen = open.has(t.id);
-  const head = el('div', 'head', null, titleLine(t, true, !isOpen), goneNote(t), ...isOpen ? [trackOf({ steps: NOT_STARTED }), waitingFacts(t, 'Draft', 'After', true), setReadyButton(t, lintErrorsOf(t))] : [wholeTip(detailsLine('checks', tagsOf(t, true)))]);
+  const line = titleLine(t, true, !isOpen);
+  // 0751: with a click of its own, a closed row's title is a tap target to a touch browser, which otherwise moves a tap
+  // on it to a tag just below. The click still reaches the head, which opens the row.
+  if (!isOpen) line.children[1].addEventListener('click', () => {});
+  const head = el('div', 'head', null, line, goneNote(t), ...isOpen ? [trackOf({ steps: NOT_STARTED }), waitingFacts(t, 'Draft', 'After', true), setReadyButton(t, lintErrorsOf(t))] : [wholeTip(detailsLine('checks', tagsOf(t, true)))]);
   // Only the top row opens and closes it, so clicking or selecting text in the details leaves it open.
   head.addEventListener('click', () => flip(open, t.id));
   return head;
