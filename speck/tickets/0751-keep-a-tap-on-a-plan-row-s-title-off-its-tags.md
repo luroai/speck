@@ -1,7 +1,7 @@
 ---
 id: "0751"
 title: "Keep a tap on a Plan row's title off its tags"                # one outcome, no "and"
-status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,12 +18,13 @@ source: "speck/ideas/done/2026-11-24-keep-a-tap-on-a-plan-row-s-title-off-its-ta
 after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T23:42:36.610Z"
-blocked_at: "2026-11-25T00:35:44.350Z"
+blocked_at: ""
+waited_seconds: 15
 
 ---
 # 0751 · Keep a tap on a Plan row's title off its tags
 
-**Status:** ⛔ blocked
+**Status:** 🔨 building
 
 ## Problem
 Since 0727 took Set ready off a closed Plan row, its title sits 2 px above its tags. On a touch screen a tap near the start of the title can land on the priority tag below, as 0739's build saw at 375 px with touch, so someone opening a ticket gets a menu instead.
@@ -44,6 +45,7 @@ A tap anywhere on a closed Plan row's title opens the row.
 - Self-check: no changes
 - The one full related-tests run had 4 failures that passed on rerun with no code change: 0723 AC2, 0067 AC2, 0160 AC5 and 0622 AC1 AC2 AC3.
 - From 0739's own note: a tap 4 px inside the title's left end landed on the "low" tag below it in headless Chrome; unchecked on a real phone.
+- Went with the recommendation: Keep each tag's target as it is now (chosen by speck, as watch is decide, 2026-11-25 00:35 UTC).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
