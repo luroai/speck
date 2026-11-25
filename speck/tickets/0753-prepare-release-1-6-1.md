@@ -52,6 +52,7 @@ speck is ready to be released as 1.6.1.
 - After it ships, check that the `v1.6.1` tag and its GitHub release page appeared. If not: `gh release create v1.6.1 --target main --title "speck 1.6.1" --notes-file docs/releases/v1.6.1.md`.
 - Checked 2026-11-24: `v1.6.0` is tagged on origin.
 - 0732's checks that name 1.6.0 as the current version should check the current version, as 0732 did for 0695's.
+- Failing before this build: not checked
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
