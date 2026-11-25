@@ -1,7 +1,7 @@
 ---
 id: "0747"
 title: "Name each Settings control by its setting's plain name"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: ["0746"]                # ticket ids that must be done first
 created: 2026-11-24
 built_on: "0746"
 started: "2026-11-25T00:01:50.120Z"
+approved: "2026-11-25T00:35:42.219Z"
 
 ---
 # 0747 · Name each Settings control by its setting's plain name
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Since 0729, Settings shows each setting by a plain name, but its list, box or switch is still labelled with the key. A screen reader reads the Name box out as "speck_name", and voice control can't find a control by the name on screen.
@@ -53,9 +54,14 @@ Screen readers and voice control now know each setting by the name Settings show
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 97,441
+- Elapsed since build started: 34 min
+- Changed lines: 64 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Skipped: test/panel-0476.test.mjs's swipe timing test failed once in the related run under load and passed on its own; it's already named by speck/ideas/done/2026-10-26-steady-two-browser-tests-under-a-busy-run.md and ticket 0542.
