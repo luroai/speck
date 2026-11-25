@@ -1,7 +1,7 @@
 ---
 id: "0737"
 title: "Wait to start dependent builds when approved work conflicts with main"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -21,7 +21,7 @@ created: 2026-11-24
 ---
 # 0737 · Wait to start dependent builds when approved work conflicts with main
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Since 1.4, speck run starts a waiting ticket on the approved work of the ticket it waits for. When that approved work no longer merges cleanly into `main`, the build can't start and stops at once, and speck run then leaves the ticket as "ended without starting" until someone sets it ready again. On 2026-11-24, 0707 and 0730 both stalled this way behind 0729.
