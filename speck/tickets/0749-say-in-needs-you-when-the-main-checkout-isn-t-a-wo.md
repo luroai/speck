@@ -1,7 +1,7 @@
 ---
 id: "0749"
 title: "Say in Needs you when the main checkout isn't a work tree"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: "speck/ideas/done/2026-11-24-say-in-needs-you-when-the-main-checkout-isn
 after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T23:40:46.626Z"
+approved: "2026-11-25T00:35:52.360Z"
 
 ---
 # 0749 · Say in Needs you when the main checkout isn't a work tree
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When the main checkout's `core.bare` is true, builds fail before starting and the panel can't load its data, as on 2026-11-24. Since 0740 speck run says so only in its log and as the ship queue's hold, so nothing tells you it needs you.
@@ -54,9 +55,15 @@ To see it, run that git setting on a spare project, open its panel or run `speck
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 A project with no tickets still hides the bare checkout problem: cmdStatus exits with 'No tickets yet' before producing the Needs you warning.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 264,388
+- Elapsed since build started: 55 min
+- Changed lines: 69 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups, not saved to the inbox:
   - 0476 AC2 (the real-browser swipe test) failed once in this build's related run with "the browser dropped the end of the touch 3 times in a row" at a load average over 50, and passed on its own. Skipped as a duplicate: it's already named in speck/ideas/done/2026-10-26-steady-two-browser-tests-under-a-busy-run.md and tickets 0542 and 0738.
