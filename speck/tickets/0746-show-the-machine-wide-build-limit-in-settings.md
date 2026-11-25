@@ -18,7 +18,7 @@ source: "speck/ideas/done/2026-11-24-show-the-machine-wide-build-limit-in-settin
 after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T23:18:34.320Z"
-approved: "2026-11-25T00:01:01.728Z"
+approved: "2026-11-25T00:33:37.912Z"
 
 ---
 # 0746 · Show the machine-wide build limit in Settings
@@ -57,13 +57,14 @@ Keep in mind that changing it affects every project on this machine, not only th
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 173,655
-- Elapsed since build started: 42 min
-- Changed lines: 32 (limit 5000)
+- Reviewer tokens: 265,351
+- Elapsed since build started: 75 min
+- Changed lines: 35 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ## Review rounds
@@ -132,6 +133,76 @@ Round 1 (codex): approve.
     "findings": [],
     "escalation_question": "",
     "summary": "Settings now shows the machine-wide build limit directly after Builds at once. Changes save to the home settings, clearing removes the limit, and invalid values show the CLI's reason and restore the saved value. The tests cover these behaviours and report no failures. No blocking concerns found."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "b4895ab99104d962362b2a1e27773f4f19880a16",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a21000-e7c2-74d1-94f4-8af7fa22fa33",
+    "builder_response": "- Tests run: test/split-0078.test.mjs test/split-0270.test.mjs test/settings-home-0746.test.mjs test/settings-layout-0729.test.mjs test/settings-0397.test.mjs test/panel-0257.test.mjs test/settings-groups-0406.test.mjs test/settings-home-0707.test.mjs test/machine-builds-0726.test.mjs test/settings-swap-0748.test.mjs (plus the checks files). All passed.\n- Failed at ship: \"0078 AC2\" and \"0270 AC2: no file under scripts/ is over 600 lines\". scripts/settings.mjs reached 602 lines as merged: main had grown it, and this ticket added 3 lines.\n- Changed: merged main (no conflicts), then moved HOME_AFTER, which places the home-folder rows, from scripts/settings.mjs into scripts/settings-home.mjs as withHomeRow. No behaviour change; settings.mjs is now 599 lines.\n",
+    "seconds": 15,
+    "usage": {
+      "input_tokens": 264210,
+      "cached_input_tokens": 205824,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1141,
+      "reasoning_output_tokens": 37
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 7150,
+      "cached": 84096,
+      "write": 0,
+      "output": 450
+    },
+    "cost_usd": 0.0272096,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-25T00:33:35.466Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/settings.mjs panelSettings uses withHomeRow from scripts/settings-home.mjs, preserving placement immediately after Builds at once. homeRow reads the home settings and explains the machine-wide scope. All three 0746 AC1 tests pass."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "panelSaveSettings still uses the CLI's homeSettingValue and saveHomeSetting functions. Both 0746 AC2 tests pass, covering the page's save request, blank removal, preservation of the other home setting and unchanged repo state."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "All five 0746 AC3 tests pass: invalid values receive the same reason as setHomeSetting, nothing is saved, and the page restores the saved value while showing the refusal."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The recorded run has 226 passed, 3 skipped and no failures. It includes the previously failing split checks. scripts/settings.mjs is now 599 lines; moving the unchanged row-placement logic into withHomeRow fixes the size failure without weakening tests."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The machine-wide build setting still meets every acceptance criterion after merging main. Moving its row-placement helper preserves behaviour and fixes the file-length failure found during shipping. All tests run for this round passed; no blocking concerns remain."
   }
 }
 ```
