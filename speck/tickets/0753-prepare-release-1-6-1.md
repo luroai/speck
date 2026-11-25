@@ -1,7 +1,7 @@
 ---
 id: "0753"
 title: "Prepare release 1.6.1"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: ["0741","0742","0743","0744","0745","0746","0747","0748","0749","0750","0
 created: 2026-11-24
 built_on: "0737"
 started: "2026-11-25T07:54:47.119Z"
+approved: "2026-11-25T08:09:20.313Z"
 
 ---
 # 0753 · Prepare release 1.6.1
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Since 1.6.0, 0737 and 0741 to 0752 start a waiting ticket only on approved work that merges cleanly, fix a test that failed every build on current Node, steady two timing tests, let a waiting test run hand back before the builder's shell limit, name only tests that still fail after a full-suite retry, show the machine-wide build limit in Settings, name Settings controls for screen readers, swap the builder's and reviewer's agents in one step, say under Needs you when the main checkout is bare, and file fewer duplicate follow-ups. Anyone updating speck still gets 1.6.0.
@@ -65,9 +66,15 @@ To see it, read the 1.6.1 section at the top of the changelog, or the release pa
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The new AC2 test asserts the order of document headings with indexOf.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 379,763
+- Elapsed since build started: 15 min
+- Changed lines: 88 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - "0176: the board stays quick to read however many tickets are built" (test/build-log-0176.test.mjs) failed once in this build's `--related` run (a 530 s run of 5,378 tests on a loaded machine) and passed when run again with only a few files. Skipped as an inbox note: speck/ideas/2026-10-17-count-tests-that-start-a-panel-through-another-helper-as-heavy.md already names that file missing its time limits under load.
