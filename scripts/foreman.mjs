@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { setting } from './core.mjs';
 import { failingSays } from './full-suite.mjs';
+import { bareMainNeeds } from './bare-main.mjs';
 
 // Not <id>.json, so nothing that reads the runs folder's build records takes it for one.
 const FILE = 'run.foreman.json';
@@ -111,7 +112,9 @@ export function switchingReady(tickets, running, own) {
 // `took` lists the recommendations the Foreman took in the 24 hours before `now`, newest first.
 // 0495: `base` is the base branch's name, given back as it is, and `why` the full reason while the word is Waiting, '' otherwise.
 // 0576: `name` is what you call it (speck_name), given back as it is, for all that says it.
-export function foremanView({ run, record, since = null, tickets, fixing = 'tell', agent = null, now = Date.now(), base = '', name = 'speck' }) {
+// 0749: `bare` is the main checkout's path while it isn't a work tree (bareMain), given back as bare_main with the command
+// that sets it back, and counted under Needs you whether or not speck run is on, as nothing builds or ships until it's set back.
+export function foremanView({ run, record, since = null, tickets, fixing = 'tell', agent = null, now = Date.now(), base = '', name = 'speck', bare = null }) {
   const on = !!(run && run.on), called = text(name) || 'speck';
   const rec = on && record && record.lock === run.pid ? record : null;
   const all = list(tickets).filter(t => t && typeof t === 'object');
@@ -152,9 +155,10 @@ export function foremanView({ run, record, since = null, tickets, fixing = 'tell
   const failed = fr ? { base: text(fr.base), commit: fr.commit, status: Number.isInteger(fr.status) ? fr.status : 1, tests: list(fr.tests).map(String), at: text(fr.at) || null, log: text(fr.log) || null } : null; // 0655: when it ran and its log, for the panel
   if (failed && typeof fr.fixing === 'string' && /^\d+$/.test(fr.fixing)) failed.fixing = fr.fixing; // 0658: the fix ticket on its way, which keeps it out of Needs you
   const yoursToo = failed && !failed.fixing ? 1 : 0;
-  const view = (word, tone, why = '') => ({ word, tone, why, base: text(base), name: called, fixing, fixing_says: fixingSays(fixing, called), building, max: rec && Number.isInteger(rec.max) && rec.max > 0 ? rec.max : null, since: on ? since : null, ready: ready.map(({ id, why }) => ({ id, why })), held, ship, blocked, took, agent: ag, ...(failed ? { full: failed } : {}) }); // 0592: max, the build slots, and since, when speck run started
-  if (!on) return view('Off', 'off');
-  if ((yours && fixing !== 'off') || asks.length || stopped || yoursToo) return view(`Needs you ${(fixing !== 'off' ? yours : 0) + asks.length + stopped + yoursToo}`, 'bad');
+  const bareMain = typeof bare === 'string' && bare ? bareMainNeeds(bare) : null, bareToo = bareMain ? 1 : 0; // 0749
+  const view = (word, tone, why = '') => ({ word, tone, why, base: text(base), name: called, fixing, fixing_says: fixingSays(fixing, called), building, max: rec && Number.isInteger(rec.max) && rec.max > 0 ? rec.max : null, since: on ? since : null, ready: ready.map(({ id, why }) => ({ id, why })), held, ship, blocked, took, agent: ag, ...(failed ? { full: failed } : {}), ...(bareMain ? { bare_main: bareMain } : {}) }); // 0592: max, the build slots, and since, when speck run started
+  if (!on) return bareToo ? view('Needs you 1', 'bad') : view('Off', 'off'); // 0749: the one thing counted while speck run is off
+  if ((yours && fixing !== 'off') || asks.length || stopped || yoursToo || bareToo) return view(`Needs you ${(fixing !== 'off' ? yours : 0) + asks.length + stopped + yoursToo + bareToo}`, 'bad');
   if (limit && !(limit.reviewer === true && (building.length || (ship && ship.running)))) return view(`Waiting: usage limit${text(limit.until) ? ` until ${limit.until}` : ''}`, 'warn', text(limit.why)); // 0623: a reviewer's limit doesn't stop what's building
   if (ship && ship.running) return view(`Shipping ${ship.running}`, 'ok');
   if (building.length) return view(`Building ${building.length}`, 'ok');
@@ -168,9 +172,10 @@ export function foremanView({ run, record, since = null, tickets, fixing = 'tell
 // Blocked tickets aren't repeated: speck status lists them with their questions.
 // 0317: with watch fix (0564: or decide), the status says so and what fix does, and the recommendations the Foreman took lately follow.
 // 0501: it names the watch setting, which was called Fixing.
+// 0749: a main checkout that isn't a work tree comes first, under the status, as nothing else moves until it's set back.
 export function foremanLines(v) {
   const name = text(v.name) || 'speck'; // 0576
-  const lines = [`SPECK: ${v.word}${speckActs(v.fixing) ? ` · watch: ${v.fixing}` : ''}`, ...(speckActs(v.fixing) ? [`  watch: ${fixingSays(v.fixing, name)}`] : [])];
+  const lines = [`SPECK: ${v.word}${speckActs(v.fixing) ? ` · watch: ${v.fixing}` : ''}`, ...(v.bare_main ? [`  Needs you: ${v.bare_main.says}`] : []), ...(speckActs(v.fixing) ? [`  watch: ${fixingSays(v.fixing, name)}`] : [])];
   for (const h of v.held || []) lines.push(`  ${h}`); // 0299: once, before the tickets it holds up
   if (v.full) lines.push(`  ${failingSays(v.full.base || 'the base branch', v.full)} ${v.full.fixing ? `${name} is fixing it in fix ticket ${v.full.fixing}.` : 'It counts under Needs you until a full run on a newer commit passes.'}`); // 0630. 0658: or the fix ticket on its way
   for (const r of v.ready) lines.push(`  ${r.id} ready, not building: ${r.why}`);

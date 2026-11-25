@@ -27,6 +27,10 @@ const WHY = "isn't a work tree, because core.bare is set to true in its .git/con
 // What speck run's ship queue holds every ship for, after "Shipping is " (as speck status and the panel show it).
 export const bareMainHold = (main, base) => `on hold: the main checkout at ${main} ${WHY}, so a ship would move ${base} without updating the files there. Set it back with \`${setBackCommand(main)}\`, and shipping starts again.`;
 
+// 0749: what Needs you says while it's bare, in speck status and the panel: what's wrong and the command that sets it back.
+export const bareMainNeeds = main => ({ path: main, command: setBackCommand(main),
+  says: `The main checkout at ${main} ${WHY}, so builds can't start and nothing ships. Set it back with \`${setBackCommand(main)}\`.` });
+
 // Refuses, changing nothing, while the main checkout of `repo` is bare.
 export function refuseBareMain(repo, base) {
   const main = bareMain(repo);
