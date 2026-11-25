@@ -18,8 +18,7 @@ import { documentFile } from './output.mjs';
 import { boardFeed, boardVersions, panelBoard } from './board-feed.mjs';
 import { logFeed } from './log-feed.mjs';
 import { panelSettingRequest, panelSaveRequestAsync, settingsAnswer, settingsQuick, agentModels, panelKeyAddRequest, panelAgentRequest, panelProviderAddRequest } from './settings.mjs'; import { panelLevelRequest } from './levels-panel.mjs'; // 0661
-import { foremanView, readForeman, fixingOf } from './foreman.mjs';
-import { bareMain } from './bare-main.mjs';
+import { foremanView, readForeman, fixingOf } from './foreman.mjs'; import { bareMain } from './bare-main.mjs'; // 0749
 import { agentView } from './foreman-agent.mjs';
 import { panelForemanReply } from './foreman-answer.mjs';
 import { goWith } from './go-with.mjs';
