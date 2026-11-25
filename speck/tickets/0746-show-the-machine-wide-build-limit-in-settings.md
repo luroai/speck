@@ -1,7 +1,7 @@
 ---
 id: "0746"
 title: "Show the machine-wide build limit in Settings"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: "speck/ideas/done/2026-11-24-show-the-machine-wide-build-limit-in-settin
 after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-24T23:18:34.320Z"
+approved: "2026-11-25T00:01:01.728Z"
 
 ---
 # 0746 · Show the machine-wide build limit in Settings
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 0726 added `machine_parallel_builds`, a limit on builds across every project on the machine, but only `speck config set` and `speck config show` reach it. Someone who tunes speck from the panel won't know it exists or that it's set.
@@ -55,9 +56,14 @@ Keep in mind that changing it affects every project on this machine, not only th
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 173,655
+- Elapsed since build started: 42 min
+- Changed lines: 32 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ## Review rounds
