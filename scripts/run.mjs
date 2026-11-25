@@ -7,7 +7,7 @@ import { logSpend, recordDelegatedSpend, ticketsElsewhere, ticketRounds, waitFie
 import { SpeckError, sh, findRepoRoot, loadConfig, setField, syncHeader, findTicket, worktreeList, readableLog, buildPaused, statusData, replaceSection, commitTicketOnly, shipQueue } from './speck.mjs';
 import { resumeFor, resumedRecord, handBackQueue } from './hand-back.mjs';
 import { goWithQueue, newBuildKeeps } from './go-with.mjs';
-import { foremanFixQueue } from './foreman-fix.mjs'; import { afterWait } from './built-on.mjs'; import { cancelledQueue } from './cancelled-build.mjs'; // 0675. 0686
+import { foremanFixQueue } from './foreman-fix.mjs'; import { afterWait, clashTips } from './built-on.mjs'; import { cancelledQueue } from './cancelled-build.mjs'; // 0675. 0686
 import { fullSuiteQueue } from './full-suite.mjs';
 import { foremanAgentQueue, buildStuck } from './foreman-agent.mjs';
 import { readyAgentsEvery } from './your-agents.mjs';
@@ -30,7 +30,7 @@ import { timeRunOutput } from './run-times.mjs';
 export { pidAlive, runState } from './run-switch.mjs';
 import { processRows, signalBuild, carryOn } from './build-procs.mjs';
 export { processRows, buildProcesses, sessionInUse, runningPids } from './build-procs.mjs';
-import { resumeHint, saveRecord, stoppedBySpeck, buildKilled, lastTicketCommit, buildTicket, readyOnBase, markStillReady, readyAgain, readyAfterStop, heldByStop } from './build-records.mjs';
+import { resumeHint, saveRecord, stoppedBySpeck, buildKilled, lastTicketCommit, buildTicket, readyOnBase, markStillReady, readyAgain, readyAfterStop, heldByStop, clashWaited, clashOf } from './build-records.mjs';
 export { DEFAULT_RESUME_COMMAND, resumeHint, resumeCommandOf, buildKilled, buildTicket } from './build-records.mjs';
 import { machineClaims, machineBuildWait, hasBuildRoom } from './build-turns.mjs'; // 0726
 
@@ -211,9 +211,11 @@ function runOn(worker) {
     // From the same reading as the board, so a build's own worktree copy of the ticket counts.
     try { t = statusData(repo).tickets.find(x => x.id === id) ?? null; } catch { /* unreadable: nothing to say */ }
     if (t?.status !== 'ready') return;
-    let tail = '', again = 'until its ticket is set ready again and committed';
-    try { tail = readableLog(fs.readFileSync(log, 'utf8')).replace(/\s+$/, '').split('\n').slice(-5).join('\n'); } catch { /* no log */ }
-    try { markStillReady(runsDir(repo), id, lastTicketCommit(t.worktree || repo, t.path)); } catch { again = 'until speck run restarts, as its run record couldn\'t be updated'; }
+    let tail = '', text = '', again = 'until its ticket is set ready again and committed';
+    try { text = readableLog(fs.readFileSync(log, 'utf8')); tail = text.replace(/\s+$/, '').split('\n').slice(-5).join('\n'); } catch { /* no log */ }
+    const clash = clashOf(t, text); // 0737: it couldn't start on approved work that clashes with the base branch
+    if (clash) again = `until ${clash} has shipped or its approved work no longer clashes with ${cfg.base_branch}, or its ticket is set ready again and committed`;
+    try { markStillReady(runsDir(repo), id, lastTicketCommit(t.worktree || repo, t.path), clash, clash ? clashTips(repo, cfg, clash) : ''); } catch { again = 'until speck run restarts, as its run record couldn\'t be updated'; }
     console.log(`${id} is still ready, so the build never started it. speck run won't launch it again ${again}. Last lines of ${path.relative(repo, log)}:\n${tail}`);
   };
 
@@ -407,7 +409,7 @@ function runOn(worker) {
     if (afterWait(t)) return { kind: 'after', why: afterWait(t) }; // 0675: not one that can start on the approved ticket it waits for
     const runs = runsDir(repo);
     // 0327: committed since its build ended still ready. 0376: or committed ready since `speck stop` ended its build.
-    if (launched.has(t.id) && (readyAgain(repo, runs, t) || readyAfterStop(repo, runs, t))) launched.delete(t.id);
+    if (launched.has(t.id) && (readyAgain(repo, runs, t) || readyAfterStop(repo, runs, t) || clashWaited(runs, t, on => clashTips(repo, cfg, on)))) launched.delete(t.id); // 0737: or it ended unstarted on clashing work that has moved since
     if (heldByStop(repo, runs, t) || (launched.has(t.id) && stoppedBySpeck(path.join(runs, `${t.id}.json`)))) {
       if (!held.has(t.id)) console.log(`${t.id} was ended by \`speck stop\`, so speck run won't launch it again until its ticket is set ready again and committed.`);
       held.add(t.id);

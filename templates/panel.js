@@ -771,11 +771,11 @@ const noteOf = i => el('div', 'note md', null, ...mdBlocks(markdown(typeof i.bod
 function whereLine(t) {
   const id = String(t.id), d = rowDoing(t), asked = !!foremanAskOf(id);
   const said = asked ? `${speckCalled()} has a question` : !t.inFlight ? 'Ready' : d.round !== null && d.round !== undefined ? `Reviewing · round ${d.round}` : d.word;
-  const waits = !t.inFlight ? list(t.waiting_on).map(String) : [], on = startsOn(t), after = shipsAfter(t), gone = goneSay(t);
+  const waits = !t.inFlight ? list(t.waiting_on).map(String) : [], on = startsOn(t), clash = startClash(t), after = shipsAfter(t), gone = goneSay(t);
   // 0698: one that can start on another's approved work says so in place of what it waits on, and an approved one built
   // on another says it ships after that one.
   const line = detailsLine(`where ${rowDot(buildGroup(t, d, asked), d)}`, [el('span', 'said', said),
-    on ? el('span', 'after', `can start on ${on}'s approved work`) : waits.length ? el('span', 'after', `after ${waits.join(', ')}`) : null,
+    on ? el('span', 'after', `can start on ${on}'s approved work`) : clash ? el('span', 'after', `waits for ${clash.id} to ship: its approved work clashes with ${clash.base}`) : waits.length ? el('span', 'after', `after ${waits.join(', ')}`) : null, // 0737
     after ? el('span', 'after', `ships after ${after}, which it was built on`) : null,
     gone ? el('span', 'after cancelled warn', gone) : null, // 0704
     t.counter !== null ? el('span', 'sub', rowTime((t.held_at ?? Date.now()) - t.since)) : null]);
@@ -784,6 +784,8 @@ function whereLine(t) {
 // 0698: the ticket a ready one can start on the approved work of, and the one an approved one was built on and ships
 // after, from speck status --json's starts_on and ships_after, or null.
 const startsOn = t => (t.status === 'ready' && typeof t.starts_on === 'string' && t.starts_on ? t.starts_on : null);
+// 0737: { id, base } when the approved work a ready one would start on clashes with the base branch (start_clash), or null.
+const startClash = t => (t.status === 'ready' && t.start_clash && typeof t.start_clash.id === 'string' && typeof t.start_clash.base === 'string' ? t.start_clash : null);
 const shipsAfter = t => (t.status === 'approved' && typeof t.ships_after === 'string' && t.ships_after ? t.ships_after : null);
 const rowDoing = t => (t.inFlight ? doing(t, t.shipping || shippingId === String(t.id), speckCalled()) : null);
 function queueRow(t) {

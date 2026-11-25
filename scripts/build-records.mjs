@@ -163,11 +163,34 @@ export function lastOwnTicketCommit(dir, rel, id, rev = 'HEAD') {
 
 // 0327: a build that ended with its ticket still ready never started it. Its run record keeps the ticket's last commit
 // as it ended, so speck run can tell once the ticket has been committed since: set ready again, or changed while ready.
-export function markStillReady(runs, id, commit) {
+// 0737: `clash`, the id of the ticket whose approved work it couldn't start on as that work clashed with the base
+// branch, is kept as start_clash, so speck run starts it again once it can (clashWaited).
+// `tips` (clashTips) is kept with it as start_clash_tips: the base branch's and that ticket's branch's tips then.
+export function markStillReady(runs, id, commit, clash = null, tips = '') {
   const file = path.join(runs, `${id}.json`);
   const rec = JSON.parse(fs.readFileSync(file, 'utf8'));
   if (!rec || typeof rec !== 'object' || Array.isArray(rec)) throw new Error('it isn\'t a JSON object');
-  saveRecord(file, { ...rec, still_ready_commit: commit });
+  saveRecord(file, { ...rec, still_ready_commit: commit, ...(clash ? { start_clash: clash, start_clash_tips: tips } : {}) });
+}
+
+// 0737: true when the ticket `t`'s last build ended without starting it because the approved work it was to start on
+// clashed with the base branch, as markStillReady kept it, and `tipsNow` (that ticket's clashTips now) differ from the
+// ones kept, so it has shipped or its work has changed since. speck run asks only once nothing in after: holds it back.
+export function clashWaited(runs, t, tipsNow) {
+  const file = path.join(runs, `${t.id}.json`);
+  let rec;
+  try { rec = JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return false; }
+  if (typeof rec?.still_ready_commit !== 'string' || typeof rec?.start_clash !== 'string' || stoppedBySpeck(file)) return false;
+  const now = typeof tipsNow === 'function' ? tipsNow(rec.start_clash) : tipsNow;
+  return typeof now === 'string' && now !== rec.start_clash_tips;
+}
+
+// 0737: the id of the ticket a build that ended still ready couldn't start on, as its approved work clashed with the base
+// branch, or null: from the status row `t` as it ended, or from speck start's refusal in its build's log `text`.
+export function clashOf(t, text = '') {
+  if (typeof t?.start_clash?.id === 'string') return t.start_clash.id;
+  const m = String(text).match(/Ticket (\d+)'s approved work doesn't merge cleanly with |waits for (\d+) to ship, as \2's approved work clashes with /);
+  return m ? m[1] || m[2] : null;
 }
 
 // True once the ticket `t` has a commit other than the one its last build kept as it ended still ready, leaving out the

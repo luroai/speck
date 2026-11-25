@@ -614,8 +614,9 @@ function liveParts(t) {
   const id = String(t.id);
   if (!t.inFlight) {
     const ask = foremanAskOf(id);
-    const on = startsOn(t); // 0698
-    return [ask ? foremanAskBox(id, ask.question) : null, on ? el('div', 'act starts-on', `Can start on ${on}'s approved work, and ships once ${on} has.`) : null, backToPlanButton(t), planRefused.has(id) ? el('div', 'plan-refused', planRefused.get(id)) : null].filter(Boolean);
+    const on = startsOn(t), clash = startClash(t); // 0698. 0737
+    return [ask ? foremanAskBox(id, ask.question) : null, on ? el('div', 'act starts-on', `Can start on ${on}'s approved work, and ships once ${on} has.`) : null,
+      clash ? el('div', 'act start-clash', `Waits for ${clash.id} to ship, as its approved work clashes with ${clash.base}. It starts from ${clash.base} once ${clash.id} has shipped.`) : null, backToPlanButton(t), planRefused.has(id) ? el('div', 'plan-refused', planRefused.get(id)) : null].filter(Boolean);
   }
   return [liveNow(t, doing(t, t.shipping || shippingId === id, speckCalled())), ...buildNotes(t),
     el('div', 'live-buttons', null, buildLogButton(id), t.pausable ? stopButton(t) : null),

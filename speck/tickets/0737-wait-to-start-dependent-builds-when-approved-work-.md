@@ -45,6 +45,7 @@ A waiting ticket starts on approved work only when that work merges cleanly into
 - Starting on approved work is 0674/0675 (`startsOn`, `afterWait` in `scripts/built-on.mjs`); the "ended without starting" hold is `ownWait` in `scripts/run.mjs`, cleared by `readyAgain` in `scripts/build-records.mjs`.
 - `speck merge-check` can tell whether a branch merges cleanly into the base branch.
 - Failing before this build: none
+- Self-check: speck run won't relaunch a ticket on the clash mark alone, only once the base branch's or the approved ticket's branch tip has moved since (no relaunch loop); the build log is read for speck start's new refusal wording as well as the old merge refusal; trimmed run.mjs back to the 600-line limit.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

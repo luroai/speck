@@ -364,6 +364,10 @@ export function statusData(repo) {
   const runs = runsOf(repo);
   const leads = groupLeader(), fixing = fixingOf(cfg), builderOf = boardBuilders(cfg, repo), providers = knownProviders(repo);
   const watchAgent = watchAgentOf(runs, tickets); // 0713
+  const startsOnOf = (t, waiting_on) => {
+    const w = t.fm.status === 'ready' && waiting_on.length === 1 ? startWaits(repo, cfg, t, () => tickets) : {};
+    return { starts_on: w.on?.id ?? null, start_clash: w.clash ?? null };
+  };
   const entries = tickets.map(t => {
     const lint = lintTicket(t, cfg);
     const facts = questionFacts(contentLines(t.sections['blocked question'])); // 0283
@@ -416,7 +420,7 @@ export function statusData(repo) {
       // 0223: the review round being run now, or null: whether the reviewer or the builder is at work on a reviewing ticket.
       review_running: inHand(t) ? roundRunning(runs, t.fm.id, ticketRounds(t.raw).rounds.length) : null,
       waiting_on, after_cancelled: waiting_on.filter(id => cancelled.has(padId(id))), ships_after: shipsAfter || null, built_on_cancelled: builtOn?.cancelled ? builtOn.id : null, // 0675: and the ticket it was built on, until that one has shipped. 0710: or that was cancelled
-      starts_on: t.fm.status === 'ready' && waiting_on.length === 1 ? startWaits(repo, cfg, t, () => tickets).on?.id ?? null : null, // 0675: the approved ticket it can start on
+      ...startsOnOf(t, waiting_on), // 0675: starts_on, the approved ticket it can start on. 0737: start_clash, the one whose approved work clashes with the base branch
       // 0217: once a build of it has started again, a stopped build is no longer shown as stopped.
       // 0284: nor is one waiting for speck run to resume it with the recommendation you went with.
       build_exit: stop?.counted || (inHand(t) && goWithWaiting(runs, t.fm.id)) ? null : buildExit(runs, t.fm.id),
