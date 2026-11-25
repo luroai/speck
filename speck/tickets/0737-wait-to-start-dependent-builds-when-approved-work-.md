@@ -1,7 +1,7 @@
 ---
 id: "0737"
 title: "Wait to start dependent builds when approved work conflicts with main"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-24
 started: "2026-11-25T07:40:11.352Z"
+approved: "2026-11-25T07:54:33.637Z"
 
 ---
 # 0737 · Wait to start dependent builds when approved work conflicts with main
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Since 1.4, speck run starts a waiting ticket on the approved work of the ticket it waits for. When that approved work no longer merges cleanly into `main`, the build can't start and stops at once, and speck run then leaves the ticket as "ended without starting" until someone sets it ready again. On 2026-11-24, 0707 and 0730 both stalled this way behind 0729.
@@ -54,9 +55,15 @@ When a ticket waits for another one that's approved but not shipped yet, speck u
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Existing builds that ended before this update cannot recover automatically across speck run's code switch.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 296,152
+- Elapsed since build started: 14 min
+- Changed lines: 94 (limit 5000)
 - Follow-ups:
   - Inbox: speck/ideas/2026-11-25-say-approved-not-building-in-a-waiting-ticket-s-waits-for-fact.md (the full view's Waits for fact calls an approved ticket "building").
   - scripts/run.mjs is now exactly at the 600-line limit of the 0078 check, so the next change there will need to move something out.
