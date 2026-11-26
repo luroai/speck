@@ -146,6 +146,8 @@
   #bridge .back::before { content: '‹'; margin-right: 4px; }
   #bridge :focus-visible { outline-color: var(--text); }
   #bridge .bridge-heading { margin: 4px 0 10px; font-size: 20px; line-height: 24px; font-weight: 600; }
+  #bridge .bridge-floor { display: inline-block; margin: 0 0 12px; padding: 2px 0; font-size: 14px; line-height: 20px; color: var(--run); } /* 0765: to speck serve's factory floor */
+  #bridge .bridge-floor::after { content: ' ›'; }
   #bridge .bridge-bar { padding: 8px 12px 12px; color: var(--bar-ink); background: var(--bar); border-radius: 12px; }
   #bridge .bridge-top { display: flex; align-items: center; gap: 8px; }
   #bridge .bridge-top svg { flex: none; }

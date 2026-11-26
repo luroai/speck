@@ -46,6 +46,7 @@ speck serve's address has a factory floor page: a row of project stations over t
 - Design: mockup D, "Stations, instrument panel", on the user's private design canvas (2026-11-25/26): near-black ground with faint grid lines, one signal orange (#FF6A1F) for anything moving or needing you, green for shipped, small spaced-out monospace capitals for labels, big thin numbers, panels with corner-bracket marks. Use the fonts the panel already ships and no fonts from the network.
 - The front is `scripts/serve-front.mjs`; each project's board comes from its own panel, as All projects already gathers summaries.
 - Failing before this build: none
+- Self-check: added tests for a panel's summary that names the station's own fields (the floor's own win) and for built-in names such as `__proto__` asked for as the station; the code already handled both. Moved the brief's floor sentences after its project menu's, and reworded them.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

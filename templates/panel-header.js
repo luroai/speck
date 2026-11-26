@@ -215,7 +215,7 @@ function bridgeButton(key, cls, press, ...kids) {
   return b;
 }
 function drawBridge() {
-  const drawn = JSON.stringify([bridgeBody, bridgeError, bridgeSaid]);
+  const drawn = JSON.stringify([bridgeBody, bridgeError, bridgeSaid, atServe]);
   if (drawn === bridgeDrawn) return;
   bridgeDrawn = drawn;
   const box = $('bridge'), had = [...bridgeButtons].find(([, b]) => b === document.activeElement)?.[0];
@@ -230,6 +230,7 @@ function drawBridge() {
     back.addEventListener('keydown', pressWithKeys);
     parts.unshift(back);
   }
+  if (SERVE || atServe) parts.push(floorLink()); // 0765
   if (bridgeSaid) parts.push(el('p', 'bridge-error', bridgeSaid)); // 0757
   if (bridgeError) parts.push(el('p', 'bridge-error', `Couldn't read your projects: ${bridgeError}`));
   if (bridgeBody) parts.push(...bridgeParts(bridgeModel(bridgeBody)));
@@ -237,6 +238,13 @@ function drawBridge() {
   box.replaceChildren(...parts);
   const again = bridgeButtons.get(had);
   if (again && again.focus) again.focus({ preventScroll: true });
+}
+// 0765: at speck serve's address, a link to its factory floor, /floor: beside the address's own page, or up from under
+// project/, where a project's page is shown there.
+function floorLink() {
+  const a = el('a', 'bridge-floor', 'Factory floor');
+  a.href = SERVE ? 'floor' : '../floor';
+  return a;
 }
 function bridgeParts(m) {
   if (!bridgeFace && globalThis.SpeckFace) bridgeFace = SpeckFace.draw({ mood: m.mood, size: 44, look: 'dark' });

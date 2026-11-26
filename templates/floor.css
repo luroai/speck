@@ -1,0 +1,123 @@
+/* 0765: the factory floor's look, an instrument panel: a near-black ground with faint grid lines, one signal orange for
+   anything moving or needing you, green for shipped, small spaced-out monospace capitals for labels, big thin numbers and
+   panels with corner-bracket marks. Dark only. Its typefaces are the panel's own, from beside the page. */
+@font-face { font-family: "Inter"; src: url("fonts/Inter-400.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Inter"; src: url("fonts/Inter-500.woff2") format("woff2"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "Inter"; src: url("fonts/Inter-600.woff2") format("woff2"); font-weight: 600; font-display: swap; }
+@font-face { font-family: "JetBrains Mono"; src: url("fonts/JetBrainsMono-400.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "JetBrains Mono"; src: url("fonts/JetBrainsMono-500.woff2") format("woff2"); font-weight: 500; font-display: swap; }
+
+:root {
+  color-scheme: dark;
+  --ground: #0A0B0D;
+  --grid: #FFFFFF09;
+  --panel: #101216;
+  --raise: #171A1F;
+  --edge: #252A31;
+  --mark: #5E6570;
+  --ink: #ECEEF1;
+  --muted: #9AA1AC;
+  --signal: #FF6A1F;
+  --signal-edge: #FF6A1F66;
+  --shipped: #3DDC84;
+  --font-ui: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, "Ubuntu", sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", Monaco, Menlo, Consolas, "Liberation Mono", "DejaVu Sans Mono", monospace;
+}
+* { box-sizing: border-box; }
+html { background: var(--ground); }
+body {
+  margin: 0; min-height: 100vh; color: var(--ink); font: 400 14px/1.45 var(--font-ui);
+  background-color: var(--ground);
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
+
+/* Labels: small spaced-out monospace capitals. */
+.floor-title, .floor-all, .floor-label, .lane-label, .figure-label, .station-n, .station-state {
+  font: 500 12px/16px var(--font-mono); letter-spacing: .14em; text-transform: uppercase;
+}
+
+.floor-bar { display: flex; align-items: baseline; gap: 14px; padding: 18px 24px 8px; }
+.floor-brand { font: 600 16px/20px var(--font-ui); letter-spacing: -.01em; }
+.floor-title { margin: 0; color: var(--signal); }
+.floor-all { margin-left: auto; padding: 2px 0; color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--mark); }
+.floor-all:hover { color: var(--signal); border-bottom-color: var(--signal); }
+
+.floor { display: flex; flex-direction: column; gap: 24px; padding: 8px 24px 40px; }
+.floor-label { margin: 0 0 10px; color: var(--muted); }
+.floor-none, .lane-empty { margin: 0; font-size: 14px; line-height: 20px; color: var(--muted); }
+.floor-none, .board-gone { grid-column: 1 / -1; }
+.floor-said, .board-gone { margin: 0; font-size: 14px; line-height: 20px; color: var(--signal); }
+.floor-said[hidden] { display: none; }
+
+/* Panels: a faint frame, with a bracket at each corner, orange on the station chosen. */
+.station, .lane {
+  --corner: var(--mark);
+  position: relative; min-width: 0;
+  background:
+    linear-gradient(var(--corner), var(--corner)) left top / 12px 2px no-repeat,
+    linear-gradient(var(--corner), var(--corner)) left top / 2px 12px no-repeat,
+    linear-gradient(var(--corner), var(--corner)) right top / 12px 2px no-repeat,
+    linear-gradient(var(--corner), var(--corner)) right top / 2px 12px no-repeat,
+    linear-gradient(var(--corner), var(--corner)) left bottom / 12px 2px no-repeat,
+    linear-gradient(var(--corner), var(--corner)) left bottom / 2px 12px no-repeat,
+    linear-gradient(var(--corner), var(--corner)) right bottom / 12px 2px no-repeat,
+    linear-gradient(var(--corner), var(--corner)) right bottom / 2px 12px no-repeat,
+    var(--panel);
+  box-shadow: inset 0 0 0 1px var(--edge);
+}
+
+/* The stations: a row of them, or two rows in a window under 1024 px (floor.js gives --wide and --narrow). */
+.stations { display: grid; grid-template-columns: repeat(var(--wide, 1), minmax(0, 1fr)); gap: 12px; }
+.station {
+  display: flex; flex-direction: column; gap: 12px; padding: 14px 16px 12px;
+  font: inherit; color: inherit; text-align: left; border: 0; border-radius: 0; cursor: pointer;
+}
+.station:hover { --corner: var(--ink); }
+.station.chosen { --corner: var(--signal); box-shadow: inset 0 0 0 1px var(--signal-edge); }
+.station-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; min-width: 0; }
+.station-n { flex: none; color: var(--muted); }
+.station-state { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
+.station-state::before { content: ""; display: inline-block; width: 6px; height: 6px; margin: 0 6px 1px 0; border-radius: 50%; background: currentColor; vertical-align: middle; }
+.station.moving .station-state, .station.needs .station-state { color: var(--signal); }
+.station-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 500 18px/24px var(--font-ui); }
+.station.gone .station-name { color: var(--muted); }
+.station-figures { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; }
+.figure { display: flex; flex-direction: column; min-width: 0; }
+.figure-n { font: 400 30px/34px var(--font-ui); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.figure.needs .figure-n { color: var(--signal); }
+.figure-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
+.station-line { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.line-chart { display: block; width: 100%; height: 30px; overflow: visible; background: linear-gradient(var(--edge), var(--edge)) left bottom / 100% 1px no-repeat; }
+.line-chart polyline { fill: none; stroke: var(--shipped); stroke-width: 1.5px; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+
+/* The chosen project's lanes, side by side, or two by two in a window under 1024 px. */
+.lanes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; align-items: start; }
+.lane { padding: 14px 14px 12px; }
+.lane-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+.lane-label { margin: 0; color: var(--muted); }
+.lane-n { font: 400 36px/40px var(--font-ui); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.cards { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.card { position: relative; display: flex; flex-direction: column; gap: 2px; min-width: 0; padding: 8px 10px 9px 14px; background: var(--raise); }
+.card::before { content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 3px; background: var(--mark); }
+.card.moving::before, .card.needs::before { background: var(--signal); }
+.card.shipped::before { background: var(--shipped); }
+.card-id { font: 500 12px/16px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.card-title { display: -webkit-box; overflow: hidden; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; font: 500 14px/19px var(--font-ui); }
+.card-detail { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 400 12px/16px var(--font-mono); color: var(--muted); }
+.card.moving .card-detail, .card.needs .card-detail { color: var(--signal); }
+
+@media (max-width: 1023.98px) {
+  .floor-bar { padding: 14px 16px 6px; }
+  .floor { gap: 20px; padding: 6px 16px 32px; }
+  .stations { grid-template-columns: repeat(var(--narrow, 1), minmax(0, 1fr)); }
+  .station { padding: 12px; }
+  .lanes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* What's moving pulses, unless the computer asks for less motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .station.moving .station-state::before, .card.moving::before { animation: floor-pulse 1.6s ease-in-out infinite; }
+}
+@keyframes floor-pulse { 50% { opacity: .35; } }

@@ -10,6 +10,7 @@
 // project's page from this speck has its project menu there, with All projects first, even with its panel the only one
 // running. For a page from an older speck, which shows its menu only with two or more panels running, the address
 // keeps a record among the panels' as one, `speck serve`, which this speck leaves out (runningPanels).
+// 0765: it also has the factory floor, at /floor, which gathers every project's summary and board (serve-floor.mjs).
 import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
@@ -22,6 +23,7 @@ import { panelUrl } from './panel-url.mjs';
 import { newestUsage } from './agent-usage.mjs';
 import { usageWarnings } from './subscriptions.mjs';
 import { BUILD_ENV } from './build-env.mjs';
+import { floorFile, floorBoards, floorAnswer } from './serve-floor.mjs';
 
 const PANEL_PORT = 4777; // a panel's own default, which speck serve's is too
 const SHOWN = '/project'; // where a chosen project's panel is shown; panel-header.js goes to it from All projects
@@ -140,13 +142,28 @@ export async function startFront({ port, url = null, env = process.env, projects
     return json(res, 200, { self: null, projects: out, usage: Array.isArray(usage) ? usage : [] });
   }
 
-  // The address's own: All projects at /, whatever has been chosen, and its files.
+  // 0765: POST /api/floor[?station=<key>&have=<name>]: the factory floor's stations and the chosen one's board
+  // (floorAnswer). Only from a page at this address, as the summaries are.
+  const boards = floorBoards();
+  async function floor(req, res) {
+    res.removeHeader('X-Speck-Panel');
+    if (req.method !== 'POST') return json(res, 405, { error: 'Method not allowed.' }, { Allow: 'POST' });
+    if (!ours(req)) return json(res, 403, { error: 'Forbidden: only a page at this address can do that. Reload it.' });
+    let listed;
+    try { listed = projects(); } catch (e) { return json(res, 500, { error: e instanceof SpeckError ? e.message : `speck serve couldn't read your projects: ${e?.message || e}` }); }
+    const q = new URLSearchParams(req.url.split('?')[1] || '');
+    try { return json(res, 200, await floorAnswer({ listed, live: new Set(panels().map(p => p.port)), via: at, station: q.get('station'), have: q.get('have'), boards })); }
+    catch (e) { return json(res, 500, { error: `speck serve couldn't read the factory floor: ${e?.message || e}` }); }
+  }
+
+  // The address's own: All projects at /, whatever has been chosen, and its files. 0765: and the factory floor's.
   function own(req, res, where) {
     if (req.method !== 'GET') return text(res, 405, 'Method not allowed.\n', 'text/plain', { Allow: 'GET' });
     if (where === '/') {
       try { return text(res, 200, page(), 'text/html'); }
       catch (e) { return text(res, 500, `Couldn't read the panel page, ${path.join(TEMPLATES, 'panel.html')}: ${e.message}\nPut the file back, then reload.\n`); }
     }
+    if (floorFile(where, res)) return; // 0765
     if (panelFile(where, res)) return;
     return text(res, 404, 'Not found.\n');
   }
@@ -158,6 +175,7 @@ export async function startFront({ port, url = null, env = process.env, projects
     const where = req.url.split('?')[0], pick = where.match(/^\/api\/projects\/(\d{1,5})$/);
     if (pick) return choose(req, res, +pick[1]);
     if (where === '/api/projects/summary') return void summaries(req, res);
+    if (where === '/api/floor') return void floor(req, res); // 0765
     if (where === '/api/projects/own' && req.headers['x-speck-via']) return json(res, 200, OWN); // an older panel's bridge asking
     if (where === SHOWN) return redirect(res, `${SHOWN}/`); // so its page's files load from under it
     const shown = where.startsWith(`${SHOWN}/`);
