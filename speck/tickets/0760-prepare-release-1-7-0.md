@@ -1,7 +1,7 @@
 ---
 id: "0760"
 title: "Prepare release 1.7.0"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -22,7 +22,7 @@ started: "2026-11-26T12:11:44.540Z"
 ---
 # 0760 · Prepare release 1.7.0
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Since 1.6.1, `speck projects` and `speck serve` run every project on a machine from one service at one address, keep each project's `speck run` going, can leave a project out without forgetting it, and can start at boot. Anyone following the setup prompt, or updating speck in a project, still gets 1.6.1.
@@ -53,7 +53,9 @@ speck is ready to be released as 1.7.0.
 - Pictures: none, because nothing anyone sees in the panel changes; the README changes only its status line and figures.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck is ready to go out as 1.7.0. Once this lands, the release page appears on GitHub and the setup prompt installs 1.7.0, whose headline is running every project on your machine from one speck service: a list of your projects, one address that opens on All projects from this machine or your phone, each project's automatic building kept going, starting with the machine, and turning a project off without forgetting it. The changelog and release notes describe each change, and the notes walk through moving from a panel per project to the one service. The README's figures and the price table are up to date as of today.
+
+To see it, open the GitHub releases page once it has shipped and check that 1.7.0 is there. Worth keeping an eye on: if the release page doesn't appear, it can be made by hand from the release notes, as the ticket's Notes say.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -62,4 +64,83 @@ speck is ready to be released as 1.7.0.
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
+Follow-ups: none.
+
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "9f2103318ee1f86597ab5e0636590ea086c06e3f",
+    "session": "fresh",
+    "thread_id": "01a217c9-eae6-7552-9fe4-b4c9c03541b6",
+    "builder_response": "- Tests run: test/release-0760.test.mjs test/release-0753.test.mjs test/docs-0491.test.mjs, with `--related` (which added every test file naming a changed file) and the repo checks.\n- Shipped since v1.6.1: 0755, 0756, 0757, 0758, 0759, 0761, 0762, 0763 (no fix tickets). Each is in the changelog; 0761 and 0763 under smaller sections.\n- test/release-0753.test.mjs: its checks that named 1.6.1 as the current version now check the current version, as 0753 did for 0732.\n- Figures worked out from speck/tickets/done/ at commit \"speck(0762): Leave a project out of speck serve without removing it\" (main when this was built): 744 shipped, 18 cancelled, 16 min median, 2 rounds median, 354 first round. Prices refreshed with `npm run prices` on 2026-11-26.\n",
+    "seconds": 30,
+    "usage": {
+      "input_tokens": 165821,
+      "cached_input_tokens": 113536,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 959,
+      "reasoning_output_tokens": 32
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 52285,
+      "cached": 113536,
+      "write": 0,
+      "output": 959
+    },
+    "cost_usd": 0.1255136,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-26T12:17:48.586Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "package.json names 1.7.0. Both AC1 tests passed, including executing speck init and checking its printed version."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "CHANGELOG.md adds 1.7.0 above 1.6.1 without altering older sections. Reviewed its descriptions against all eight tickets shipped since v1.6.1: 0755–0759 and 0761–0763."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "README.md and docs/brief.md status lines name 1.7.0; status and latest-release setup-prompt tests passed. scripts/prices.json records 2026-11-26 and contains newly fetched model entries, consistent with the reported npm run prices refresh."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/releases/v1.7.0.md explains the release, shipped changes and benefits, per-project update command, migration to speck serve and changelog link. Claims match the shipped tickets; no person's name appears. Command and link tests passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Independently recomputed figures from current done tickets: 744 shipped, 18 cancelled, 16 minutes median, 2 review rounds median and 354 first-round approvals, matching README.md. Full recorded test output confirms 1771 passed, zero failed and three skipped; version/changelog matching passed."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The 1.7.0 release preparation is ready for merge. The notes accurately describe the shipped changes and explain updating and moving to one service. Published figures match the ticket records, prices are refreshed, and the recorded tests pass."
+  }
+}
+```
+
+</details>
