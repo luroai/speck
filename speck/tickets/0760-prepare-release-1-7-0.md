@@ -1,7 +1,7 @@
 ---
 id: "0760"
 title: "Prepare release 1.7.0"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0755","0756","0757","0758","0759","0762","0763"]                # ticket ids that must be done first
 created: 2026-11-25
 started: "2026-11-26T12:11:44.540Z"
+approved: "2026-11-26T12:17:56.293Z"
 
 ---
 # 0760 · Prepare release 1.7.0
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Since 1.6.1, `speck projects` and `speck serve` run every project on a machine from one service at one address, keep each project's `speck run` going, can leave a project out without forgetting it, and can start at boot. Anyone following the setup prompt, or updating speck in a project, still gets 1.6.1.
@@ -61,9 +62,14 @@ To see it, open the GitHub releases page once it has shipped and check that 1.7.
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 166,780
+- Elapsed since build started: 6 min
+- Changed lines: 84 (limit 5000)
 Follow-ups: none.
 
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
