@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="icon" href="icon-32.png" type="image/png" sizes="32x32">
+<title>speck · Factory floor</title>
+<link rel="stylesheet" href="floor.css">
+</head>
+<body>
+<header class="floor-bar">
+  <span class="floor-brand">speck</span>
+  <h1 class="floor-title">Factory floor</h1>
+  <a class="floor-all" href="./">All projects</a>
+</header>
+<main class="floor">
+  <p id="floor-said" class="floor-said" role="status" hidden></p>
+  <section class="floor-part" aria-labelledby="stations-title">
+    <h2 id="stations-title" class="floor-label">Stations</h2>
+    <div id="stations" class="stations"></div>
+  </section>
+  <section class="floor-part" aria-labelledby="board-title">
+    <h2 id="board-title" class="floor-label">Board</h2>
+    <div id="lanes" class="lanes"></div>
+  </section>
+</main>
+<script src="panel-model.js"></script>
+<script src="floor.js"></script>
+</body>
+</html>
