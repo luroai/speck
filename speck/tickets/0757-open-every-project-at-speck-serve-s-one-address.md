@@ -51,7 +51,11 @@ Even with `speck serve`, each project's panel is on its own port, and only one s
 - speck (2026-11-26 10:59 UTC) told you: Nothing is stuck: 0757 is a big change (speck serve's address, the project menu and bridge, real-panel tests and pictures from a headless browser), its 5,354-test related run passed with no failures in about 4 minutes, review round 1 came back in under a minute and the build is now fixing its findings. Why: The build log shows steady progress with no gap longer than a few minutes, every test run after the expected failing-before check passed, and the machine's load is falling (11.7 over 15 minutes down to 1.6 now), so heavier load earlier only added a little.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+`speck serve` now gives you one address for every project. Open it, on this machine at http://127.0.0.1:4777 or, when you start it with `--url`, at your private tunnel's https address from your phone, and you land on All projects: every project on your list, what needs you across them, and any project whose panel isn't running marked Not answering. Tap a project and its usual panel opens at the same address, where everything works as on its own: setting tickets ready, priorities, answers, shipping, the Auto-build switch, Settings and the live updates. To get back, use All projects in the project menu on the bar, the browser's Back, or just open the address again. If the port is already taken, for example by a panel you started yourself, speck serve says so and starts nothing; `--port` picks another.
+
+To see it, run `speck serve` (adding `--url https://<your tunnel's name>` to reach it from your phone), open the address it prints first, pick a project, then go back to All projects.
+
+Worth keeping an eye on: a project still on an older speck lists the address in its project menu as "speck serve" while speck serve runs, on its own panel's address too, until its speck is updated.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -61,6 +65,13 @@ Even with `speck serve`, each project's panel is on its own port, and only one s
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups (Delivery log only, none sent to the inbox):
+- A project on an older speck lists "speck serve" in its project menu, and as a bridge row that counts nothing, while speck serve runs, on that panel's own address too, as the address keeps a record among the panels' for older pages' menus. It goes once the project's speck is updated.
+- All projects is the panel's own page with its bridge opened by its script, so on a slow connection the bar and empty lanes might show for a moment before All projects covers them (not seen while taking the pictures). A style that shows the bridge from the first paint on speck serve's own page would hide it.
+- A project's page left open when its project stops being chosen in another tab, with its panel the only one running, says its panel has stopped rather than reloading to All projects, as its board doesn't say which port it is. A reload goes to All projects.
+- When speck serve has to start a project's panel again on another port, because its old one was taken, a page showing it says its panel has stopped; picking it again from All projects shows it.
+- The All projects page asks every listed project's panel for its summary every 5 seconds while it's open, as the bridge already does.
+- Skipped: the project menu at the address also lists running panels of projects that aren't on the list. Match: 0762 (its AC3 leaves them out at speck serve's address).
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -225,6 +236,89 @@ Even with `speck serve`, each project's panel is on its own port, and only one s
     ],
     "escalation_question": "",
     "summary": "The address now reliably opens on All projects, and panel actions still pass their tests. Older project pages still lack the required navigation back: browser Back helps, but a visible return control is needed."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "3264e2ad640d15f9d752a3ed06c3c21ce824377a",
+    "session": "continued",
+    "thread_id": "01a2177f-986f-7842-9b83-105beb5df781",
+    "builder_response": "- Tests run: `speck test --files test/panel-0757.test.mjs test/serve-0757.test.mjs test/serve-front-0757.test.mjs test/serve-front-panel-0757.test.mjs test/serve-0756.test.mjs test/panel-0516.test.mjs` (210 passed, 0 failed, 3 of 0078's long-standing skips).\n- F1: fixed, with a visible control on an older project's own page. Every supported speck's page (1.5.0 on) has a project menu on the bar, with All projects first, opening its own bridge, but it shows only while its panel lists two or more running panels: `show = list.length > 1` in its `drawProjects`. So speck serve's address now keeps a record among the panels' (`registerPanel({ port, name: 'speck serve', serve: true })` in `startFront`, taken away when it closes; checked: 1.5.0's and 1.6.1's `runningPanels` accept it, needing only pid, port and a name). An older panel therefore always lists at least itself and the address. Its page at the address has its menu: All projects (its bridge, which asks the address's `/api/projects/summary`, so it lists every project on speck serve's list), the project, and `speck serve`, which goes to the address's own All projects. That last one posts the address's own port, which forgets the choice, and the page's reload of `/project/` then goes to `/`. This speck's `runningPanels` leaves a record marked `serve` out, so a page on this speck doesn't list it: it already knows the address from `X-Speck-Serve` and shows the menu by itself. An older panel's bridge that lists the address asks it for `/api/projects/own` as another speck. The address answers with a summary that counts nothing (status All projects, mood asleep, no spend), rather than show as Not answering. The compatibility test (`serve-front-panel-0757`, \"a project on an older speck, its panel the only one running, has its own project menu at the address, with All projects\") now exercises the control itself. It sets up a project with speck 1.6.1's own init, from its tag, and starts its real panel as the only project panel, with a listed project that isn't answering. It takes the real answers through the address: the 1.6.1 panel's board, which now carries the menu's list, and the address's summary. It then runs 1.6.1's own page code on the fake page (`fakePage` takes a `templates` folder now). That page has its menu on the bar, with All projects first. All projects opens its bridge with its project. Choosing `speck serve` posts the address's port and reloads, and the address then sends `/project/` to `/`. `serve-front-0757` checks the record (its contents, that this speck leaves it out, the summary it gives another speck, and that it goes when the address stops). The `/project/` route and the browser's Back from round 1 stay. The brief says an older project's menu lists the address as speck serve.\n",
+    "seconds": 24,
+    "usage": {
+      "input_tokens": 1032836,
+      "cached_input_tokens": 896896,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 3235,
+      "reasoning_output_tokens": 614
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 22956,
+      "cached": 375040,
+      "write": 0,
+      "output": 817
+    },
+    "cost_usd": 0.091586,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-26T11:08:32.072Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "serve-front.mjs startFront retains the panel's port/URL parsing and Host/Origin checks. Passing serve-front-0757 and serve-0757 tests cover local and tunnel addresses, rejected headers and background operation."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The root serves All projects and /project/ serves the chosen panel. The passing older-speck compatibility test uses a real 1.6.1 panel's board and its own page scripts to exercise the visible menu, open All projects and return through the speck serve entry. Current-page tests cover switching between projects."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "passOn preserves API requests, tokens and permitted Origin rewriting, and strips the project prefix for page assets. Passing real-panel tests cover writes, Settings and live updates; proxy tests cover request bodies, delayed replies and successive streamed events."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing summary and page tests retain unavailable projects as Not answering, exclude them from figures and verify continued access to another project. The compatibility record is excluded from this version's runningPanels results."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The brief documents --port, --url and opening on All projects, with a passing fact test. The latest recorded run has 210 passing tests, zero failures and three skips; the earlier related run also passed."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/serve-front.mjs",
+        "issue": "Older supported project pages previously lacked visible navigation back to All projects when only one project panel was running.",
+        "suggested_fix": "Implemented: the address registers a compatibility record that enables older pages' existing menu. Tests exercise that menu using the older page's own scripts and verify the return route.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Every project is reachable through one address, panel actions remain covered, and unavailable projects stay listed. The older-version navigation gap is fixed and tested. All acceptance criteria pass."
   }
 }
 ```
