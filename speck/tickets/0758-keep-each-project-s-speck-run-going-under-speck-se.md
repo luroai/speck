@@ -44,6 +44,8 @@ Each project's `speck run` is started by hand or by its panel's Auto-build switc
 ## Notes
 - Step 1 of the factory (see the source idea): one speck service per machine runs every project behind one address, so the user can sign in from any device and see every project, instead of starting a panel and a `speck run` in each project.
 - Failing before this build: not checked
+- Self-check: a project taken off the list and put back is looked at afresh (no stale restart count); the brief's serve row now says what it keeps on and where, with a test for the file names.
+- Pictures: none, because nothing anyone sees in the panel changes: speck serve is a command, and its only panel effect is lines in the Pipeline log.
 - `panelRunOn` and `runState` (`scripts/panel-run.mjs`, `scripts/run-switch.mjs`) start a run and tell whether one is on; the run lock is `speck/.cache/runs/run.lock`.
 
 ## In plain words

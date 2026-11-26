@@ -6,6 +6,7 @@
 // speck/.cache/panel.log, as `speck panel --background`'s does. Only one runs per machine: its record in the home
 // folder, ~/.config/speck/serve.json, is its lock and names the panels it started, so `speck serve --stop`, or the next
 // speck serve after one was killed, finds them. --background runs it on its own, its output in ~/.config/speck/serve.log.
+// 0758: it also keeps each listed project's speck run going (serve-runs.mjs), and never stops one.
 
 import fs from 'node:fs';
 import net from 'node:net';
@@ -16,16 +17,17 @@ import { SpeckError } from './core.mjs';
 import { homeSettingsDir } from './home-settings.mjs';
 import { listedProjects, panelPorts } from './projects.mjs';
 import { panelAnswers } from './panel-background.mjs';
-import { pidAlive } from './run-switch.mjs';
+import { pidAlive, runState } from './run-switch.mjs';
 import { timedMessage } from './run-times.mjs';
 import { BUILD_ENV } from './build-env.mjs';
+import { runKeeper, runsIn, stillOnSays } from './serve-runs.mjs'; // 0758
 
 const TICK_MS = 2000, START_MS = 15000, STOP_MS = 5000, POLL_MS = 100, SERVE_STOP_MS = 30000, BACKGROUND_MS = 60000;
 // How long a panel has to answer once started, in ms. SPECK_SERVE_START_MS sets it directly, for speck's own tests.
 const startMs = () => (Number(process.env.SPECK_SERVE_START_MS) > 0 ? Number(process.env.SPECK_SERVE_START_MS) : START_MS);
 const RETRY_MS = [2000, 5000, 10000, 30000, 60000]; // before trying again after 1, 2, 3, 4, then 5 or more failed starts in a row
 const AWAY = 'SPECK_SERVE_AWAY'; // set for the speck serve --background starts
-const USAGE = 'speck serve                start a panel for every project on your list, and look after them until Ctrl+C\n  speck serve --background   the same, on its own, after the shell that started it has ended\n  speck serve --stop         stop it, and every panel it started';
+const USAGE = 'speck serve                start a panel for every project on your list, and look after them and their speck runs until Ctrl+C\n  speck serve --background   the same, on its own, after the shell that started it has ended\n  speck serve --stop         stop it, and every panel it started, leaving each speck run on';
 const CLI = path.join(path.dirname(fileURLToPath(import.meta.url)), 'speck.mjs');
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -38,7 +40,7 @@ const panels = n => `${n} panel${n === 1 ? '' : 's'}`;
 // speck serve's files in the home folder, or null when there's no home folder.
 export function serveFiles(env = process.env) {
   const dir = homeSettingsDir(env);
-  return dir ? { dir, record: path.join(dir, 'serve.json'), log: path.join(dir, 'serve.log') } : null;
+  return dir ? { dir, record: path.join(dir, 'serve.json'), log: path.join(dir, 'serve.log'), runs: path.join(dir, 'serve-runs.json') } : null;
 }
 // A file as messages name it: ~/.config/speck/<name> unless the tests moved it.
 const shown = (env, file) => (env.SPECK_HOME_SETTINGS_DIR ? file : `~/.config/speck/${path.basename(file)}`);
@@ -170,6 +172,7 @@ async function serve(env, away) {
   const owned = new Map(); // folder → { folder, name, port, pid, child, state: starting | running | stopping }
   const retry = new Map(); // folder → { fails, at, port, said }: when to start its panel again, and on which port
   const noted = new Map(); // folder → what was last said about a project it has no panel of its own for
+  const keeper = runKeeper({ file: files.runs, env: panelEnv, say }); // 0758: each project's speck run
   let stopping = false, ticking = false, again = false, listError = null, timer = null, saved = null, saveError = null;
   // Its record, with the panels it has started, when that has changed. Never over another speck serve's, after this
   // one's was deleted by hand, and not again once it has been forgotten as this one stops.
@@ -290,6 +293,7 @@ async function serve(env, away) {
     }
     for (const m of [noted, retry]) for (const f of m.keys()) if (!listed.has(f)) m.delete(f);
     save();
+    keeper.check(folders.filter(f => !cannotStart(f)));
     return starts;
   }
   function queueTick() {
@@ -307,6 +311,8 @@ async function serve(env, away) {
     await Promise.all(mine.map(p => stopOne(p)));
     try { forgetRecord(files.record, process.pid); } catch { /* the next speck serve or --stop finds nothing of it running */ }
     say(`stopped${mine.length ? `, with the ${panels(mine.length)} it started: ${listOf(mine.map(p => p.name))}` : ''}.`);
+    const on = runsLeftOn(env);
+    if (on) say(on);
     process.exit(0);
   }
   for (const sig of ['SIGINT', 'SIGTERM', 'SIGHUP']) process.on(sig, () => void shutdown());
@@ -367,6 +373,13 @@ async function serveBackground(env) {
   process.exit(0);
 }
 
+// 0758: what speck serve says as it stops about the listed projects whose speck run it leaves on, or ''.
+function runsLeftOn(env) {
+  let folders = [];
+  try { folders = listedProjects(env); } catch { return ''; }
+  return stillOnSays(folders.filter(f => runState(runsIn(f)).on).map(nameOf));
+}
+
 // `speck serve --stop`: stops the speck serve running on this machine, which stops every panel it started, and then
 // any of those it didn't get to, as when it was killed. Nothing else is stopped.
 async function serveStop(env) {
@@ -394,7 +407,9 @@ async function serveStop(env) {
     const all = started();
     await stopLeft(all);
     forgetRecord(files.record, held.pid);
-    return console.log(`speck serve: stopped (process ${held.pid})${all.length ? ` and the ${panels(all.length)} it started: ${names(all)}` : ''}.`);
+    console.log(`speck serve: stopped (process ${held.pid})${all.length ? ` and the ${panels(all.length)} it started: ${names(all)}` : ''}.`);
+    const on = runsLeftOn(env);
+    return on && console.log(on);
   }
   const left = await stopLeft(started());
   forgetRecord(files.record, held.pid);
