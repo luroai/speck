@@ -14,4 +14,5 @@ The user can't tell when they're genuinely needed. In one case a build's blocked
 - When the watch agent hits its recommendation limit, say so on the ticket, in plain words: "speck has stopped deciding for this ticket: your answer is needed".
 - `speck answer` should accept a build's blocked question as well as the watch agent's question, or say which command does (today only the panel's Go with the recommendation does).
 - Related, both dropped: `2026-10-18-answer-or-dismiss-the-foreman-s-question.md`, `2026-10-18-foreman-will-take-it-while-speck-run-is-off.md`.
+- A task ticket's run summary lives in its gitignored output folder, so the review pack never shows it; the pack should show the task's run summary, since that's what the user is asked to accept.
 - Open: should a "waiting on you" item send a notification, so the user isn't watching the board?
