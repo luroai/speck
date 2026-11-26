@@ -1,7 +1,7 @@
 ---
 id: "0775"
 title: "Steady the 0067 panel restart tests"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -21,7 +21,7 @@ created: 2026-11-26
 ---
 # 0775 · Steady the 0067 panel restart tests
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 "0067 AC2: the token survives a restart" and "0067 AC4: new code that fails to start leaves the old server serving, shows the error and the next change tries again" fail now and then on a busy machine, turning builds' and `main`'s test runs red for no real fault.
