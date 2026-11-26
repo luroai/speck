@@ -1,7 +1,7 @@
 ---
 id: "0762"
 title: "Leave a project out of speck serve without removing it"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,13 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/2026-11-10-run-a-software-factory-from-one-speck-service.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0757","0758"]                # ticket ids that must be done first
 created: 2026-11-26
+built_on: "0758"
+started: "2026-11-26T11:49:18.267Z"
 
 ---
 # 0762 · Leave a project out of speck serve without removing it
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Under `speck serve`, the only way to keep a project out is `speck projects remove`, which forgets it, so bringing it back means adding it again. The user wants to keep some projects, such as a paused side project, off the factory floor and out of the service without losing them from the list.
