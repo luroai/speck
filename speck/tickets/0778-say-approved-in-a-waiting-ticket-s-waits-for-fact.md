@@ -1,7 +1,7 @@
 ---
 id: "0778"
 title: "Say approved in a waiting ticket's Waits for fact"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -21,7 +21,7 @@ created: 2026-11-26
 ---
 # 0778 · Say approved in a waiting ticket's Waits for fact
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 A ready ticket's Waits for fact names each ticket it waits on with its state, and shows one that is approved and waiting to ship as "building", pointing you at the wrong thing to chase.
