@@ -1,7 +1,7 @@
 ---
 id: "0765"
 title: "Open a factory floor page at speck serve's address"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -21,7 +21,7 @@ created: 2026-11-26
 ---
 # 0765 · Open a factory floor page at speck serve's address
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 On a laptop the panel is one narrow column showing one lane of one project at a time. The user wants a page for a wide window that shows every project as a station and a project's whole board side by side.
