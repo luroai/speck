@@ -1,7 +1,7 @@
 ---
 id: "0761"
 title: "Keep the lane lists from scrolling sideways"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-25
 started: "2026-11-26T09:32:41.906Z"
+approved: "2026-11-26T09:50:25.041Z"
 
 ---
 # 0761 · Keep the lane lists from scrolling sideways
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 On an iPhone in Safari, the Plan list can scroll sideways: its rows slide left under the finger with a horizontal scrollbar, and the swipe no longer changes lane. The lists scroll up and down (`overflow-y: auto`), which lets them scroll sideways too once anything in them is wider, and the panel hands a swipe to the lanes only when it doesn't start in something that scrolls sideways (`scrollsSideways`).
@@ -58,9 +59,14 @@ Worth keeping an eye on: this was checked in Chrome with touch, not in Safari it
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 94,280
+- Elapsed since build started: 18 min
+- Changed lines: 11 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - Inbox: speck/ideas/2026-11-26-steady-the-0067-ac4-second-restart-error-test.md, as "0067 AC4: new code that fails to start…" failed once in the related-tests run and passed on rerun unchanged.
