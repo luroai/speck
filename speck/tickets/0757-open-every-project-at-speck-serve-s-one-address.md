@@ -47,6 +47,7 @@ Even with `speck serve`, each project's panel is on its own port, and only one s
 - The panel already shows other projects at one address through its project switcher, a cookie and a proxy to each panel's own port (`route`, `pass`, `choose` in `scripts/panel-projects.mjs`); this can reuse it.
 - Each project's panel keeps its own token; the proxy passes requests on as the switcher does now.
 - Failing before this build: not checked
+- Self-check: at speck serve's address, a stopped project's page and its requests now say speck serve starts its panel again, rather than to start it with `speck panel`, which would want port 4777; All projects asks only the ports of panels running now, never one speck serve remembered for a project, so nothing else on that port is reached; the brief no longer says the menu always offers All projects, as a project on an older speck offers it only with two panels running. A test for each.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

@@ -194,7 +194,9 @@ export const round = (n, tokens) => ({ round: n, reviewer: 'codex', verdict: 'ap
 // Runs the whole page script against a minimal DOM, fetch and timer, so the view can be checked without a browser.
 // `globals` replaces what the page sees, for example a `Date` whose clock the test moves (0040).
 // `made`, when given, is called with each element the page creates, for example to give it a browser's sizes (0052).
-export function fakePage(responses, globals = {}, { made = () => {} } = {}) {
+// `ids` gives elements of the page, by id, what the server put in them before its scripts run, for example 0757's
+// { 'speck-serve': { content: '1' } } for speck serve's own page.
+export function fakePage(responses, globals = {}, { made = () => {}, ids = {} } = {}) {
   const nodes = new Map();
   const make = tag => {
     const n = { tagName: tag, className: '', hidden: false, children: [], listeners: {}, _text: '' };
@@ -221,6 +223,7 @@ export function fakePage(responses, globals = {}, { made = () => {} } = {}) {
     listeners: {},
     addEventListener(type, fn) { this.listeners[type] = fn; }, // the page's own key handling (0054)
   };
+  for (const [id, props] of Object.entries(ids)) Object.assign(document.getElementById(id), props);
   const timers = [];
   // 0186: the page's waits of 10 seconds or more (how long it goes without a board before it says it's disconnected,
   // and how long it waits for one), by id, apart from `timers`, so a test steps the board's refreshes as it always has.

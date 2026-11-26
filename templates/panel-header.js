@@ -54,10 +54,14 @@ function drawBar(f, word) {
 // The panel that sent this page is in its speck-panel tag. Once another tab at this address chooses another project,
 // this page's next answer comes from that project's panel: rather than show it under this project's name, or send it
 // this one's key, the page reloads.
+// 0757: at speck serve's address, as every answer there says (X-Speck-Serve), the menu is always there, with All projects
+// first, as that's where the address opens, even while this project's panel is the only one running.
+let atServe = false;
 if (typeof globalThis.fetch === 'function') {
   const fetchFrom = globalThis.fetch.bind(globalThis);
   globalThis.fetch = async (...args) => {
-    const res = await fetchFrom(...args), from = res && res.headers && typeof res.headers.get === 'function' ? res.headers.get('X-Speck-Panel') : null;
+    const res = await fetchFrom(...args), heads = res && res.headers && typeof res.headers.get === 'function' ? res.headers : null, from = heads ? heads.get('X-Speck-Panel') : null;
+    if (heads && heads.get('X-Speck-Serve') === '1') atServe = true;
     const own = $('speck-panel').content;
     if (from && own && from !== own) { location.reload(); return new Promise(() => {}); } // answered by the reload
     return res;
@@ -67,10 +71,11 @@ if (typeof globalThis.fetch === 'function') {
 // chosen only while the bridge is open; otherwise the menu has the project shown chosen. 0610: its first choice.
 const ALL_PROJECTS = 'all';
 let projectsGoneList = null, projectsDrawn = null; // the panels still running while the one shown has stopped; what the menu was drawn from
-// The project shown, by the name the menu last gave it.
+// The project shown, by the name the menu last gave it, or else (0757) the one the panel put in the bar.
 function projectShown() {
   const p = state && state.projects, me = p && Array.isArray(p.list) ? p.list.find(x => x.port === p.self) : null;
-  return me ? String(me.name) : 'This project';
+  const bar = pageHeader && pageHeader.querySelector('.repo');
+  return me ? String(me.name) : (bar && bar.textContent.trim()) || 'This project';
 }
 function projectsGone(gone) {
   // Another tab at this address chose a project that has stopped since: not this page's, so it reloads to show the address's own.
@@ -79,23 +84,25 @@ function projectsGone(gone) {
   projectsGoneList = gone && Array.isArray(gone.list) ? gone.list : null;
   if (projectsGoneList) {
     $('offline').hidden = false;
-    $('offline').textContent = `${projectShown()}'s panel has stopped, so this shows the last state received. Pick another project from the menu at the top, or start its panel again with speck panel.`;
+    $('offline').textContent = `${projectShown()}'s panel has stopped, so this shows the last state received. ${atServe ? 'speck serve starts it again by itself, or pick another project from the menu at the top.' : 'Pick another project from the menu at the top, or start its panel again with speck panel.'}`; // 0757
   }
   drawProjects();
 }
 function drawProjects() {
   const projects = state && state.projects, list = projectsGoneList || (projects && Array.isArray(projects.list) ? projects.list : []);
-  const self = projectsGoneList ? null : projects && projects.self, show = list.length > (projectsGoneList ? 0 : 1);
+  const self = projectsGoneList ? null : projects && projects.self, home = atServe && state !== null; // 0757
+  const show = home || list.length > (projectsGoneList ? 0 : 1);
   $('project-pick').hidden = !show;
-  const drawn = JSON.stringify([show && list, self, bridgeOpen]);
+  const drawn = JSON.stringify([show && list, self, bridgeOpen, home]);
   if (!show || drawn === projectsDrawn) return;
   projectsDrawn = drawn;
   const named = new Map();
   for (const p of list) named.set(p.name, (named.get(p.name) || 0) + 1);
   const option = (value, text, chosen) => { const o = el('option', null, text); o.value = value; o.selected = chosen; return o; };
   const options = list.map(p => option(String(p.port), named.get(p.name) > 1 ? `${p.name} · ${p.port}` : String(p.name), p.port === self && !bridgeOpen));
+  if (home && !projectsGoneList && !list.some(p => p.port === self)) options.unshift(option('', projectShown(), !bridgeOpen)); // 0757: this project, its panel the only one running
   if (projectsGoneList) { const o = option('', `${projectShown()} (stopped)`, !bridgeOpen); o.disabled = true; options.unshift(o); }
-  if (list.length >= 2) options.unshift(option(ALL_PROJECTS, 'All projects', bridgeOpen)); // 0596: every project at once, from two running panels. 0610: first
+  if (home || list.length >= 2) options.unshift(option(ALL_PROJECTS, 'All projects', bridgeOpen)); // 0596: every project at once, from two running panels. 0610: first. 0757: always, at speck serve's address
   $('project').replaceChildren(...options);
 }
 async function chooseProject(port) {
@@ -103,11 +110,20 @@ async function chooseProject(port) {
   let res = null, body = null;
   try { res = await fetch(`/api/projects/${port}`, { method: 'POST' }); body = await res.json(); } catch { /* answered below */ }
   if (res && res.ok) return location.reload();
-  $('offline').hidden = false;
-  $('offline').textContent = `Couldn't show that project: ${(body && body.error) || "can't reach speck panel."}`;
+  cantShow((body && body.error) || `can't reach ${reached()}.`);
   projectsDrawn = null;
   drawProjects(); // the menu goes back to the project shown
   return false;
+}
+// What this page talks to: speck serve at its address (0757), or else speck panel.
+const reached = () => (SERVE || atServe ? 'speck serve' : 'speck panel');
+// Why the project chosen isn't shown: under the bar, or (0757) on speck serve's own page, where All projects is all
+// there is, on All projects.
+function cantShow(why) {
+  const text = `Couldn't show that project: ${why}`;
+  if (SERVE) { bridgeSaid = text; return drawBridge(); }
+  $('offline').hidden = false;
+  $('offline').textContent = text;
 }
 $('project').addEventListener('change', () => ($('project').value === ALL_PROJECTS ? openBridge() : chooseProject($('project').value)));
 // 0596: the bridge, every project at once: a full view over the lanes, opened by All projects in the project menu. It
@@ -117,11 +133,12 @@ const BRIDGE_MS = 5000, BRIDGE_GIVE_UP_MS = 15000, ASKED_TICKET = 'speck-open-ti
 const MOOD_RANK = ['asleep', 'watching', 'focused', 'asking']; // busiest last, as speckMood puts asking ahead of focused
 const NEED_WHY = new Map([['question', 'Question'], ['manager', 'Engineering manager'], ['stopped', 'Build stopped'], ['full_suite', 'Full suite'], ['bare_main', 'Main checkout'], ['ship', 'At Ship'], ['high_risk', 'High risk']]); // 0697: stopped, full_suite. 0749: bare_main
 const NEED_SAYS = new Map([['question', 'Blocked, waiting for your answer.'], ['manager', 'Your engineering manager has a question.'], ['stopped', 'Its build stopped before finishing.'], ['ship', 'Approved, and waiting for you at Ship.'], ['high_risk', 'High risk, so it\'s waiting for you at Ship.']]);
-let bridgeOpen = false, bridgeBody = null, bridgeError = null, bridgeAsking = false, bridgeTimer = null, bridgeDrawn = null, bridgeFace = null;
+let bridgeOpen = false, bridgeBody = null, bridgeError = null, bridgeAsking = false, bridgeTimer = null, bridgeDrawn = null, bridgeFace = null, bridgeSaid = null; // bridgeSaid: 0757's cantShow
 const bridgeButtons = new Map(); // what's on it to press, by what it opens, so a redraw keeps the focus
 function openBridge() {
   bridgeOpen = true;
-  bridgeBody = null; bridgeError = null; bridgeDrawn = null; bridgeFace = null;
+  bridgeBody = null; bridgeError = null; bridgeDrawn = null; bridgeFace = null; bridgeSaid = null;
+  if (SERVE) document.title = 'speck · All projects'; // 0757
   drawBridge();
   drawProjects(); // 0604: All projects chosen in the menu while it's open
   $('bridge').hidden = false;
@@ -131,6 +148,7 @@ function openBridge() {
   bridgeTimer = setInterval(askBridge, BRIDGE_MS);
 }
 function closeBridge() {
+  if (SERVE) return; // 0757: speck serve's own page is All projects, with nothing under it to go back to
   bridgeOpen = false;
   clearInterval(bridgeTimer);
   bridgeTimer = null;
@@ -146,7 +164,7 @@ async function askBridge() {
   try {
     const res = await fetch('/api/projects/summary', { method: 'POST', signal: stop.signal }), body = await res.json();
     if (res.ok) { bridgeBody = body; bridgeError = null; } else bridgeError = (body && body.error) || 'the panel refused.';
-  } catch { bridgeError = "can't reach speck panel."; }
+  } catch { bridgeError = `can't reach ${reached()}.`; }
   clearTimeout(giveUp);
   bridgeAsking = false;
   if (bridgeOpen) drawBridge();
@@ -154,10 +172,11 @@ async function askBridge() {
 // The bridge's figures from the summaries: only panels that answered count.
 function bridgeModel(body) {
   const count = v => (Number.isFinite(v) && v > 0 ? v : 0), all = body && Array.isArray(body.projects) ? body.projects : [];
-  const projects = all.filter(p => p && typeof p === 'object' && Number.isInteger(p.port) && typeof p.name === 'string');
+  // 0757: a project on speck serve's list with no panel has no port, and isn't running
+  const projects = all.filter(p => p && typeof p === 'object' && (Number.isInteger(p.port) || (p.port === null && p.running !== true)) && typeof p.name === 'string');
   const named = new Map();
   for (const p of projects) named.set(p.name, (named.get(p.name) || 0) + 1);
-  for (const p of projects) p.label = named.get(p.name) > 1 ? `${p.name} · ${p.port}` : p.name;
+  for (const p of projects) p.label = named.get(p.name) > 1 && p.port !== null ? `${p.name} · ${p.port}` : p.name;
   const up = projects.filter(p => p.running);
   const spends = up.map(p => p.spent_week_usd).filter(Number.isFinite);
   return { projects,
@@ -196,18 +215,22 @@ function bridgeButton(key, cls, press, ...kids) {
   return b;
 }
 function drawBridge() {
-  const drawn = JSON.stringify([bridgeBody, bridgeError]);
+  const drawn = JSON.stringify([bridgeBody, bridgeError, bridgeSaid]);
   if (drawn === bridgeDrawn) return;
   bridgeDrawn = drawn;
   const box = $('bridge'), had = [...bridgeButtons].find(([, b]) => b === document.activeElement)?.[0];
   bridgeButtons.clear();
-  const back = el('span', 'back', 'Back');
-  back.tabIndex = 0;
-  back.setAttribute('role', 'link');
-  back.setAttribute('aria-label', 'Back to this project');
-  back.addEventListener('click', e => { e.stopPropagation(); closeBridge(); });
-  back.addEventListener('keydown', pressWithKeys);
-  const parts = [back, el('h2', 'bridge-heading', 'All projects')];
+  const parts = [el('h2', 'bridge-heading', 'All projects')];
+  if (!SERVE) { // 0757: speck serve's own page has no project to go back to
+    const back = el('span', 'back', 'Back');
+    back.tabIndex = 0;
+    back.setAttribute('role', 'link');
+    back.setAttribute('aria-label', 'Back to this project');
+    back.addEventListener('click', e => { e.stopPropagation(); closeBridge(); });
+    back.addEventListener('keydown', pressWithKeys);
+    parts.unshift(back);
+  }
+  if (bridgeSaid) parts.push(el('p', 'bridge-error', bridgeSaid)); // 0757
   if (bridgeError) parts.push(el('p', 'bridge-error', `Couldn't read your projects: ${bridgeError}`));
   if (bridgeBody) parts.push(...bridgeParts(bridgeModel(bridgeBody)));
   else if (!bridgeError) parts.push(el('p', 'bridge-none', 'Reading your projects…'));
@@ -233,15 +256,18 @@ function bridgeParts(m) {
     return bridgeButton(`need ${n.port} ${id}`, 'bridge-card', () => pressBridgeTicket(n.port, id),
       el('span', 'bridge-where', `${n.project} · ${id} · ${why}`), el('span', 'bridge-title', String(n.title || '')), el('span', 'bridge-reason', reason));
   });
-  const rows = m.projects.map(p => bridgeButton(`row ${p.port}`, 'bridge-row', () => pressBridgeProject(p.port),
+  const rows = m.projects.map(p => bridgeButton(`row ${p.port ?? p.label}`, 'bridge-row', () => pressBridgeProject(p.port, p.label),
     el('span', `bridge-dot ${bridgeDot(p)}`), el('span', 'bridge-about', null, el('span', 'bridge-name', p.label), el('span', 'bridge-line', bridgeLine(p))),
     el('span', 'bridge-spend', p.running ? bridgeSpend(p.spent_week_usd, p.spent_week_unknown === true) : '')));
   const usage = m.usage.map(line => el('p', 'bridge-usage', line)); // 0720
-  return [bar, ...usage, el('h3', 'bridge-section', 'Needs you'), ...(cards.length ? cards : [el('p', 'bridge-none', 'Nothing needs you.')]), el('h3', 'bridge-section', 'Projects'), ...rows];
+  return [bar, ...usage, el('h3', 'bridge-section', 'Needs you'), ...(cards.length ? cards : [el('p', 'bridge-none', 'Nothing needs you.')]), el('h3', 'bridge-section', 'Projects'),
+    ...(rows.length ? rows : [el('p', 'bridge-none', 'No projects on your list yet. Add one with speck projects add.')])]; // 0757: speck serve's list can be empty
 }
 const shownHere = port => !projectsGoneList && state && state.projects && state.projects.self === port;
 // A row: that project's panel here, by the same switch as the menu. The project already shown just comes back.
-function pressBridgeProject(port) {
+// 0757: a project on speck serve's list with no panel running can't be shown, and says so.
+function pressBridgeProject(port, label) {
+  if (!Number.isInteger(port)) { cantShow(`${label}'s panel isn't running, so it can't be shown. speck serve's output says why.`); return closeBridge(); }
   if (shownHere(port)) return closeBridge();
   return switchFromBridge(port);
 }
@@ -274,7 +300,8 @@ function openAskedTicket(m) {
   askedTicket(null); // first, as opening it draws the page again
   let v = null;
   try { v = JSON.parse(kept); } catch { return; }
-  if (v && state && state.projects && v.port === state.projects.self) openTicket(String(v.id), m);
+  // 0757: at speck serve's address with this project's panel the only one running, it's the one chosen there
+  if (v && state && (state.projects ? v.port === state.projects.self : atServe)) openTicket(String(v.id), m);
 }
 // 0410: Plan, Build and Shipped are tabs under the header (0520: with Capture first), and only the open one's lane shows. 0582: each says
 // how many its lane holds. Build opens with the
