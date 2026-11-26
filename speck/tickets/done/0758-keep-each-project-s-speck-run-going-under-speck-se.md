@@ -1,7 +1,7 @@
 ---
 id: "0758"
 title: "Keep each project's speck run going under speck serve"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -22,11 +22,12 @@ started: "2026-11-26T10:17:16.586Z"
 blocked_at: ""
 waited_seconds: 3946
 approved: "2026-11-26T11:49:01.945Z"
+finished: "2026-11-26T11:52:25.874Z"
 
 ---
 # 0758 · Keep each project's speck run going under speck serve
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Each project's `speck run` is started by hand or by its panel's Auto-build switch, and stays off after the machine restarts until someone turns it on again. Under one service, work in every project should carry on by itself.
