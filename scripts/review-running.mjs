@@ -14,11 +14,12 @@ const safeId = id => /^[\w-]+$/.test(String(id ?? ''));
 // called, which removes it if it's still that process's. It only feeds the panel, so a record that can't be written
 // leaves the round to run without one. 0540: `speck review` records the round's own process as soon as it starts it,
 // so the round shows as running even if `speck review` exits 12 before that process has got as far as recording it.
-export function markRoundRunning(repo, id, round, pid = process.pid) {
+// 0764: `mark` is kept with it: the agent standing in for its reviewer, `stand_in: { name, for }`, for the factory floor.
+export function markRoundRunning(repo, id, round, pid = process.pid, mark = {}) {
   const runs = runsOf(repo), file = fileOf(runs, id);
   try {
     fs.mkdirSync(runs, { recursive: true });
-    fs.writeFileSync(file, JSON.stringify({ id: padId(id), round, pid, started: new Date().toISOString() }) + '\n');
+    fs.writeFileSync(file, JSON.stringify({ ...mark, id: padId(id), round, pid, started: new Date().toISOString() }) + '\n');
   } catch { return () => {}; }
   return () => {
     try { if (JSON.parse(fs.readFileSync(file, 'utf8')).pid === pid) fs.rmSync(file, { force: true }); } catch { /* gone already */ }
@@ -50,4 +51,17 @@ export function roundRunning(runs, id, recorded) {
   if (Number.isInteger(pid) && pid > 0) return pidAlive(pid) ? round : null;
   if (pid !== null || build === undefined) return null;
   return build === null || (Number.isInteger(build) && build > 0 && pidAlive(build)) ? round : null;
+}
+
+// 0764: when the round of ticket `id` being run started, and who stands in for its reviewer on its bench (0649), as its
+// record keeps them: { started, stand_in: { name, for } or null }, or null when it has no record. Whether the round is
+// still running is roundRunning's to say.
+export function roundStarted(runs, id) {
+  if (!safeId(id)) return null;
+  let rec;
+  try { rec = JSON.parse(fs.readFileSync(fileOf(runs, id), 'utf8')); } catch { return null; }
+  if (!rec || typeof rec !== 'object' || Array.isArray(rec)) return null;
+  const s = rec.stand_in, named = v => typeof v === 'string' && v.trim() !== '';
+  return { started: typeof rec.started === 'string' && Number.isFinite(Date.parse(rec.started)) ? rec.started : null,
+    stand_in: s && typeof s === 'object' && named(s.name) && named(s.for) ? { name: s.name.trim(), for: s.for.trim() } : null };
 }

@@ -3,6 +3,7 @@
 import { sumParts } from './spend.mjs';
 import { buildTimes, LAST_SHIPPED } from './long-build.mjs';
 import { stoppedForYou } from './foreman.mjs';
+import { projectLine, stationOf } from './panel-line.mjs';
 
 const WEEK_MS = 7 * 864e5;
 const list = v => (Array.isArray(v) ? v : []);
@@ -31,7 +32,9 @@ function atShip(t, tickets, runOn) {
 // 0697: so do 'stopped' (a build stopped that nothing will carry on, 0616) and 'full_suite' (the full suite failing on the
 // base branch with no fix ticket on its way, 0630), its id '', and detail its failing tests or its exit code.
 // 0749: and 'bare_main', the main checkout not a work tree, its id '' too.
-export function projectSummary({ board, foreman, run, now = Date.now() }) {
+// 0764: and `line`, the factory floor's (panel-line.mjs), from `facts`, lineFacts', with the tickets at Ship: each
+// approved one its build doesn't have back, or being shipped, and whether it waits for you, as Needs you counts it.
+export function projectSummary({ board, foreman, run, now = Date.now(), facts = null }) {
   const tickets = list(board && board.tickets).filter(t => t && typeof t === 'object');
   const f = foreman && typeof foreman === 'object' ? foreman : {}, runOn = !!(run && run.on), since = now - WEEK_MS;
   const blocked = list(f.blocked).filter(b => b && typeof b === 'object'), byId = new Map(tickets.map(t => [String(t.id), t]));
@@ -63,7 +66,16 @@ export function projectSummary({ board, foreman, run, now = Date.now() }) {
     shipped_week: tickets.filter(t => t.status === 'done' && !shipping(t) && time(t.finished) !== null && time(t.finished) >= since).length,
     spent_week_usd: spent.total_cost_usd, spent_week_unknown: spent.total_cost_unknown.length > 0,
     build_minutes: buildTimes(tickets.filter(t => !shipping(t))).slice(0, LAST_SHIPPED).map(x => x.minutes), // 0596: each build's, so the bridge can take one median over every project
+    line: lineOf({ board, facts, tickets, runOn }),
   };
+}
+
+// 0764: the line, with the tickets at Ship, or null should it fail, so the rest of the summary still reaches the bridge.
+function lineOf({ board, facts, tickets, runOn }) {
+  try {
+    return { ...projectLine({ board, facts }), ship: tickets.filter(t => shipping(t) || (t.status === 'approved' && !stationOf(t)))
+      .map(t => ({ id: String(t.id), title: text(t.title), yours: atShip(t, tickets, runOn), shipping: shipping(t) })) };
+  } catch { return null; }
 }
 
 // 0579: speck's mood from the board, for its face, as projectSummary works it out. Its other moods aren't the board's:

@@ -25,6 +25,7 @@ import { goWith } from './go-with.mjs';
 import { panelAway } from './panel-background.mjs'; // 0509: --background and --stop
 import { panelProjects } from './panel-projects.mjs'; // 0516: the project menu, and showing another panel's project here
 import { projectSummary, speckMood } from './panel-summary.mjs'; // 0595: this panel's part of the bridge. 0579: speck's mood
+import { lineFacts } from './line-facts.mjs'; // 0764: and what its line on the factory floor needs beyond the board
 import { panelStarNote } from './panel-star.mjs'; import { panelSetLevel } from './panel-level.mjs'; import { panelSetBuilder } from './panel-builder.mjs'; // 0538: the star on a note in Capture. 0662: a ticket's level. 0669: its builder
 import { panelUrl } from './panel-url.mjs'; import { panelFile } from './panel-files.mjs'; import { subscriptionsAnswer, usageWarnings } from './subscriptions.mjs'; import { readUsage } from './agent-usage.mjs'; // 0538: moved out, to keep this under 600 lines. 0646: Your subscriptions in Settings
 
@@ -274,7 +275,7 @@ export async function panelServer() {
     try {
       const run = panelRunState(repo, runs), name = nameNow(), foreman = foremanView({ run, record: readForeman(runs), since: runSince(runs), tickets: out.board && out.board.tickets, fixing: fixingNow(), agent: agentView(runs, out.board && out.board.tickets, name), base: baseNow(), name, bare: bareMain(repo) }); // 0749: bare
       const snap = boards.snapshot({ ...panelBoard(out.board), ...(run.on ? { run } : {}), ...(restartError ? { restart_error: restartError } : {}), foreman: { ...foreman, mood: speckMood({ board: out.board, foreman, run }) }, ...runLogPart(runs), ...pageNow(), ...(projects ? projects.part() : {}) }); // 0415: run_log. 0516: projects
-      return { status: 200, body: snap.body, snap, summary: () => projectSummary({ board: out.board, foreman, run }) }; // 0595: worked out when asked, as its 7 days move on
+      return { status: 200, body: snap.body, snap, summary: () => projectSummary({ board: out.board, foreman, run, facts: lineFacts(repo, out.board, runs) }) }; // 0595: worked out when asked, as its 7 days move on. 0764: and its records
     }
     catch (e) { return { status: 500, body: JSON.stringify({ error: e instanceof SpeckError ? e.message : String(e?.message || e) }) }; }
   };

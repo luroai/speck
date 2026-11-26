@@ -305,11 +305,11 @@ function reviewSetup(repo, id, opts) {
 // Runs a review round. Round 1 on a building ticket, or any round on an approved one, sets it to reviewing before the
 // reviewer starts, and puts the ticket back exactly as it was if the round fails, so only a recorded round leaves the status changed.
 // 0623: unless the reviewer's usage limit refused it: the ticket stays reviewing, for speck run to carry on.
-// 0223: the round counts as running from then until it's recorded, fails or times out.
-function reviewRound(repo, id, opts, run) {
+// 0223: the round counts as running from then until it's recorded, fails or times out. 0764: its record keeps `mark` too.
+function reviewRound(repo, id, opts, run, mark = {}) {
   const s = reviewSetup(repo, id, opts);
   const marked = startReviewing(s.ticket.raw, s.round);
-  const ended = markRoundRunning(repo, s.ticket.fm.id || id, s.round);
+  const ended = markRoundRunning(repo, s.ticket.fm.id || id, s.round, undefined, mark);
   try {
     if (marked === s.ticket.raw) return run(s);
     fs.writeFileSync(s.ticket.file, marked);
@@ -436,7 +436,7 @@ export function cmdReview(args) {
         waitForFirst(repo, pad, reviewer, bench);
       }
       console.log(`The ${reviewer} reviewer's usage limit is reached${refused.length ? `, and so is that of ${refused.join(' and ')}` : ''}, so this round runs on ${sub.name}, the ${refused.length ? 'next' : 'first'} agent on reviewer_bench that can take it, in a fresh session with the full history.`);
-      try { rec = reviewRound(repo, id, opts, s => runOn(sub.name, standInRound(s, sub))); break; } catch (again) {
+      try { rec = reviewRound(repo, id, opts, s => runOn(sub.name, standInRound(s, sub)), { stand_in: { name: sub.name, for: sub.for } }); break; } catch (again) { // 0764: the stand-in, kept while it runs
         if (again.code !== REVIEWER_LIMITED) throw again;
         refused.push(sub.name);
       }
