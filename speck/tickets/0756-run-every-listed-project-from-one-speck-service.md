@@ -52,7 +52,11 @@ Each project needs its own `speck panel`, on its own port, started by hand in it
 - Pictures: none, because nothing anyone sees in the panel changes: `speck serve` is a command, and the panels it starts are the projects' own.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+There's now one command that brings up every project on this machine. `speck serve` starts a panel for each project on your list (the one `speck projects` keeps), each on that project's own version of speck, and prints each one's address. A project whose panel you already have running is left as it is. It then keeps them going: a panel that stops is started again within seconds, and adding a project to the list, or taking one off, starts or stops its panel within 10 seconds. `speck serve --background` keeps it running after you close the terminal, with what it says kept in a log in your home folder. `speck serve --stop` stops it and the panels it started, and leaves any panel you started yourself alone. Only one runs on a machine at a time: a second one says where the first is.
+
+To see it, add two projects with `speck projects add`, run `speck serve` and open the addresses it prints. Then stop one of those panels and watch it come back.
+
+Worth keeping an eye on: each project gets a new address whenever `speck serve` starts, until the next ticket puts every project behind one address.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -62,6 +66,13 @@ Each project needs its own `speck panel`, on its own port, started by hand in it
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups (Delivery log only, none sent to the inbox):
+- Each project gets a new port whenever `speck serve` starts, so its own address changes. Skipped: 0757 puts every project behind `speck serve`'s one address.
+- `speck panel --stop` in a project doesn't stop the panel `speck serve` started for it, and `speck serve` would start it again. Skipped: 0762 lets a project be left out of `speck serve`.
+- Where `ps` can't be run, `speck serve` can't confirm which processes are its own, so it signals none of them: a second one could start, and `--stop` leaves a killed one's panels running. speck run's lock relies on `ps` in the same way.
+- A `serve.json.recover` left by a `speck serve` killed while taking over a stale record has to be deleted by hand, as speck run's `run.lock.recover` does; the message says so.
+- With `SPECK_SERVE_START_MS` at 1000, as a test sets it, the message says "within 1 seconds".
+- Each project's `speck/.cache/panel.log` and `~/.config/speck/serve.log` grow without limit, as the logs of `speck panel --background` and speck run do.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -151,6 +162,97 @@ Each project needs its own `speck panel`, on its own port, started by hand in it
     ],
     "escalation_question": "",
     "summary": "The main start, background and older-version flows have passing coverage. Two lifecycle defects need fixing: failed starts can later corrupt retry tracking, and stopping an adopted panel can signal an unrelated process after its PID is reused."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "4e366af38cdcdebac4d7a4386c754886d228570c",
+    "session": "continued",
+    "thread_id": "01a21755-ee6b-7e53-9e86-89984cd9975d",
+    "builder_response": "- Tests run: test/serve-0756.test.mjs test/serve-0756-old.test.mjs test/cli-0231.test.mjs test/projects-0755.test.mjs (181 tests, 0 failures, 3 of 0078's long-standing skips).\n- F1: fixed. Each start attempt now ends for good when its panel exits or fails to spawn: `exited()` and the child's `error` handler set `p.state = 'gone'` before doing anything else, and branch on the state it had. Because `start()` polls only while `p.state === 'starting'`, a failed attempt's polling stops at once. It never reaches the timeout branch, so it can't call `failed()` again or change `retry` after a later attempt. Only the current attempt is in `owned` and can reach `failed()`, and `stopOne()` does nothing for a `gone` attempt. For the test, `SPECK_SERVE_START_MS` sets how long a start has to answer, as `SPECK_RUN_POLL_MS` and `SPECK_STALL_MS` do for their waits, so the test can wait past a failed start's own time limit. New test, `0756 AC2: a start that failed changes nothing once a later one has worked, even after its own time to answer has passed`. Each start gets 1 second. The first start fails, and its fixed copy starts on the 2-second retry. The test waits until 3 seconds after serve started, then checks: no \"didn't answer\" was said, the failure was said once, the panel that started is still the one serving, and the record names only it. I checked the test against the round-1 logic with only that timing setting added. It fails there with the spurious \"didn't answer at … within 1 seconds\" and the retry pushed back to 5 seconds, as you described. It passes now.\n- F2: fixed. A panel taken over from a killed speck serve is no longer judged by `pidAlive()`. A new `alive(p)` holds while its child hasn't exited (Node's own record, for the panels it started) or, for one it took over, while `ps` still shows that project's own `speck.mjs panel --port <its port>` (`isOurPanel`). `pass()` re-checks a taken-over panel with it on every look at the list. Once that fails, the panel is forgotten without being signalled, and the project gets a panel again. `stopOne()` stops a panel only while `alive(p)`. `stopPanel(p, ours)` now takes that check: it sends SIGTERM only while `ours(p)`, counts the panel gone once `!ours(p)` and its port no longer answers for the project, and signals the process group only while the panel's first process or a part of it still answering on its port keeps the group's id its. `--stop` passes `isOurPanel`. The same kind of hole was in `--stop`'s wait for speck serve itself, which used `pidAlive` and then SIGKILLed the pid. It now waits for `!isServe(pid)` and sends SIGKILL only while `ps` still shows speck serve. When an attempt's panel exits unexpectedly, the group kill now happens only while something still answers on its port. New test, `0756 AC3: a panel taken over from a killed speck serve is never signalled once its pid is another program's`. The stand-in panel's SIGUSR2 makes it \"another program with the same pid\": it stops serving, takes its record away and renames itself with `process.title`, which `ps` then shows. The test starts a speck serve, kills it and starts another, which takes the panel over. The test then turns the panel's pid into that other program. It checks that the project gets a new panel and the project can be taken off the list, which stops the new panel. After speck serve itself has stopped, the program with the old pid is still running. Against the round-1 code it fails, as the project never gets a panel again and removing it would SIGTERM that pid. It passes now.\n",
+    "seconds": 22,
+    "usage": {
+      "input_tokens": 390275,
+      "cached_input_tokens": 308352,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1993,
+      "reasoning_output_tokens": 319
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 15361,
+      "cached": 142336,
+      "write": 0,
+      "output": 749
+    },
+    "cost_usd": 0.0524456,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-26T10:16:10.509Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/serve.mjs pass() and start() launch each project's own .speck script on a free loopback port, print addresses and preserve existing panels. All three AC1 tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The AC2 tests passed for restart timing, list additions and removals, failed-start retries and obsolete startup attempts. exited() and the spawn-error handler now mark attempts gone, ending their startup polling."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "serveBackground() detaches the service and logs its output. alive(), stopOne() and stopPanel() now check process ownership before signalling adopted panels. The background, shutdown, recovery and replacement-process tests all passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "serve-0756-old.test.mjs passed using a real speck 1.5.0 installation, verifying its own script runs and that the project can be listed and switched to."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The brief's command table describes serve, --background and --stop; the AC5 test passed. The reported round ran 181 tests with 178 passing, three existing skips and no failures."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/serve.mjs",
+        "issue": "Failed startup attempts previously remained active and could overwrite later retry state.",
+        "suggested_fix": "Completed: exit and spawn-error handlers mark attempts gone, terminating their polling. A passing regression test checks beyond the failed attempt's timeout.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/serve.mjs",
+        "issue": "Adopted panel PIDs previously lacked identity checks during supervision and shutdown.",
+        "suggested_fix": "Completed: adopted processes are revalidated during supervision and before signalling. A passing regression test verifies a replacement program remains running.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Both lifecycle defects are fixed and have meaningful regression coverage. The service starts and supervises listed projects, supports older installations, and preserves panels started separately. All criteria pass; the change is ready for the owner's merge decision."
   }
 }
 ```
