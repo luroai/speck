@@ -43,6 +43,7 @@ Each project's `speck run` is started by hand or by its panel's Auto-build switc
 
 ## Notes
 - Step 1 of the factory (see the source idea): one speck service per machine runs every project behind one address, so the user can sign in from any device and see every project, instead of starting a panel and a `speck run` in each project.
+- Failing before this build: not checked
 - `panelRunOn` and `runState` (`scripts/panel-run.mjs`, `scripts/run-switch.mjs`) start a run and tell whether one is on; the run lock is `speck/.cache/runs/run.lock`.
 
 ## In plain words
