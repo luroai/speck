@@ -87,7 +87,7 @@ function unitText(d, args, lingerMark) {
     ...(d.env.PATH ? [`Environment=${unitEnv('PATH', noNewline('PATH', d.env.PATH))}`] : []),
     'Restart=always',
     'RestartSec=5',
-    'KillMode=mixed',
+    'KillMode=process', // 0758: stopping speck serve leaves each project's speck run, and its builds, running
     '',
     '[Install]',
     'WantedBy=default.target',

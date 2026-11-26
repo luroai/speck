@@ -10,6 +10,7 @@ import { ticketKind } from './core.mjs';
 import { runState, runsDir, pidAlive, refusalFile, takeRefusal } from './run.mjs';
 import { isSpeckRun, runProcesses } from './run-lock.mjs';
 import { startApp, stopApp } from './app.mjs';
+import { writeAutoBuild } from './serve-runs.mjs';
 export { runLogPart, runLogAnswer } from './run-log.mjs'; // 0415: speck run's output, for the Pipeline pop-up
 
 // 0133: the Ship button in an approved ticket's review pack. It's the user shipping (Gate 2), so it runs `speck ship <id>`
@@ -145,7 +146,7 @@ export function panelRunOn(repo, { ms = RUN_SWITCH_MS, stop = stopStarted } = {}
     child.on('exit', code => finish({ status: 409, body: { error: takeRefusal(refusal) || `speck run stopped with exit code ${code} before it was on. Its output is in ${path.relative(repo, log)}.` } }));
     check = setInterval(() => {
       const run = runState(runsOf(repo));
-      if (run.on && run.pid === child.pid && said()) finish({ status: 200, body: { ok: true, run } });
+      if (run.on && run.pid === child.pid && said()) { recordSwitch(repo, true); finish({ status: 200, body: { ok: true, run } }); }
     }, RUN_SWITCH_POLL_MS);
     timer = setTimeout(async () => {
       // Its exit, once stopped, isn't a refusal: this answer is the time-out's, given once it has gone or couldn't be stopped.
@@ -160,6 +161,12 @@ export function panelRunOn(repo, { ms = RUN_SWITCH_MS, stop = stopStarted } = {}
       resolve({ status: 500, body: { error, pid: child.pid } });
     }, ms);
   });
+}
+
+// 0758: how the switch was last turned, which speck serve reads to know which runs to keep going. A record that can't be
+// written doesn't stop the switch working; speck serve then goes by whether the run was on.
+function recordSwitch(repo, on) {
+  try { writeAutoBuild(runsOf(repo), on, 'the Auto-build switch'); } catch { /* see above */ }
 }
 
 // 0321: each speck run being turned off, by repo: { pid, left }, the pid its lock held and its processes still to stop.
@@ -194,6 +201,7 @@ export function panelRunState(repo, runs = runsOf(repo)) {
 // or with an error after `ms`. isSpeckRun keeps a lock left with a pid since reused by another program from getting that
 // program stopped. Turned off again while still stopping, it asks whatever is left to stop.
 export function panelRunOff(repo, { ms = RUN_SWITCH_MS } = {}) {
+  recordSwitch(repo, false); // first, so speck serve never takes the stop for one to start again
   const run = runState(runsOf(repo)), was = stillStopping(repo);
   if (!run.on && !was) return Promise.resolve({ status: 409, body: { error: 'speck run is off already.' } });
   if (run.on && !isSpeckRun(run.pid))
