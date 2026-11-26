@@ -1,7 +1,7 @@
 ---
 id: "0760"
 title: "Prepare release 1.7.0"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: ["0755","0756","0757","0758","0759","0762","0763"]                # ticke
 created: 2026-11-25
 started: "2026-11-26T12:11:44.540Z"
 approved: "2026-11-26T12:17:56.293Z"
+finished: "2026-11-26T12:20:54.677Z"
 
 ---
 # 0760 · Prepare release 1.7.0
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Since 1.6.1, `speck projects` and `speck serve` run every project on a machine from one service at one address, keep each project's `speck run` going, can leave a project out without forgetting it, and can start at boot. Anyone following the setup prompt, or updating speck in a project, still gets 1.6.1.
