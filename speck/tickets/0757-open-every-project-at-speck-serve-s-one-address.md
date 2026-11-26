@@ -46,6 +46,7 @@ Even with `speck serve`, each project's panel is on its own port, and only one s
 - Step 1 of the factory (see the source idea): one speck service per machine runs every project behind one address, so the user can sign in from any device and see every project, instead of starting a panel and a `speck run` in each project.
 - The panel already shows other projects at one address through its project switcher, a cookie and a proxy to each panel's own port (`route`, `pass`, `choose` in `scripts/panel-projects.mjs`); this can reuse it.
 - Each project's panel keeps its own token; the proxy passes requests on as the switcher does now.
+- Failing before this build: not checked
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
