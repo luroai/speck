@@ -17,6 +17,10 @@
 </header>
 <main class="floor">
   <p id="floor-said" class="floor-said" role="status" hidden></p>
+  <section class="floor-part" aria-labelledby="line-title">
+    <h2 id="line-title" class="floor-label">Line</h2>
+    <div id="line" class="line-box" role="region" aria-labelledby="line-title" tabindex="0"></div>
+  </section>
   <section class="floor-part" aria-labelledby="stations-title">
     <h2 id="stations-title" class="floor-label">Stations</h2>
     <div id="stations" class="stations"></div>
@@ -27,6 +31,7 @@
   </section>
 </main>
 <script src="panel-model.js"></script>
+<script src="speck-face.js"></script>
 <script src="floor.js"></script>
 </body>
 </html>

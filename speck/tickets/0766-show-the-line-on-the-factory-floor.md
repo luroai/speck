@@ -45,6 +45,7 @@ Above the stations, the factory floor shows the line: a row per project through 
 - Design: mockup D, "Stations, instrument panel", on the user's private design canvas (2026-11-25/26): near-black ground with faint grid lines, one signal orange (#FF6A1F) for anything moving or needing you, green for shipped, small spaced-out monospace capitals for labels, big thin numbers, panels with corner-bracket marks. Use the fonts the panel already ships and no fonts from the network.
 - Agent colours on the mockup: Claude Code sand, Codex blue, Cursor silver; keep them apart from the status colours.
 - Failing before this build: not checked
+- Self-check: a station whose agent its panel couldn't read (the line's idle stations with no settings) showed an empty slot; it now says Not known, with a test. Added the line to the brief's `speck serve` row, beside the factory floor's stations.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
