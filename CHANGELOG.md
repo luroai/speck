@@ -1,5 +1,35 @@
 # Changelog
 
+## 1.7.0 · 26 November 2026
+
+What's new since 1.6.1. A minor release that runs every project on your machine from one speck service. `speck projects` keeps a list of your projects, and `speck serve` starts a panel for each one, keeps it and its `speck run` going, and shows them all at one address that opens on All projects, from this machine or from your phone. It can start by itself when the machine starts, and you can turn a project off without taking it off the list. Costs speck works out itself are still estimates at API list prices.
+
+### Getting started
+
+- Install this release with `npx github:luroai/speck#v1.7.0 init`.
+
+### One speck service for every project
+
+- `speck projects` lists the speck projects on this machine, with each one's folder, the speck version it's on and whether its panel and its `speck run` are on, and shows a project whose folder has gone as missing. `speck projects add` puts the project you're in, or the folder you name, on the list, and `speck projects remove <name or folder>` takes one off. The list lives in your home folder, never in a project, and adding or removing a project changes nothing inside it.
+- `speck serve` starts a panel for every project on the list, each on that project's own copy of speck, from 1.5.0 on, so a project doesn't need updating to join. A project whose panel you already have running is left as it is. While it runs, a panel that stops is started again within seconds, and a project added to or taken off the list has its panel started or stopped within 10 seconds. `speck serve --background` keeps it running after you close the terminal, with its output in `~/.config/speck/serve.log`, and `speck serve --stop` stops it and the panels it started, leaving any panel you started yourself alone. Only one runs on a machine at a time.
+- `speck serve` answers at one address, `http://127.0.0.1:4777` unless `--port` gives another, and with `--url` at your private tunnel's https address too, so you can reach every project from your phone. It opens on All projects, listing every project and what needs you across them, with a project whose panel isn't answering marked Not answering. Choose a project and its usual panel opens at the same address, where everything works as on its own: setting tickets ready, priorities, answers, shipping, the Auto-build switch, Settings and the live updates. The project menu, the browser's Back or the address itself takes you back to All projects. If the port is already taken, it says so and starts nothing.
+- `speck serve` keeps each project's `speck run` going. As it starts, for example after a restart, it turns Auto-build back on in every project that had it on and leaves the rest off. A run that stops without anyone turning it off is started again within a few seconds, up to 3 times an hour, and the project's Pipeline log says so. Turning Auto-build off in a project's panel keeps it off, even after `speck serve` restarts, and `speck serve --stop` leaves every project's run going and says which are still on.
+- `speck serve --install` makes `speck serve` start by itself and start again if it stops, with the `--port` and `--url` you give it: on Linux as a systemd user service that starts at boot, and on a Mac as a launch agent that starts when you log in. It prints how to check it's running and where its log is. Running it again replaces the service with the new options, and `speck serve --uninstall` removes it and nothing else. While it's installed, `speck serve --stop` stops it only until the service starts it again. Windows isn't covered.
+- `speck projects off <name or folder>` keeps a project on the list but leaves it out of `speck serve`: within a few seconds the panel `speck serve` started for it stops, its panel and its `speck run` aren't started again, and All projects, the project menu and their totals leave it out, even with a panel you started yourself running. `speck projects on <name or folder>` brings it back, with its panel, and its `speck run` if Auto-build was on. `speck projects` says which projects are off. A panel or `speck run` you started by hand keeps running.
+
+### Builds and review
+
+- When a ticket has used up its review rounds and the reviewer's last round asked you a question, answering it lets the build carry on with the 2 extra rounds your answer gives, rather than stopping again straight away.
+
+### The panel
+
+- On a phone, the Capture, Plan, Build and Shipped lists only scroll up and down, so a sideways swipe on a list always changes lane. An open ticket's long facts, such as its builder, wrap inside their boxes rather than running past the card's edge, and code blocks in an open ticket still scroll sideways on their own.
+
+### Prices
+
+- The shipped price table has been refreshed with this release's rates, taken on 26 November 2026.
+
+
 ## 1.6.1 · 25 November 2026
 
 What's new since 1.6.0. A patch release that keeps the line moving on a busy machine and finishes off the new Settings. A ticket waiting on approved work that no longer fits main waits for it to ship rather than stalling, a test run steps out of the queue before a builder's command limit cuts it off, and a fix ticket names only the tests that really still fail. Settings shows the machine-wide build limit, lets you swap the builder's and the reviewer's agents in one step and names each control for screen readers. speck tells you under Needs you when the main checkout stops being a working checkout, and builds file far fewer duplicate notes in Capture. Costs speck works out itself are still estimates at API list prices.
