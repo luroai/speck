@@ -43,6 +43,7 @@ The factory floor has Virgil's dial: the manager drawn large in the pipeline's m
 ## Notes
 - Design: mockup D, "Stations, instrument panel", on the user's private design canvas (2026-11-25/26): near-black ground with faint grid lines, one signal orange (#FF6A1F) for anything moving or needing you, green for shipped, small spaced-out monospace capitals for labels, big thin numbers, panels with corner-bracket marks. Use the fonts the panel already ships and no fonts from the network.
 - Virgil's look is the panel's own drawing (`templates/speck-face.js`): the half-shine glass, the red visor, its moods; the floor uses it rather than a copy.
+- Failing before this build: not checked
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
