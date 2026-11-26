@@ -20,6 +20,11 @@
   --signal: #FF6A1F;
   --signal-edge: #FF6A1F66;
   --shipped: #3DDC84;
+  /* 0766: each agent's colour on the line, kept apart from the status colours above. */
+  --agent-claude: #D9B98A;
+  --agent-codex: #4C8DFF;
+  --agent-cursor: #C3C8D0;
+  --agent-other: #6E7682;
   --font-ui: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, "Ubuntu", sans-serif;
   --font-mono: "JetBrains Mono", "SF Mono", Monaco, Menlo, Consolas, "Liberation Mono", "DejaVu Sans Mono", monospace;
 }
@@ -116,8 +121,70 @@ body {
   .lanes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
+/* 0766: the line, a row for each project through Queue, Builder, Reviewer, QA and Ship, in a box of its own that
+   scrolls sideways when the window is too narrow for it, so the page doesn't. */
+.line-box {
+  --corner: var(--mark);
+  overflow-x: auto; overflow-y: hidden; max-width: 100%; padding: 12px 14px;
+  background:
+    linear-gradient(var(--corner), var(--corner)) left top / 12px 2px no-repeat,
+    linear-gradient(var(--corner), var(--corner)) left top / 2px 12px no-repeat,
+    linear-gradient(var(--corner), var(--corner)) right top / 12px 2px no-repeat,
+    linear-gradient(var(--corner), var(--corner)) right top / 2px 12px no-repeat,
+    linear-gradient(var(--corner), var(--corner)) left bottom / 12px 2px no-repeat,
+    linear-gradient(var(--corner), var(--corner)) left bottom / 2px 12px no-repeat,
+    linear-gradient(var(--corner), var(--corner)) right bottom / 12px 2px no-repeat,
+    linear-gradient(var(--corner), var(--corner)) right bottom / 2px 12px no-repeat,
+    var(--panel);
+  background-attachment: local;
+  box-shadow: inset 0 0 0 1px var(--edge);
+}
+.line-grid { display: flex; flex-direction: column; gap: 6px; min-width: 980px; }
+.line-heads, .line-row { display: grid; grid-template-columns: 150px 120px repeat(3, minmax(170px, 1fr)) minmax(170px, 1fr); gap: 8px; align-items: stretch; }
+.line-head { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 0 2px 4px; }
+.line-head-label { font: 500 12px/16px var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.line-row { padding-top: 6px; border-top: 1px solid var(--edge); transition: opacity .2s; }
+.line-row.idle { opacity: .55; }
+.line-row.off { opacity: .32; }
+.line-project { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding: 4px 2px; }
+.line-n { font: 500 12px/16px var(--font-mono); letter-spacing: .14em; color: var(--muted); }
+.line-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 500 15px/20px var(--font-ui); }
+.line-cell { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.line-empty { margin: 0; padding: 6px 2px; font: 400 12px/16px var(--font-mono); color: var(--muted); }
+.line-queue { padding: 2px; }
+.queue-n { font: 400 30px/34px var(--font-ui); letter-spacing: -.02em; font-variant-numeric: tabular-nums; color: var(--muted); }
+.queue-n.some { color: var(--ink); }
+.queue-next { overflow-wrap: anywhere; font: 400 12px/16px var(--font-mono); color: var(--muted); }
+
+/* A station's slot: lit with its ticket, or dim with what it would run on; its agent a stripe on the left. */
+.slot { --agent: var(--agent-other); position: relative; display: flex; flex-direction: column; gap: 2px; min-width: 0; padding: 6px 8px 7px 12px; background: var(--raise); }
+.slot.agent-claude { --agent: var(--agent-claude); }
+.slot.agent-codex { --agent: var(--agent-codex); }
+.slot.agent-cursor { --agent: var(--agent-cursor); }
+.slot-stripe { position: absolute; top: 0; bottom: 0; left: 0; width: 3px; background: var(--agent); }
+.slot.lit { box-shadow: inset 0 0 0 1px var(--signal-edge); }
+.slot.idle { background: transparent; box-shadow: inset 0 0 0 1px var(--edge); opacity: .5; }
+.slot.none { padding: 6px 8px; background: transparent; box-shadow: inset 0 0 0 1px var(--edge); font: 400 12px/16px var(--font-mono); color: var(--muted); opacity: .6; }
+.slot-top { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; }
+.slot-id { font: 500 12px/16px var(--font-mono); letter-spacing: .08em; color: var(--signal); }
+.slot-time { flex: none; font: 400 12px/16px var(--font-mono); color: var(--signal); }
+.slot-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 500 14px/19px var(--font-ui); }
+.slot-runs { display: flex; flex-wrap: wrap; gap: 0 6px; font: 400 12px/16px var(--font-mono); color: var(--muted); }
+.slot-agent { color: var(--agent); }
+.slot-model, .slot-effort { overflow-wrap: anywhere; }
+.slot-effort::before, .slot-model::before { content: "·"; margin-right: 6px; color: var(--mark); }
+.slot-why { font: 400 12px/16px var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--mark); }
+
+.ship-list { display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.ship-item { position: relative; display: flex; flex-direction: column; gap: 1px; min-width: 0; padding: 5px 8px 6px 12px; background: var(--raise); }
+.ship-item::before { content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 3px; background: var(--mark); }
+.ship-item.yours::before, .ship-item.shipping::before { background: var(--signal); }
+.ship-id { font: 500 12px/16px var(--font-mono); letter-spacing: .08em; color: var(--muted); }
+.ship-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 500 14px/19px var(--font-ui); }
+.ship-mark { font: 500 12px/16px var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--signal); }
+
 /* What's moving pulses, unless the computer asks for less motion. */
 @media (prefers-reduced-motion: no-preference) {
-  .station.moving .station-state::before, .card.moving::before { animation: floor-pulse 1.6s ease-in-out infinite; }
+  .station.moving .station-state::before, .card.moving::before, .slot.lit .slot-stripe { animation: floor-pulse 1.6s ease-in-out infinite; }
 }
 @keyframes floor-pulse { 50% { opacity: .35; } }
