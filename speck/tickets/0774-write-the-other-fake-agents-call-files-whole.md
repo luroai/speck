@@ -1,7 +1,7 @@
 ---
 id: "0774"
 title: "Write the other fake agents' call files whole"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-11-24-write-the-other-fake-agents-call-files-whole.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-26
+started: "2026-11-26T23:57:36.883Z"
 
 ---
 # 0774 · Write the other fake agents' call files whole
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 The fake agents in several `speck run` tests write each call file with a plain write while the test reads the folder, so on a busy machine a test can read half a file and fail for no real reason. 0742 fixed this for the 0289 fake only.
