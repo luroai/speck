@@ -40,6 +40,7 @@ Every fake agent in speck's tests writes its call files so a reader never sees h
 
 ## Notes
 - From 0742's build. None of these has been seen to fail this way yet.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
