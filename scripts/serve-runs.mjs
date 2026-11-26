@@ -5,10 +5,12 @@
 // after that run took its lock. While it runs, a project whose switch is on and whose run has stopped is started again,
 // at most 3 times an hour, saying so in the project's run.log, which the panel's Pipeline log shows. It never stops a
 // run, apart from one it was starting when the switch was turned off: turning one off is the switch's job. A project on a
-// speck from before 0758, whose panel doesn't record the switch, is started as speck serve starts when its run was on, but
-// never started again when it stops, as its switch turned off can't be told from a run that stopped by itself.
+// speck from before 0758, whose panel doesn't record the switch, is kept going once speck serve has seen its run on,
+// until the run says in run.log that it stopped as it was told to (stoppedAsTold); after the machine has started again,
+// which stops every run that way, one that was on is started all the same.
 
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { runState, pidAlive } from './run-switch.mjs';
@@ -54,14 +56,40 @@ export function wantedAtStart(sw, last) {
   return timeOf(last.since) >= timeOf(sw.at);
 }
 
-// The projects whose runs speck serve last saw on, { [folder]: { since } }, from its record in the home folder.
+// speck serve's record in the home folder: { runs, boot }. `runs` gives each project whose run it last saw on, or, on
+// an older speck, kept going: { [folder]: { since, log } }, when that run took its lock and how long its run.log was
+// then. `boot` is when the machine started, as that record was written, or null.
 export function readRunsRecord(file) {
+  const runs = Object.create(null);
   try {
     const v = JSON.parse(fs.readFileSync(file, 'utf8'));
-    const out = Object.create(null);
-    for (const [folder, r] of Object.entries(v?.runs ?? {})) if (path.isAbsolute(folder) && r && typeof r === 'object') out[folder] = { since: typeof r.since === 'string' ? r.since : null };
-    return out;
-  } catch { return Object.create(null); }
+    for (const [folder, r] of Object.entries(v?.runs ?? {})) {
+      if (path.isAbsolute(folder) && r && typeof r === 'object') runs[folder] = { since: typeof r.since === 'string' ? r.since : null, log: Number.isInteger(r.log) && r.log >= 0 ? r.log : 0 };
+    }
+    return { runs, boot: Number.isFinite(v?.boot) || (typeof v?.boot === 'string' && v.boot) ? v.boot : null };
+  } catch { return { runs, boot: null }; }
+}
+
+// Which start of the machine this is: Linux's boot id, or else when it started, in ms. restartedSince says whether the
+// machine has started again since `boot`, which bootMark() gave earlier: never when they can't be compared.
+export function bootMark() {
+  try { const id = fs.readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim(); if (id) return id; } catch { /* not Linux */ }
+  return Math.round(Date.now() - os.uptime() * 1000);
+}
+export function restartedSince(boot, now = bootMark()) {
+  if (typeof boot === 'string' && typeof now === 'string') return boot !== now;
+  if (typeof boot === 'number' && typeof now === 'number') return Math.abs(now - boot) > 2 * 60 * 1000;
+  return false;
+}
+
+// Whether speck run said it stopped as it was told to (Ctrl+C, the Auto-build switch or SIGTERM), in its run.log from
+// `from` on: every speck run since before 1.5.0 says "speck run stopped." then, and one that ends any other way doesn't.
+const logSize = runs => { try { return fs.statSync(path.join(runs, 'run.log')).size; } catch { return 0; } };
+export function stoppedAsTold(runs, from) {
+  try {
+    const buf = fs.readFileSync(path.join(runs, 'run.log'));
+    return /^(?:\d\d:\d\d:\d\d )?speck run stopped\./m.test(buf.subarray(from <= buf.length ? from : 0).toString('utf8'));
+  } catch { return false; }
 }
 
 // Adds a timed line to the project's run.log, which the panel's Pipeline log shows.
@@ -113,29 +141,29 @@ export async function stopRun(pid) {
   return goneWithin(STOP_MS);
 }
 
-// Whether the project's own speck records the Auto-build switch (0758 on), which its panel's off switch must, for speck
-// serve to start its run again when it stops: an older one's off can't be told from a run that stopped by itself.
+// Whether the project's own speck records the Auto-build switch (0758 on). An older one's panel doesn't, so for it speck
+// serve goes by the run itself: one it saw on is kept going until it says it stopped as it was told to (stoppedAsTold).
 export const recordsSwitch = folder => fs.existsSync(path.join(folder, '.speck', 'scripts', 'serve-runs.mjs'));
 
 const clock = ms => { const d = new Date(ms), two = n => String(n).padStart(2, '0'); return `${two(d.getHours())}:${two(d.getMinutes())}`; };
 
 // What speck serve does about runs. check(folders) is called on each of its looks at the list; stillOn(folders) names
 // the projects whose runs are on. `start`, `state` and `now` can be stood in for by tests.
-export function runKeeper({ file, env, say, start = startRun, stop = stopRun, state = runState, now = Date.now, records = recordsSwitch }) {
-  const atStart = readRunsRecord(file); // as speck serve last left it
+export function runKeeper({ file, env, say, start = startRun, stop = stopRun, state = runState, now = Date.now, records = recordsSwitch, boot = bootMark }) {
+  const before = readRunsRecord(file), atStart = before.runs; // as speck serve last left it
+  const restarted = restartedSince(before.boot, boot()); // the machine has started again since, which stopped every run
   const last = Object.create(null);
   for (const f of Object.keys(atStart)) last[f] = atStart[f];
-  let saved = JSON.stringify(last), saveError = null;
+  let saved = null, saveError = null;
   const looked = new Set(), busy = new Set();
   const restarts = new Map(); // folder → the times this speck serve started its run again, in the last hour
   const held = new Map(); // folder → until when it's left off, once said
-  const seenOn = new Set(), toldOld = new Set(); // projects whose run it has seen on; older ones told it isn't kept going
   const name = folder => path.basename(folder);
 
   function save() {
-    const text = JSON.stringify(last);
+    const record = { boot: boot(), runs: last }, text = JSON.stringify(last);
     if (text === saved) return;
-    try { fs.mkdirSync(path.dirname(file), { recursive: true, mode: 0o700 }); writeJson(file, { runs: last }); saved = text; saveError = null; } catch (e) {
+    try { fs.mkdirSync(path.dirname(file), { recursive: true, mode: 0o700 }); writeJson(file, record); saved = text; saveError = null; } catch (e) {
       if (saveError !== (e.code || e.message)) say(`can't write ${file} (${saveError = e.code || e.message}), so the next speck serve may not know which runs were on.`);
     }
   }
@@ -146,18 +174,20 @@ export function runKeeper({ file, env, say, start = startRun, stop = stopRun, st
     const runs = runsIn(folder);
     const turnedOff = () => { const now = readAutoBuild(runs); return now && !now.on && now.at !== sw?.at; };
     busy.add(folder);
+    // On an older speck, kept going from now on: its record says how long run.log was before it started.
+    if (!own) last[folder] = { since: null, log: logSize(runs) };
     try {
-      if (turnedOff()) return;
+      if (own && turnedOff()) return;
       // Its own speck records the switch: on, so a run that stops by itself is started again. One already on is left as it is.
       if (own && !sw?.on) { try { writeAutoBuild(runs, true, 'speck serve'); } catch { /* it still starts; a later stop is then not started again */ } }
       const got = await start(folder, env);
-      if (got.pid && turnedOff()) {
+      if (got.pid && own && turnedOff()) {
         const gone = await stop(got.pid);
         const text = `Auto-build was turned off while speck serve was starting speck run (process ${got.pid}), so ${gone ? 'it was stopped' : `it was asked to stop but is still running: stop process ${got.pid} yourself`}.`;
         pipelineSays(runs, text);
         say(`${name(folder)}: ${text}`);
       } else if (got.pid) {
-        const text = again ? `speck run stopped without being turned off, so speck serve started it again (process ${got.pid}), ${again} of at most ${RESTARTS_AN_HOUR} times an hour.` : `started speck run (process ${got.pid}), as ${why}.`;
+        const text = again ? `speck run ended without being turned off, so speck serve started it again (process ${got.pid}), ${again} of at most ${RESTARTS_AN_HOUR} times an hour.` : `started speck run (process ${got.pid}), as ${why}.`;
         pipelineSays(runs, text);
         say(`${name(folder)}: ${text}`);
       } else {
@@ -177,32 +207,35 @@ export function runKeeper({ file, env, say, start = startRun, stop = stopRun, st
       try { run = state(runs); } catch { continue; }
       const first = !looked.has(folder);
       looked.add(folder);
-      if (run.on) { last[folder] = { since: lockSince(runs) }; held.delete(folder); seenOn.add(folder); continue; }
-      delete last[folder];
-      // An older speck's panel doesn't record its switch, so whatever is recorded there is speck serve's own, from before.
-      const own = records(folder), sw = own ? readAutoBuild(runs) : null;
+      if (run.on) {
+        // How long run.log was when it was first seen on, so only what this run says after that is read when it stops.
+        const since = lockSince(runs), prev = last[folder];
+        if (!prev || prev.since === null) last[folder] = { since, log: prev ? prev.log : logSize(runs) }; // one it started: from before it did
+        else if (prev.since !== since) last[folder] = { since, log: logSize(runs) };
+        held.delete(folder);
+        continue;
+      }
+      // An older speck's panel doesn't record its switch, so whatever is recorded there is speck serve's own, from before:
+      // its run is kept going while speck serve's record has it, until it says it stopped as it was told to.
+      const own = records(folder), sw = own ? readAutoBuild(runs) : null, was = last[folder];
+      const told = !own && was && stoppedAsTold(runs, was.log);
       if (first) {
-        if (sw?.on) void launch(folder, 'its Auto-build switch was last turned on', 0, sw, own);
-        else if (wantedAtStart(sw, atStart[folder])) void launch(folder, 'it was on when speck serve last stopped', 0, sw, own);
+        delete last[folder];
+        if (own && sw?.on) void launch(folder, 'its Auto-build switch was last turned on', 0, sw, own);
+        else if (own && wantedAtStart(sw, atStart[folder])) void launch(folder, 'it was on when speck serve last stopped', 0, sw, own);
+        else if (!own && was && (restarted || !told)) void launch(folder, restarted ? 'it was on when the machine last stopped' : 'it was on when speck serve last stopped', 0, sw, own);
         continue;
       }
-      if (!own) {
-        if (seenOn.has(folder) && !toldOld.has(folder)) {
-          toldOld.add(folder);
-          const text = 'speck run stopped. This project\'s speck is too old to say when Auto-build is turned off, so speck serve doesn\'t start it again. Update speck in this project to have its run kept going.';
-          pipelineSays(runs, text);
-          say(`${name(folder)}: ${text}`);
-        }
-        continue;
-      }
-      if (!sw?.on) { held.delete(folder); continue; }
+      const keep = own ? sw?.on : was && !told;
+      if (!keep) { delete last[folder]; held.delete(folder); continue; }
+      if (own) delete last[folder];
       const t = now(), times = (restarts.get(folder) ?? []).filter(at => t - at < HOUR_MS);
       restarts.set(folder, times);
       if (times.length >= RESTARTS_AN_HOUR) {
         const until = times[0] + HOUR_MS;
         if (held.get(folder) !== until) {
           held.set(folder, until);
-          const text = `speck run stopped without being turned off, but speck serve has started it again ${RESTARTS_AN_HOUR} times in the last hour, so it leaves it off until ${clock(until)}, then starts it again. Turn Auto-build off to stop it trying.`;
+          const text = `speck run ended without being turned off, but speck serve has started it again ${RESTARTS_AN_HOUR} times in the last hour, so it leaves it off until ${clock(until)}, then starts it again. Turn Auto-build off to stop it trying.`;
           pipelineSays(runs, text);
           say(`${name(folder)}: ${text}`);
         }
@@ -212,7 +245,7 @@ export function runKeeper({ file, env, say, start = startRun, stop = stopRun, st
       void launch(folder, null, times.length, sw, own);
     }
     for (const f of Object.keys(last)) if (!listed.has(f)) delete last[f];
-    for (const f of [...looked]) if (!listed.has(f)) { for (const m of [looked, restarts, held, seenOn, toldOld]) m.delete(f); } // a project put back on the list is looked at afresh
+    for (const f of [...looked]) if (!listed.has(f)) { for (const m of [looked, restarts, held]) m.delete(f); } // a project put back on the list is looked at afresh
     save();
   }
 

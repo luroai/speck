@@ -153,3 +153,94 @@ Each project's `speck run` is started by hand or by its panel's Auto-build switc
 ```
 
 </details>
+
+<details><summary>Round 2 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "6bc3be222a48a96433eb4133f44453ccd5cb0211",
+    "session": "continued",
+    "thread_id": "01a2176a-0afa-76b1-bc66-ef6eed17c472",
+    "builder_response": "- Tests run: test/serve-0758.test.mjs test/serve-0756.test.mjs test/usage-limit-0622.test.mjs\n- F1: fixed. runKeeper now checks whether the project's own speck records the switch (recordsSwitch: its .speck/scripts/serve-runs.mjs, the module its panel's switch writes with). For an older speck it reads no switch record and writes none, starts the run as serve starts only when the run was on when serve last stopped, and never starts it again once it stops, saying so once in the Pipeline log and serve's output. Test: \"a project on an older speck, whose panel doesn't record its switch, ...\". The brief's serve row says this.\n- F2: fixed. launch() is given the switch as check() read it. It doesn't start when the switch has since been turned off, and once the run has taken its lock it reads the switch again: if it was turned off meanwhile, it stops the run as the switch does (stopRun: SIGINT, then SIGKILL to its group), saying so in the Pipeline log. serve no longer rewrites a switch already on, so it can't overwrite a newer off. Test: \"Auto-build turned off while speck serve is starting the run stops it ...\", which turns it off with panelRunOff during the start and checks it stays off after a new keeper (a serve restart).\n",
+    "seconds": 23,
+    "usage": {
+      "input_tokens": 272581,
+      "cached_input_tokens": 203136,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1995,
+      "reasoning_output_tokens": 292
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 17825,
+      "cached": 117504,
+      "write": 0,
+      "output": 838
+    },
+    "cost_usd": 0.0557804,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-26T10:35:24.747Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "runKeeper.check and wantedAtStart select previously running projects and recorded on switches. Passing AC1 unit tests and the process integration test exercise startup selection."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "The new delayed-start test covers off requests during startup. However, older panels record no off request, so a stale serve-runs.json entry can still cause startup after an explicit off."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "runKeeper.check now unconditionally skips recovery when recordsSwitch is false, including runs serve itself started. The new older-project test explicitly asserts this exception, which the criterion does not allow."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The passing process integration test verifies --stop leaves the run alive and names its project. The stop implementation remains unchanged this round."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Reported targeted tests: 205 passed, zero failed, three skipped. Existing tests were not weakened."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/serve-runs.mjs",
+        "issue": "The older-version fallback avoids immediate resurrection by disabling crash recovery, but does not fulfil the ticket. A run serve started in an older project is never restarted after a crash, contrary to AC3. It also cannot honour an off request across restart when the older panel stops the run after serve's last observation and serve stops before its next check: the saved on entry remains and starts it again. Documenting these exceptions does not change the acceptance criteria.",
+        "suggested_fix": "Provide compatible switch tracking and recovery for supported projects, with tests for both a serve-started run crashing and an explicit off immediately before serve stops. If older projects must be excluded from these guarantees, obtain an explicit scope decision and update the ticket before approval.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/serve-runs.mjs",
+        "issue": "The startup race identified in round 1 is addressed: launch rechecks for an off request after startup and stops the newly started run.",
+        "suggested_fix": "No further change required for this finding. The passing delayed-start test exercises panelRunOff during startup and verifies it stays off after a keeper restart.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The startup race is fixed and all reported tests pass. Older projects now lose automatic crash recovery, and an off request just before service shutdown can still be forgotten. Those compatibility gaps remain outside the ticket's promised behaviour."
+  }
+}
+```
+
+</details>

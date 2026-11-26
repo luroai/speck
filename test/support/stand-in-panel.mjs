@@ -12,7 +12,7 @@ import { fileURLToPath } from 'node:url';
 
 const args = process.argv.slice(2);
 // 0758: `run` stands in for speck run: it takes speck/.cache/runs/run.lock with its pid, refusing while another holds
-// it, says it's watching and runs until SIGINT or SIGTERM, taking the lock away as it stops.
+// it, says it's watching and runs until SIGINT or SIGTERM, saying it stopped as speck run does and taking the lock away.
 if (args[0] === 'run') {
   const runs = path.join(process.cwd(), 'speck', '.cache', 'runs'), lock = path.join(runs, 'run.lock');
   fs.mkdirSync(runs, { recursive: true });
@@ -21,7 +21,7 @@ if (args[0] === 'run') {
   if (held) { try { process.kill(held, 0); console.error(`speck run is already running (process ${held}).`); process.exit(1); } catch { /* gone */ } }
   fs.writeFileSync(lock, String(process.pid));
   console.log('speck run: watching the board');
-  const off = () => { try { if (Number(fs.readFileSync(lock, 'utf8')) === process.pid) fs.unlinkSync(lock); } catch { /* gone */ } process.exit(0); };
+  const off = () => { console.log('speck run stopped.'); try { if (Number(fs.readFileSync(lock, 'utf8')) === process.pid) fs.unlinkSync(lock); } catch { /* gone */ } process.exit(0); };
   process.on('SIGINT', off);
   process.on('SIGTERM', off);
   setInterval(() => {}, 1000);

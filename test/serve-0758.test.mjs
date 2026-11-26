@@ -20,10 +20,10 @@ const lockOf = dir => { try { return Number(fs.readFileSync(path.join(runsIn(dir
 // A keeper over stood-in runs: `on` holds the folders whose run is on, and each start is recorded and turns it on.
 // `old` stands in for a project on a speck from before 0758, whose panel doesn't record its switch. `during` runs while a
 // start is under way, before the run has taken its lock.
-function keeper(file, { now = () => Date.now(), startOk = true, old = false, during = () => {} } = {}) {
+function keeper(file, { now = () => Date.now(), startOk = true, old = false, during = () => {}, boot = 'boot-a' } = {}) {
   const on = new Set(), started = [], said = [], stopped = [];
   const k = runKeeper({
-    file, env: {}, say: t => said.push(t), now, records: () => !old,
+    file, env: {}, say: t => said.push(t), now, records: () => !old, boot: () => boot,
     stop: async pid => { stopped.push(pid); on.clear(); return true; },
     state: runs => ({ on: on.has(path.dirname(path.dirname(path.dirname(runs)))), pid: 1 }),
     start: async folder => { started.push(folder); await during(folder); if (!startOk) return { why: 'it stopped (exit code 1)' }; on.add(folder); return { pid: 4242 }; },
@@ -111,23 +111,44 @@ test('0758 AC2: Auto-build turned off while speck serve is starting the run stop
   assert.deepEqual(two.started, [], 'nor after speck serve restarts');
 });
 
-test('0758 AC2: a project on an older speck, whose panel doesn\'t record its switch, is started as it starts when its run was on, but never started again', async () => {
+// What an older speck run writes to run.log as the Auto-build switch or Ctrl+C stops it.
+const saysStopped = dir => fs.appendFileSync(path.join(runsIn(dir), 'run.log'), '09:30:00 speck run stopped.\n');
+
+test('0758 AC2, AC3: on an older speck, whose panel doesn\'t record its switch, a run turned off stays off and one that ends by itself is started again', async () => {
   const file = path.join(tmp('speck-0758-home-'), 'serve-runs.json');
   const dir = project('alpha');
-  fs.writeFileSync(file, JSON.stringify({ runs: { [dir]: { since: '2026-11-20T10:00:00.000Z' } } }));
-  const { k, on, started, said } = keeper(file, { old: true });
-  k.check([dir]); await tick(); await tick();
-  assert.deepEqual(started, [dir], 'on when speck serve last stopped');
-  assert.equal(readAutoBuild(runsIn(dir)), null, 'nothing recorded for its switch');
+  fs.writeFileSync(path.join(runsIn(dir), 'run.log'), '09:00:00 speck run stopped.\n'); // an earlier run's, before this one
+  const { k, on, started } = keeper(file, { old: true });
+  on.add(dir);
   k.check([dir]);
-  on.clear(); // turned off by its own panel, which records nothing
+  on.clear(); // ended by itself: nothing said
+  k.check([dir]); await tick(); await tick();
+  assert.deepEqual(started, [dir], 'started again');
+  assert.match(runLog(dir), /speck run ended without being turned off, so speck serve started it again \(process 4242\), 1 of at most 3 times an hour/);
+  assert.equal(readAutoBuild(runsIn(dir)), null, 'nothing recorded for its switch');
+  k.check([dir]); // seen on again
+  saysStopped(dir); on.clear(); // turned off by its own panel
   k.check([dir]); k.check([dir]); await tick();
   assert.equal(started.length, 1, 'not started again');
-  assert.equal(runLog(dir).match(/This project's speck is too old to say when Auto-build is turned off, so speck serve doesn't start it again/g)?.length, 1, 'said once in the Pipeline log');
-  assert.ok(said.some(t => t.startsWith('alpha: speck run stopped. This project')));
+  assert.deepEqual(JSON.parse(fs.readFileSync(file, 'utf8')).runs, {}, 'nor kept for the next speck serve');
   const two = keeper(file, { old: true });
   two.k.check([dir]); await tick();
-  assert.deepEqual(two.started, [], 'and not as speck serve starts again, as its run was off when it stopped');
+  assert.deepEqual(two.started, []);
+});
+
+test('0758 AC1, AC2: on an older speck, a run turned off just before speck serve stopped stays off when it starts again, and one that ended by itself, or that the machine stopping stopped, is started', async () => {
+  for (const [how, boot, want] of [['turned off', 'boot-a', 0], ['ended by itself', 'boot-a', 1], ['stopped as the machine stopped', 'boot-b', 1]]) {
+    const file = path.join(tmp('speck-0758-home-'), 'serve-runs.json');
+    const dir = project('alpha');
+    const one = keeper(file, { old: true });
+    one.on.add(dir);
+    one.k.check([dir]); // speck serve saw it on, then stopped before its next look
+    if (how !== 'ended by itself') saysStopped(dir);
+    const two = keeper(file, { old: true, boot });
+    two.k.check([dir]); await tick(); await tick();
+    assert.equal(two.started.length, want, how);
+    if (want) assert.match(runLog(dir), boot === 'boot-a' ? /as it was on when speck serve last stopped/ : /as it was on when the machine last stopped/, how);
+  }
 });
 
 test(`0758 AC3: a run that stops without being turned off is started again, at most ${RESTARTS_AN_HOUR} times an hour, saying so in the Pipeline log`, async () => {
@@ -142,14 +163,14 @@ test(`0758 AC3: a run that stops without being turned off is started again, at m
     on.delete(dir); t += 60000;
     k.check([dir]); await tick(); await tick();
     assert.equal(started.length, i);
-    assert.match(runLog(dir), new RegExp(`speck serve: speck run stopped without being turned off, so speck serve started it again \\(process 4242\\), ${i} of at most ${RESTARTS_AN_HOUR} times an hour`));
+    assert.match(runLog(dir), new RegExp(`speck serve: speck run ended without being turned off, so speck serve started it again \\(process 4242\\), ${i} of at most ${RESTARTS_AN_HOUR} times an hour`));
   }
   on.delete(dir); t += 60000;
   k.check([dir]); k.check([dir]); await tick();
   assert.equal(started.length, RESTARTS_AN_HOUR, 'not a fourth time in the hour');
-  const held = runLog(dir).match(/speck serve: speck run stopped without being turned off, but speck serve has started it again 3 times in the last hour, so it leaves it off until 10:01, then starts it again/g);
+  const held = runLog(dir).match(/speck serve: speck run ended without being turned off, but speck serve has started it again 3 times in the last hour, so it leaves it off until 10:01, then starts it again/g);
   assert.equal(held?.length, 1, 'said once');
-  assert.ok(said.some(s => s.startsWith('alpha: speck run stopped')));
+  assert.ok(said.some(s => s.startsWith('alpha: speck run ended')));
   t = Date.parse('2026-11-26T10:01:00');
   k.check([dir]); await tick(); await tick();
   assert.equal(started.length, RESTARTS_AN_HOUR + 1, 'started again once the hour allows');
