@@ -1,7 +1,7 @@
 ---
 id: "0765"
 title: "Open a factory floor page at speck serve's address"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: []                # ticket ids that must be done first
 created: 2026-11-26
 started: "2026-11-26T19:39:37.424Z"
 approved: "2026-11-26T20:14:09.444Z"
+finished: "2026-11-26T20:21:19.324Z"
 
 ---
 # 0765 · Open a factory floor page at speck serve's address
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 On a laptop the panel is one narrow column showing one lane of one project at a time. The user wants a page for a wide window that shows every project as a station and a project's whole board side by side.
