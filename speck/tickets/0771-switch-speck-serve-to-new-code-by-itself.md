@@ -43,6 +43,7 @@ The panel and `speck run` switch to new code when speck changes, but `speck serv
 ## Notes
 - Found 2026-11-26: the systemd service runs `scripts/speck.mjs serve` from speck's own repo, so a ship changes the code under it.
 - The panel hands its listening socket to a new process and stops the old one (`restart()` in `scripts/panel.mjs`); `speck run` does the same through `scripts/run-switch.mjs`. `speck serve` is `scripts/serve.mjs` and `scripts/serve-front.mjs`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
