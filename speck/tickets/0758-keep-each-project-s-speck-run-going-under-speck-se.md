@@ -54,6 +54,7 @@ Each project's `speck run` is started by hand or by its panel's Auto-build switc
 - Review limit: you allowed 2 more review rounds (2026-11-26 10:48 UTC).
 - Went with the recommendation: fix speck first in its own ticket, then resume this one (chosen by speck, as watch is decide, 2026-11-26 10:49 UTC).
 - Waiting for: a ticket that lets an answered escalation be reviewed again, which the user makes (2026-11-26).
+- Answer (2026-11-26): 0763 has shipped on main, so an answered escalation at the review limit now gets the review rounds it allowed. Carry on with the review round.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
