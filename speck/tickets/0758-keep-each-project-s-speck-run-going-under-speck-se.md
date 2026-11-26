@@ -1,7 +1,7 @@
 ---
 id: "0758"
 title: "Keep each project's speck run going under speck serve"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,13 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/2026-11-10-run-a-software-factory-from-one-speck-service.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0756"]                # ticket ids that must be done first
 created: 2026-11-25
+built_on: "0756"
+started: "2026-11-26T10:17:16.586Z"
 
 ---
 # 0758 · Keep each project's speck run going under speck serve
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Each project's `speck run` is started by hand or by its panel's Auto-build switch, and stays off after the machine restarts until someone turns it on again. Under one service, work in every project should carry on by itself.
