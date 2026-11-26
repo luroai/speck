@@ -41,6 +41,7 @@ A changed template brings in only the tests that load that template.
 
 ## Notes
 - From 0767's build. The earlier fix (`speck/ideas/done/2026-10-23-keep-related-tests-from-picking-the-whole-suite.md`) didn't cover a support file that reads any page by name.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
