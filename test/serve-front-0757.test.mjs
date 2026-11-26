@@ -9,6 +9,7 @@ import http from 'node:http';
 import { startFront, serveAddress, addressText } from '../scripts/serve-front.mjs';
 import { panelUrl } from '../scripts/panel-url.mjs';
 import { SpeckError } from '../scripts/core.mjs';
+import { runningPanels } from '../scripts/panel-projects.mjs';
 import { ROOT } from './support/panel.mjs';
 import { panelsHere, standInPanel, ask, cookieOf, setCookieOf } from './support/serve-front.mjs';
 
@@ -323,4 +324,20 @@ test('0757 AC4 self-check: a port given for a project with no panel running ther
   const f = await front(t, dir, [{ folder: '/x/alpha', name: 'alpha', port: other.address().port }]);
   assert.deepEqual(JSON.parse((await summary(f)).body).projects, [{ port: null, name: 'alpha', running: false }]);
   assert.equal(reached, 0, 'nothing reached the other program on that port');
+});
+
+test('0757 AC2: the address keeps a record among the panels\' while it runs, for an older page\'s menu, which this speck leaves out', async () => {
+  const dir = panelsHere();
+  const f = await startFront({ port: 0, env: { ...process.env, SPECK_PANELS_DIR: dir }, projects: () => [] });
+  const record = path.join(dir, `${f.port}.json`);
+  try {
+    assert.deepEqual(JSON.parse(fs.readFileSync(record, 'utf8')), { pid: process.pid, port: f.port, name: 'speck serve', serve: true });
+    assert.deepEqual(runningPanels(dir), [], 'this speck\'s menus and bridge leave it out');
+    // An older panel's bridge, which lists it, asks it for its summary as another speck: one with nothing to count.
+    const own = await ask(f.port, { pathName: '/api/projects/own', headers: { 'X-Speck-Via': '4801' } });
+    assert.equal(own.status, 200);
+    assert.deepEqual(JSON.parse(own.body), { status: 'All projects', tone: 'idle', mood: 'asleep', busy: false, building: 0, queued: 0, needs_you: 0, needs: [], shipped_week: 0, spent_week_usd: null, spent_week_unknown: false, build_minutes: [] });
+    assert.equal((await ask(f.port, { pathName: '/api/projects/own' })).status, 404, 'a page can\'t ask for it');
+  } finally { f.close(); }
+  assert.equal(fs.existsSync(record), false, 'and takes it away as it stops');
 });

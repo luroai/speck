@@ -43,7 +43,8 @@ export function buildPanelsDir(session, env = process.env) {
 }
 
 // The running panels, as [{ port, name }] by name and then port. A record whose process has gone (a panel killed, or
-// stopped by Ctrl+C before it could tidy up) is left out, and deleted.
+// stopped by Ctrl+C before it could tidy up) is left out, and deleted. 0757: so is speck serve's, marked serve, which it
+// keeps for the menu of a page from an older speck, as a page from this one knows speck serve's address by itself.
 export function runningPanels(dir = panelsDir()) {
   let names = [];
   if (!dir) return [];
@@ -54,20 +55,21 @@ export function runningPanels(dir = panelsDir()) {
     try { r = JSON.parse(fs.readFileSync(path.join(dir, n), 'utf8')); } catch { continue; } // half-written, or gone meanwhile
     if (!r || !Number.isInteger(r.pid) || r.pid <= 0 || r.port !== Number(n.slice(0, -5)) || r.port < 1 || r.port > 65535 || typeof r.name !== 'string') continue;
     if (!pidAlive(r.pid)) { try { fs.unlinkSync(path.join(dir, n)); } catch { /* gone already */ } continue; }
+    if (r.serve === true) continue;
     out.push({ port: r.port, name: r.name });
   }
   return out.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : a.port - b.port));
 }
 
 // This panel's record, written once it's serving (by each server process, so a restart on new code keeps it), and
-// deleted as it exits, unless a newer process on the port has written it since.
-export function registerPanel({ port, name, repo }, dir = panelsDir()) {
+// deleted as it exits, unless a newer process on the port has written it since. `serve`: speck serve's address's (0757).
+export function registerPanel({ port, name, repo, serve = false }, dir = panelsDir()) {
   if (!dir) return () => {}; // no home folder: the panel still serves, but isn't in the menus
   const file = path.join(dir, `${port}.json`);
   try {
     fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
     const tmp = `${file}.${process.pid}.tmp`;
-    fs.writeFileSync(tmp, `${JSON.stringify({ pid: process.pid, port, name, repo })}\n`, { mode: 0o600 });
+    fs.writeFileSync(tmp, `${JSON.stringify({ pid: process.pid, port, name, repo, ...(serve ? { serve: true } : {}) })}\n`, { mode: 0o600 });
     fs.renameSync(tmp, file);
   } catch { /* no home folder to write to: the panel still serves, but isn't in the menus */ }
   return () => {

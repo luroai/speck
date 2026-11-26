@@ -6,13 +6,16 @@
 // load from beside the page (0543); its requests to /api/ go by the cookie. Each is passed on to that project's panel,
 // on its own port, and its answer back, as a panel's project menu does (0516): its own page, with its own key, its live
 // updates and every write, which that panel checks as its own. So whatever its version, the browser's Back, or opening
-// the address again, goes back to All projects. Every answer says it's speck serve's address (X-Speck-Serve).
+// the address again, goes back to All projects. Every answer says it's speck serve's address (X-Speck-Serve), so a
+// project's page from this speck has its project menu there, with All projects first, even with its panel the only one
+// running. For a page from an older speck, which shows its menu only with two or more panels running, the address
+// keeps a record among the panels' as one, `speck serve`, which this speck leaves out (runningPanels).
 import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
 import crypto from 'node:crypto';
 import { SpeckError, TEMPLATES } from './core.mjs';
-import { panelsDir, runningPanels, summaryOf, passOn, goneAnswer } from './panel-projects.mjs';
+import { panelsDir, runningPanels, registerPanel, summaryOf, passOn, goneAnswer } from './panel-projects.mjs';
 import { panelFile } from './panel-files.mjs';
 import { panelPort } from './panel.mjs';
 import { panelUrl } from './panel-url.mjs';
@@ -22,6 +25,8 @@ import { BUILD_ENV } from './build-env.mjs';
 
 const PANEL_PORT = 4777; // a panel's own default, which speck serve's is too
 const SHOWN = '/project'; // where a chosen project's panel is shown; panel-header.js goes to it from All projects
+// What the address says of itself to an older panel's bridge, which lists it as a panel: a project with nothing to count.
+const OWN = { status: 'All projects', tone: 'idle', mood: 'asleep', busy: false, building: 0, queued: 0, needs_you: 0, needs: [], shipped_week: 0, spent_week_usd: null, spent_week_unknown: false, build_minutes: [] };
 
 // speck serve's address from its arguments, checked as a panel's: { port, url }, url being { origin, host } or null.
 export const serveAddress = args => ({ port: panelPort(args), url: panelUrl(args) });
@@ -97,6 +102,7 @@ export async function startFront({ port, url = null, env = process.env, projects
     const where = req.url.split('?')[0], pick = where.match(/^\/api\/projects\/(\d{1,5})$/);
     if (pick) return choose(req, res, +pick[1]);
     if (where === '/api/projects/summary') return void summaries(req, res);
+    if (where === '/api/projects/own' && req.headers['x-speck-via']) return json(res, 200, OWN); // an older panel's bridge asking
     if (where === SHOWN) return redirect(res, `${SHOWN}/`); // so its page's files load from under it
     const shown = where.startsWith(`${SHOWN}/`);
     if (!shown && !where.startsWith('/api/')) return own(req, res, where);
@@ -122,5 +128,6 @@ export async function startFront({ port, url = null, env = process.env, projects
   origins = new Set([`http://127.0.0.1:${at}`, `http://localhost:${at}`, ...(url ? [url.origin] : [])]);
   id = crypto.createHash('sha256').update(`speck serve\0${at}`).digest('hex').slice(0, 16);
   cookie = `speck-serve-${at}`;
-  return { port: at, close: () => { server.close(); server.closeAllConnections(); } };
+  const unregister = registerPanel({ port: at, name: 'speck serve', serve: true }, dir);
+  return { port: at, close: () => { unregister(); server.close(); server.closeAllConnections(); } };
 }

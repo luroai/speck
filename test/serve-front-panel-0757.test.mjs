@@ -5,10 +5,10 @@ import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { panelRepo, startPanel, freePort, stop, tokenOf, request } from './support/panel.mjs';
+import { panelRepo, startPanel, freePort, stop, tokenOf, request, fakePage } from './support/panel.mjs';
 import { startFront } from '../scripts/serve-front.mjs';
 import { panelUrl } from '../scripts/panel-url.mjs';
-import { ask, cookieOf, panelsHere } from './support/serve-front.mjs';
+import { ask, cookieOf, setCookieOf, panelsHere } from './support/serve-front.mjs';
 import { oldProject } from './support/serve.mjs';
 
 const URL_HOST = 'speck.example.ts.net', URL_ORIGIN = `https://${URL_HOST}`;
@@ -67,29 +67,51 @@ test('0757 AC3: a real project\'s panel works through the address as on its own 
   }
 });
 
-test('0757 AC2: a project on an older speck, its panel the only one running, is shown at the address, and the address still goes back to All projects', async () => {
-  const old = oldProject('1.6.1'), name = path.basename(old), dir = panelsHere();
+test('0757 AC2: a project on an older speck, its panel the only one running, has its own project menu at the address, with All projects', async () => {
+  const old = oldProject('1.6.1'), name = path.basename(old), dir = panelsHere(), templates = path.join(old, '.speck', 'templates');
   assert.equal(fs.readFileSync(path.join(old, '.speck', 'VERSION'), 'utf8').trim(), '1.6.1');
-  // Its own panel, on its own copy, the only one whose record is where this address looks.
+  // Its own panel, on its own copy, the only project's panel whose record is where this address looks.
   const op = await startPanel(old, ['--port', String(await freePort())], path.join(old, '.speck', 'scripts', 'speck.mjs'), { SPECK_PANELS_DIR: dir });
   const g = await startFront({ port: 0, env: { ...process.env, SPECK_PANELS_DIR: dir }, projects: () => [{ folder: old, name, port: op.port }, { folder: '/nowhere/gone', name: 'gone', port: null }] });
   try {
     const origin = `http://127.0.0.1:${g.port}`;
-    const listed = JSON.parse((await ask(g.port, { method: 'POST', pathName: '/api/projects/summary', origin })).body).projects;
-    assert.deepEqual(listed.map(p => [p.name, p.running]), [['gone', false], [name, true]], 'All projects has it, and the project that isn\'t answering');
+    const listed = JSON.parse((await ask(g.port, { method: 'POST', pathName: '/api/projects/summary', origin })).body);
+    assert.deepEqual(listed.projects.map(p => [p.name, p.running]), [['gone', false], [name, true]], 'All projects has it, and the project that isn\'t answering');
     const cookie = cookieOf(await ask(g.port, { method: 'POST', pathName: `/api/projects/${op.port}`, origin }));
     const page = await ask(g.port, { pathName: '/project/', cookie });
     assert.ok(page.body.includes(`<span class="repo">${name}</span>`), 'its own page');
     assert.doesNotMatch(page.body, /speck-serve/, 'on 1.6.1, which knows nothing of speck serve');
-    // Its files are its own copy's, from under its page, and its menu shows only with two or more panels running: here,
-    // with its panel the only one, it has no menu, and so no way back of its own.
-    const header = await ask(g.port, { pathName: '/project/panel-header.js', cookie });
-    assert.equal(header.body, fs.readFileSync(path.join(old, '.speck', 'templates', 'panel-header.js'), 'utf8'));
-    assert.match(header.body, /show = list\.length > \(projectsGoneList \? 0 : 1\)/);
-    const board = JSON.parse((await ask(g.port, { pathName: '/api/state', cookie })).body);
-    assert.ok(Array.isArray(board.tickets), 'its board, from its own panel');
-    assert.equal(board.projects, undefined, 'with no project menu on it');
-    // The browser's Back from it, or opening the address again, is All projects, whatever its page can do.
-    assert.match((await ask(g.port, { cookie })).body, /<meta name="speck-serve" id="speck-serve" content="1">/);
+    assert.equal((await ask(g.port, { pathName: '/project/panel-header.js', cookie })).body, fs.readFileSync(path.join(templates, 'panel-header.js'), 'utf8'), 'with its own copy\'s files');
+    // Its panel counts the address among the panels running, so its board has the project menu's list.
+    let board = null;
+    for (const until = Date.now() + 10000; Date.now() < until; await new Promise(r => setTimeout(r, 200))) {
+      board = JSON.parse((await ask(g.port, { pathName: '/api/state', cookie })).body);
+      if (board.projects) break;
+    }
+    assert.deepEqual(board.projects.list.map(p => p.name).sort(), [name, 'speck serve'].sort());
+    // 1.6.1's own page, given those answers: its menu is on the bar, All projects first, which opens its bridge with
+    // the address's projects; and the address's own entry goes to All projects at the address.
+    let reloaded = 0;
+    const p = fakePage([board, listed, { ok: true }], { location: { reload: () => { reloaded++; } } }, { templates });
+    await p.settle();
+    assert.equal(p.byId('project-pick').hidden, false, 'its menu is there');
+    assert.deepEqual(p.byId('project').children.map(o => o.textContent).sort(), ['All projects', name, 'speck serve'].sort());
+    assert.equal(p.byId('project').children[0].textContent, 'All projects');
+    p.byId('project').value = 'all';
+    p.byId('project').listeners.change();
+    await p.settle();
+    assert.equal(p.byId('bridge').hidden, false, 'All projects opens');
+    const names = [], walk = n => { if (/\bbridge-name\b/.test(String(n.className || ''))) names.push(n.textContent); for (const c of n.children || []) walk(c); };
+    walk(p.byId('bridge'));
+    assert.ok(names.includes(name), `with its project: ${names}`);
+    p.byId('project').value = String(g.port);
+    p.byId('project').listeners.change();
+    await p.settle();
+    assert.equal(p.calls.at(-1).url, `/api/projects/${g.port}`);
+    assert.equal(reloaded, 1, 'and the page reloads');
+    const home = await ask(g.port, { method: 'POST', pathName: `/api/projects/${g.port}`, origin, cookie });
+    assert.match(setCookieOf(home), /Max-Age=0/, 'the address forgets the choice');
+    assert.equal((await ask(g.port, { pathName: '/project/' })).headers.location, '/', 'so the reload goes to All projects');
+    assert.match((await ask(g.port, { cookie })).body, /<meta name="speck-serve" id="speck-serve" content="1">/, 'as do Back and the address itself');
   } finally { g.close(); await stop(op); }
 });
