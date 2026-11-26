@@ -47,7 +47,9 @@ Under the line, the factory floor shows each of your subscriptions' use, when it
 - Self-check: a Codex limit whose type names no window now shows as limited, as the bridge warns about it; a reset day that isn't a real day says the reset isn't known.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The factory floor now has a Subscriptions row between the line and the stations. Each agent speck has a usage reading for (Claude Code, Codex, Cursor) gets a panel with how much of its tightest limit is used, as a big number and a bar of 20 blocks in that agent's colour, when that limit resets, and how many stations across all your projects are running on it right now. At 90% or more, or once it's been cut off, the number and bar turn orange and the panel says "Nearly used up" or "Limited". An agent speck has no reading for isn't shown.
+
+To see it, open the factory floor at speck serve's address. The readings are the ones speck saves when a build or review ends, so a reading can be a little behind; one whose reset time has passed is ignored until the next run reads it again.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -57,6 +59,9 @@ Under the line, the factory floor shows each of your subscriptions' use, when it
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- Tidy-up: `speck test --related` brings in about 486 files for any change to `templates/floor.html`, because `test/support/panel.mjs` names it; the floor's helper could be kept apart so a floor change brings in only the floor's tests.
+- Skipped (duplicate): `test/panel-0476.test.mjs`'s touch tests fail under a loaded run and pass alone; already named by 0542 (`speck/tickets/done/0542-steady-two-browser-tests-under-a-busy-run.md`) and the full-suite fix tickets 0699, 0734, 0738 and 0754.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -141,6 +146,92 @@ Under the line, the factory floor shows each of your subscriptions' use, when it
     ],
     "escalation_question": "",
     "summary": "The floor shows subscription usage and station counts, and the reported tests pass. One limit-handling gap needs fixing: a subscription explicitly reported as limited can disappear when its usage percentage is unknown."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "f8de37774408df056615e1c3413019c466e405d1",
+    "session": "continued",
+    "thread_id": "01a219a8-2a47-77f0-a2e1-1987216908c9",
+    "builder_response": "- Tests run: test/floor-subs-0768.test.mjs test/floor-0765.test.mjs\n- F1: fixed. floorUsage() (scripts/subscriptions.mjs) now works out the unnamed-limit fallback first and keeps an open window with no share used when it applies; such a window ranks below any with a share, and is shown at 100% and limited. New tests: your reproduction gives ['5 hours', 100, high, limited], and the page draws a limited 100% subscription orange with \"Limited\".\n- F2: fixed. resetsWhen() (templates/floor.js) checks the whole calendar date, as capturedOn does; the AC1 test now covers 2027-02-31 as well as day 45.\n",
+    "seconds": 20,
+    "usage": {
+      "input_tokens": 256622,
+      "cached_input_tokens": 203904,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1775,
+      "reasoning_output_tokens": 127
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 6354,
+      "cached": 95872,
+      "write": 0,
+      "output": 658
+    },
+    "cost_usd": 0.0288752,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-26T21:01:35.207Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "floorUsage() selects the tightest open window; subOf() renders its name, percentage, segmented gauge and reset. Passing AC1 tests cover API delivery, agent colours and reset dates, including impossible calendar dates."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "feeding() counts matching agents across projects' summary lines. The passing AC2 test covers multiple projects, Claude subagents and zero stations."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing AC3 tests cover high usage, limited readings, orange styling and absent readings. The new regression covers an unnamed limit with an unknown percentage; independently calling floorUsage() confirms it remains visible and limited."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The reported test run has 171 passes, zero failures and three skips. The changes preserve existing tests and add regression coverage for both findings."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/subscriptions.mjs",
+        "issue": "An explicitly limited reading with an unknown percentage previously disappeared.",
+        "suggested_fix": "Implemented: apply the unnamed-limit fallback before filtering unknown percentages, with regression coverage.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "minor",
+        "file": "templates/floor.js",
+        "issue": "Impossible calendar dates previously appeared as valid reset dates.",
+        "suggested_fix": "Implemented: validate the complete calendar date, with coverage for 2027-02-31.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The floor shows subscription usage, reset times and station counts, with orange warnings for high usage or limits. Both previous findings are fixed and covered by passing tests. No blocking concerns remain."
   }
 }
 ```
