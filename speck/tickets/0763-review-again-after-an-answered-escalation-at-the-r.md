@@ -1,7 +1,7 @@
 ---
 id: "0763"
 title: "Review again after an answered escalation at the review limit"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-26
 started: "2026-11-26T11:39:35.777Z"
+approved: "2026-11-26T11:41:45.188Z"
 
 ---
 # 0763 · Review again after an answered escalation at the review limit
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When a ticket has used its review rounds and the last round escalated a question, answering it (Go with the recommendation, `speck answer` or the panel) allows 2 more rounds, but `speck review` still refuses the next round: the escalation is checked before the rounds you allowed. 0758 is stuck on this on 2026-11-26, holding up 0762 and the 1.7.0 release.
@@ -54,9 +55,14 @@ When a ticket has used up its review rounds and the reviewer's last round asked 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 118,374
+- Elapsed since build started: 2 min
+- Changed lines: 9 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none.
 
