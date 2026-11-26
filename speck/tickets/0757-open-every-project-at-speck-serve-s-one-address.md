@@ -1,7 +1,7 @@
 ---
 id: "0757"
 title: "Open every project at speck serve's one address"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: ["0756"]                # ticket ids that must be done first
 created: 2026-11-25
 built_on: "0756"
 started: "2026-11-26T10:17:23.093Z"
+approved: "2026-11-26T11:09:17.341Z"
 
 ---
 # 0757 · Open every project at speck serve's one address
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Even with `speck serve`, each project's panel is on its own port, and only one sits behind the private tunnel, so from a phone you can reach one project and see the rest only on the bridge. The user wants to open one address on any device and see every project.
@@ -61,9 +62,16 @@ Worth keeping an eye on: a project still on an older speck lists the address in 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Returning to All projects depends on the project's copy containing this ticket's new panel-header.js.
+Round 2 (codex): changes requested.
+Round 3 (codex): approve.
 
 ## Delivery log
+- Review rounds: 3
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 1,036,071
+- Elapsed since build started: 52 min
+- Changed lines: 497 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (Delivery log only, none sent to the inbox):
 - A project on an older speck lists "speck serve" in its project menu, and as a bridge row that counts nothing, while speck serve runs, on that panel's own address too, as the address keeps a record among the panels' for older pages' menus. It goes once the project's speck is updated.
