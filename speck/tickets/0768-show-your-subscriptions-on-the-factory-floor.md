@@ -1,7 +1,7 @@
 ---
 id: "0768"
 title: "Show your subscriptions on the factory floor"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,13 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0764","0765","0766"]                # ticket ids that must be done first
 created: 2026-11-26
+built_on: "0766"
+started: "2026-11-26T20:32:28.875Z"
 
 ---
 # 0768 · Show your subscriptions on the factory floor
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Usage limits decide where work can go, and Settings is the only place that shows them. On the factory floor, the user wants to see each subscription's use next to the work drawing on it.
