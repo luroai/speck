@@ -1,7 +1,7 @@
 ---
 id: "0766"
 title: "Show the line on the factory floor"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -20,11 +20,12 @@ created: 2026-11-26
 built_on: "0765"
 started: "2026-11-26T20:14:29.144Z"
 approved: "2026-11-26T20:32:11.449Z"
+finished: "2026-11-26T20:35:17.430Z"
 
 ---
 # 0766 · Show the line on the factory floor
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The user wants to see, across every project at once, who is working on what and on which model. The factory floor shows projects and boards, but not the work at each station.
