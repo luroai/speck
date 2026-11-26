@@ -47,6 +47,7 @@ Each project needs its own `speck panel`, on its own port, started by hand in it
 - Step 1 of the factory (see the source idea): one speck service per machine runs every project behind one address, so the user can sign in from any device and see every project, instead of starting a panel and a `speck run` in each project.
 - Each project keeps its own panel process and `.speck/` version; this supervises them rather than running them in one process. `speck panel --background` (`scripts/panel-background.mjs`) and the panels registry (`scripts/panel-projects.mjs`) can be reused.
 - Only one `speck serve` may run per machine at a time; a second says where the first is and exits.
+- Failing before this build: not checked
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
