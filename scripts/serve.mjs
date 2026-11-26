@@ -308,7 +308,7 @@ async function serve(env, away, served) {
     for (const f of off) if (!offSaid.has(f)) { offSaid.add(f); say(`${nameOf(f)} is turned off, so speck serve leaves it out until \`speck projects on ${nameOf(f)}\`.`); }
     for (const f of offSaid) if (!off.has(f)) offSaid.delete(f);
     save();
-    keeper.check(folders.filter(f => !cannotStart(f)));
+    keeper.check(folders.filter(f => !cannotStart(f)), [...off]);
     return starts;
   }
   function queueTick() {

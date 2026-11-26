@@ -154,8 +154,9 @@ export const recordsSwitch = folder => fs.existsSync(path.join(folder, '.speck',
 
 const clock = ms => { const d = new Date(ms), two = n => String(n).padStart(2, '0'); return `${two(d.getHours())}:${two(d.getMinutes())}`; };
 
-// What speck serve does about runs. check(folders) is called on each of its looks at the list; stillOn(folders) names
-// the projects whose runs are on. `start`, `state` and `now` can be stood in for by tests.
+// What speck serve does about runs. check(folders, off) is called on each of its looks at the list, with the projects
+// on it that are turned off (0762), whose runs it leaves alone but remembers; stillOn(folders) names the projects whose
+// runs are on. `start`, `state` and `now` can be stood in for by tests.
 export function runKeeper({ file, env, say, start = startRun, stop = stopRun, state = runState, now = Date.now, records = recordsSwitch, boot = bootMark }) {
   const before = readRunsRecord(file), atStart = before.runs; // as speck serve last left it
   // The machine has started again since, and speck serve was told to stop as it shut down: a run that stopped then was
@@ -168,6 +169,7 @@ export function runKeeper({ file, env, say, start = startRun, stop = stopRun, st
   const looked = new Set(), busy = new Set();
   const restarts = new Map(); // folder → the times this speck serve started its run again, in the last hour
   const held = new Map(); // folder → until when it's left off, once said
+  let wasOff = new Set(); // 0762: the projects turned off at the last check
   const name = folder => path.basename(folder);
 
   let stoppedAt = null;
@@ -209,8 +211,8 @@ export function runKeeper({ file, env, say, start = startRun, stop = stopRun, st
     } finally { busy.delete(folder); }
   }
 
-  function check(folders) {
-    const listed = new Set(folders);
+  function check(folders, off = []) {
+    const listed = new Set(folders), kept = new Set(off);
     for (const folder of folders) {
       if (busy.has(folder)) continue;
       const runs = runsIn(folder);
@@ -234,7 +236,7 @@ export function runKeeper({ file, env, say, start = startRun, stop = stopRun, st
         delete last[folder];
         if (own && sw?.on) void launch(folder, 'its Auto-build switch was last turned on', 0, sw, own);
         else if (own && wantedAtStart(sw, atStart[folder])) void launch(folder, 'it was on when speck serve last stopped', 0, sw, own);
-        else if (!own && was && !told) void launch(folder, 'it was on when speck serve last stopped', 0, sw, own);
+        else if (!own && was && !told) void launch(folder, wasOff.has(folder) ? 'it was on when the project was turned off' : 'it was on when speck serve last stopped', 0, sw, own);
         else if (!own && was && byShutdown(runs)) void launch(folder, 'it was on when the machine last stopped', 0, sw, own);
         continue;
       }
@@ -256,7 +258,8 @@ export function runKeeper({ file, env, say, start = startRun, stop = stopRun, st
       times.push(t);
       void launch(folder, null, times.length, sw, own);
     }
-    for (const f of Object.keys(last)) if (!listed.has(f)) delete last[f];
+    for (const f of Object.keys(last)) if (!listed.has(f) && !kept.has(f)) delete last[f]; // 0762: kept while it's off
+    wasOff = kept;
     for (const f of [...looked]) if (!listed.has(f)) { for (const m of [looked, restarts, held]) m.delete(f); } // a project put back on the list is looked at afresh
     save();
   }

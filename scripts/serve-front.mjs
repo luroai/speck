@@ -39,7 +39,8 @@ export const addressText = (port, origin) => `http://127.0.0.1:${port}/${origin 
 // records. Port 0 takes any free port, for speck's own tests.
 // 0762: `shown()`, when given, gives the ports of the panels the address may show, as a Set: those of the projects on
 // the list that aren't turned off. Any other running panel, started by hand for a project that's off or not listed, is
-// left out of the choices and of a project's menu, which every answer names them for (X-Speck-Serve-Shown).
+// left out of the choices and of a project's menu, as the project lists in /api/state answers passed on are cut down to
+// them (stateShown), whatever speck the project's page is from.
 export async function startFront({ port, url = null, env = process.env, projects, shown = null }) {
   const dir = panelsDir({ ...env, [BUILD_ENV]: undefined }); // your panels', as speck serve starts them, even from a build
   const showing = () => { if (!shown) return null; try { return shown(); } catch { return new Set(); } };
@@ -56,6 +57,35 @@ export async function startFront({ port, url = null, env = process.env, projects
   // All projects: the panel's page, with no project, key or board of its own.
   const page = () => fs.readFileSync(path.join(TEMPLATES, 'panel.html'), 'utf8').replace('{{page}}', () => '').replace('{{repo}}', () => 'All projects')
     .replace('{{base}}', () => '').replace('{{token}}', () => '').replace('{{panel}}', () => id).replace('{{serve}}', () => '1');
+
+  // 0762: an /api/state answer from the panel on `to`, with its project menu's list (projects.list, 0516) cut down to the
+  // panels the address shows, and the address's own record, which an older page lists as speck serve. An answer that
+  // gives only what changed (0188) may leave the list out, as unchanged since the page's board: the list that panel
+  // last sent through the address is put in, cut down as it is now. Until the address has seen one, the page is sent
+  // the whole board. Gives the answer's rewrite for passOn, or null when the address shows every running panel.
+  const sentLists = new Map(); // panel port → the projects part it last sent through the address, or null for none
+  function stateShown(req, to) {
+    if (!shown) return null;
+    if (!sentLists.has(to)) delete req.headers['x-speck-have'];
+    return answer => (answer.statusCode === 200 ? text => cutState(text, to) : null);
+  }
+  function cutState(text, to) {
+    const v = JSON.parse(text), only = showing() || new Set();
+    if (!v || typeof v !== 'object' || Array.isArray(v)) return text;
+    const cut = part => (part && typeof part === 'object' && Array.isArray(part.list) ? { ...part, list: part.list.filter(p => p && (p.port === at || p.port === part.self || only.has(p.port))) } : part);
+    const d = v.delta;
+    if (d && typeof d === 'object') {
+      if (!d.set || typeof d.set !== 'object' || !Array.isArray(d.keys)) return text;
+      if (Object.hasOwn(d.set, 'projects')) { sentLists.set(to, d.set.projects); d.set.projects = cut(d.set.projects); }
+      else if (!d.keys.includes('projects')) sentLists.set(to, null);
+      else if (sentLists.get(to)) d.set.projects = cut(sentLists.get(to));
+      return JSON.stringify(v);
+    }
+    if (!Object.hasOwn(v, 'projects')) { sentLists.set(to, null); return text; }
+    sentLists.set(to, v.projects);
+    v.projects = cut(v.projects);
+    return JSON.stringify(v);
+  }
 
   // POST /api/projects/<port>: show the project whose panel is on that port at this address, or All projects again
   // for this address's own port. Only from a page at this address: it may be a project's page, carrying its panel's key.
@@ -103,8 +133,6 @@ export async function startFront({ port, url = null, env = process.env, projects
     if (!hosts.has(String(req.headers.host || '').toLowerCase())) return text(res, 403, 'Forbidden: open the panel at 127.0.0.1 or localhost.\n');
     res.setHeader('X-Speck-Serve', '1'); // on every answer, a project's passed on too, so its page knows it's at speck serve's address
     res.setHeader('X-Speck-Panel', id); // a project's page answered here, rather than by its own panel, reloads
-    const only = showing();
-    if (only) res.setHeader('X-Speck-Serve-Shown', [...only].join(',')); // 0762: the panels a project's menu may list
     const where = req.url.split('?')[0], pick = where.match(/^\/api\/projects\/(\d{1,5})$/);
     if (pick) return choose(req, res, +pick[1]);
     if (where === '/api/projects/summary') return void summaries(req, res);
@@ -113,7 +141,10 @@ export async function startFront({ port, url = null, env = process.env, projects
     const shown = where.startsWith(`${SHOWN}/`);
     if (!shown && !where.startsWith('/api/')) return own(req, res, where);
     const to = chosen(req);
-    if (to !== null && running(to)) return passOn(req, res, to, { via: at, ours: ours(req), path: shown ? req.url.slice(SHOWN.length) : req.url, gone: () => goneAnswer(req, res, to, panels(), { serve: true }) });
+    if (to !== null && running(to)) {
+      const rewrite = where === '/api/state' ? stateShown(req, to) : null; // 0762
+      return passOn(req, res, to, { via: at, ours: ours(req), path: shown ? req.url.slice(SHOWN.length) : req.url, gone: () => goneAnswer(req, res, to, panels(), { serve: true }), rewrite });
+    }
     // No project to show. Its page goes to All projects, forgetting a choice whose panel has stopped. A project's page
     // still open is told on its stream that its project has gone, and its other requests are answered as from another
     // panel, so it reloads, and goes there too.
