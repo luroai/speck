@@ -1,7 +1,7 @@
 ---
 id: "0757"
 title: "Open every project at speck serve's one address"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -20,11 +20,12 @@ created: 2026-11-25
 built_on: "0756"
 started: "2026-11-26T10:17:23.093Z"
 approved: "2026-11-26T11:09:17.341Z"
+finished: "2026-11-26T11:12:31.116Z"
 
 ---
 # 0757 · Open every project at speck serve's one address
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Even with `speck serve`, each project's panel is on its own port, and only one sits behind the private tunnel, so from a phone you can reach one project and see the rest only on the bridge. The user wants to open one address on any device and see every project.
