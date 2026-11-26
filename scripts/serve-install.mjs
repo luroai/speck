@@ -219,12 +219,17 @@ function installMac(d, args) {
   ];
 }
 
+const notLoaded = r => r.status === 3 || /no such process/i.test(r.stderr);
 function uninstallMac(d) {
   const file = plistFile(d);
   if (readText(file) === null) return [`speck serve isn't installed as a launch agent on this machine (there's no ${file}), so there's nothing to remove.`];
   const target = `gui/${d.uid}/${LABEL}`, r = d.run('launchctl', ['bootout', target]);
-  // bootout fails when it isn't loaded, which is fine. When launchctl print still finds it, it's still running.
-  if (r.status !== 0 && d.run('launchctl', ['print', target]).status === 0) throw new SpeckError(`speck serve's launch agent wasn't removed, as ${failed(r, `launchctl bootout ${target}`)} and it's still loaded. Its file is still there: ${file}.`);
+  // bootout fails when it isn't loaded, which is fine, but only once that's certain: bootout says no such process (3),
+  // or launchctl print says it can't find the service (113). Any other failure keeps the file and says so.
+  if (r.status !== 0 && !notLoaded(r)) {
+    const p = d.run('launchctl', ['print', target]);
+    if (!(p.status === 113 || /could not find service/i.test(p.stderr))) throw new SpeckError(`speck serve's launch agent wasn't removed, as ${failed(r, `launchctl bootout ${target}`)}${p.status === 0 ? ' and it\'s still loaded' : ', and launchctl couldn\'t say whether it\'s still loaded'}. Its file is still there: ${file}.`);
+  }
   try { fs.rmSync(file, { force: true }); } catch (e) { throw new SpeckError(`speck serve's launch agent is stopped, but ${file} couldn't be removed (${e.code || e.message}). Remove it yourself.`); }
   return [`speck serve's launch agent is stopped, and ${file} is removed.`];
 }

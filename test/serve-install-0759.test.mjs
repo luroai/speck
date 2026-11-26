@@ -221,6 +221,25 @@ test('0759 AC3: on a Mac, an agent that wasn\'t loaded is removed all the same',
   assert.ok(!fs.existsSync(plistFile(m.d)));
 });
 
+test('0759 AC3: on a Mac, an agent launchctl print can\'t find after a failed unload is removed', () => {
+  const m = machine('darwin');
+  serveInstall(['--install'], m.d);
+  m.d.run = (cmd, args) => (args[0] === 'print' ? { status: 113, stdout: '', stderr: 'Could not find service "dev.speck.serve" in domain for user gui: 501', error: null } : { status: 5, stdout: '', stderr: 'Boot-out failed: 5: Input/output error', error: null });
+  assert.match(serveUninstall(['--uninstall'], m.d).join('\n'), /is removed/);
+  assert.ok(!fs.existsSync(plistFile(m.d)));
+});
+
+test('0759 AC3: on a Mac, when launchctl can\'t reach the service manager at all, --uninstall keeps the file and says so', () => {
+  const m = machine('darwin');
+  serveInstall(['--install'], m.d);
+  m.d.run = () => ({ status: 125, stdout: '', stderr: 'Domain does not support specified action', error: null });
+  assert.throws(() => serveUninstall(['--uninstall'], m.d), /couldn't say whether it's still loaded/);
+  assert.ok(fs.existsSync(plistFile(m.d)));
+  m.d.run = () => ({ status: null, stdout: '', stderr: '', error: 'ENOENT' });
+  assert.throws(() => serveUninstall(['--uninstall'], m.d), /launchctl isn't on this machine/);
+  assert.ok(fs.existsSync(plistFile(m.d)));
+});
+
 test('0759 AC1: the arguments the service passes to speck serve are ones speck serve takes, at the port and address given', async () => {
   const { serveAddress } = await import('../scripts/serve-front.mjs');
   const m = machine('linux', lingerOn);
