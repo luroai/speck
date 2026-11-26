@@ -19,7 +19,7 @@ after: ["0764","0765","0766"]                # ticket ids that must be done firs
 created: 2026-11-26
 built_on: "0766"
 started: "2026-11-26T20:32:28.875Z"
-approved: "2026-11-26T21:02:02.803Z"
+approved: "2026-11-26T21:10:25.465Z"
 
 ---
 # 0768 · Show your subscriptions on the factory floor
@@ -58,12 +58,13 @@ To see it, open the factory floor at speck serve's address. The readings are the
 ## Review log
 Round 1 (codex): changes requested: F1 floorUsage() hides an explicitly limited Codex reading when its window percentages are unknown.
 Round 2 (codex): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 258,397
-- Elapsed since build started: 30 min
+- Reviewer tokens: 373,213
+- Elapsed since build started: 38 min
 - Changed lines: 124 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
@@ -239,6 +240,93 @@ Follow-ups:
     ],
     "escalation_question": "",
     "summary": "The floor shows subscription usage, reset times and station counts, with orange warnings for high usage or limits. Both previous findings are fixed and covered by passing tests. No blocking concerns remain."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "023e510651d9ed2d24887863ebf015c144bad378",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a219a8-2a47-77f0-a2e1-1987216908c9",
+    "builder_response": "Merge of main (0767, Virgil's dial on the factory floor) into the approved 0768.\n- templates/floor.html (logic): kept main's `floor-top` block (the line with the Engineering manager dial beside it) as it is, and put 0768's Subscriptions section straight after it, so it's still under the line and above the stations.\n- templates/floor.js (added-lines, 3 hunks): kept both sides. The header comment has 0767's paragraph then 0768's; draw() calls drawLine, drawDial, drawSubs, drawStations, drawBoard; the 0768 subscriptions block and the 0767 dial block both stay whole, 0768's closed with its `}` before 0767's begins. No other change.\n- Tests run: test/floor-subs-0768.test.mjs test/floor-dial-0767.test.mjs test/floor-line-0766.test.mjs test/floor-0765.test.mjs test/floor-line-browser-0766.test.mjs test/floor-browser-0765.test.mjs (196 tests, 0 failed).\n- Pictures retaken with the merged layout.\n",
+    "seconds": 19,
+    "usage": {
+      "input_tokens": 370793,
+      "cached_input_tokens": 312704,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2420,
+      "reasoning_output_tokens": 127
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 5371,
+      "cached": 108800,
+      "write": 0,
+      "output": 645
+    },
+    "cost_usd": 0.028072,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-26T21:10:23.085Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "floorUsage() and subOf() retain tightest-window selection and subscription rendering. floor.html places subscriptions below the line and dial, above stations. All five AC1 tests pass."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "feeding() retains aggregation across projects' summary lines. The AC2 test covering multiple projects, Claude subagents and zero stations passes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The limit fallback and orange warning styles remain intact. All four AC3 tests pass, including unknown usage percentages and absent readings."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The reported merged test run has 193 passes, zero failures and three skips, covering subscriptions, dial, line and floor behaviour. Independent JavaScript syntax validation also passes."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/subscriptions.mjs",
+        "issue": "An explicitly limited reading with an unknown percentage previously disappeared.",
+        "suggested_fix": "Fixed: the unnamed-limit fallback precedes filtering, with passing regression coverage. Preserved through the merge.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "minor",
+        "file": "templates/floor.js",
+        "issue": "Impossible calendar dates previously appeared as valid reset dates.",
+        "suggested_fix": "Fixed: complete calendar-date validation and regression coverage remain intact after the merge.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The merge preserves subscription usage panels alongside Virgil’s dial. Both earlier fixes remain intact, and the combined tests pass. No blocking concerns remain."
   }
 }
 ```
