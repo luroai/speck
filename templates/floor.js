@@ -8,6 +8,9 @@
 // project's lanes, and is kept in this browser, so a reload shows the same one. It loads after the panel's model
 // (panel-model.js), which makes the lanes from the project's board as its panel's tabs have them. Everything here is
 // inside this function, so none of its names can clash with the model's.
+// 0766: above the stations, the line: a row for each project through Queue, Builder, Reviewer, QA and Ship, from the line
+// its summary gives (0764's, scripts/panel-line.mjs), each lit station naming its ticket, agent, model and effort. The
+// members' faces on its headings are the panel's own (speck-face.js, which loads before this).
 (() => {
   const FLOOR_MS = 2000, GIVE_UP_MS = 15000, KEPT = 'speck-floor-station', SVG = 'http://www.w3.org/2000/svg';
   const LANES = [['capture', 'Capture', 'Nothing captured'], ['plan', 'Plan', 'Nothing to plan'], ['build', 'Build', 'Nothing building or queued'], ['shipped', 'Shipped', 'Nothing shipped yet']];
@@ -41,7 +44,7 @@
   // board is shown, the one chosen or, until one is, the first. board and boardName: its board, and the name speck serve
   // gave it, sent back so an unchanged one isn't sent again. boardGone: its panel gave none in the last answer.
   let stations = null, chosen = keptStation(), shown = null, board = null, boardName = null, boardGone = false;
-  let said = null, asking = false, again = false, stationsDrawn = null, boardDrawn = null, lanesMade = null;
+  let said = null, asking = false, again = false, stationsDrawn = null, boardDrawn = null, lanesMade = null, lineDrawn = null;
 
   async function ask() {
     if (asking) { again = true; return; }
@@ -84,8 +87,102 @@
     const note = $('floor-said');
     note.hidden = !said;
     note.textContent = said ? `Couldn't read your projects: ${said}` : '';
+    drawLine();
     drawStations();
     drawBoard();
+  }
+
+  // ---------- 0766: the line ----------
+
+  const MEMBERS = ['builder', 'reviewer', 'qa'];
+  const COLUMNS = [['queue', 'Queue'], ['builder', 'Builder'], ['reviewer', 'Reviewer'], ['qa', 'QA'], ['ship', 'Ship']];
+  const obj = v => !!v && typeof v === 'object' && !Array.isArray(v);
+  const words = v => (typeof v === 'string' || (typeof v === 'number' && Number.isFinite(v)) ? String(v).trim() : '');
+  // An agent's colour, kept apart from the status colours: Claude Code sand, Codex blue, Cursor silver, any other grey.
+  const agentColour = a => (a === 'claude' || a === 'claude-subagent' ? 'claude' : a === 'codex' || a === 'cursor' ? a : 'other');
+  // Why a ticket is on its agent and model, in a few words, or '' for a reason the floor doesn't know.
+  function whyOf(w) {
+    if (w.why === 'level') return words(w.level) ? `Level ${words(w.level)}` : 'Its level';
+    if (w.why === 'ticket') return 'Ticket\'s own';
+    if (w.why === 'settings') return 'Settings';
+    if (w.why === 'bench') { const s = obj(w.stands_in_for) ? words(w.stands_in_for.agent_name) || words(w.stands_in_for.agent) : ''; return s ? `Stands in for ${s}` : 'Stand-in'; }
+    return '';
+  }
+  // How long a ticket has been at its station, from `since`, or '' when it hasn't a time there yet.
+  function timeThere(since) {
+    const at = typeof since === 'string' ? Date.parse(since) : NaN;
+    if (!Number.isFinite(at)) return '';
+    const m = Math.floor(Math.max(0, Date.now() - at) / 60000);
+    if (m < 1) return 'under 1 min';
+    if (m < 60) return `${m} min`;
+    if (m < 1440) return `${Math.floor(m / 60)} h${m % 60 ? ` ${m % 60} min` : ''}`;
+    return `${Math.floor(m / 1440)} d`;
+  }
+  // What a project's line gives, made safe to draw: each station's tickets and what it would run on, the queue and Ship.
+  // null when its summary gives no line, as an older speck's doesn't, or its panel isn't answering.
+  function lineNow(s) {
+    const l = s.running && obj(s.line) ? s.line : null;
+    if (!l) return null;
+    const at = { builder: [], reviewer: [], qa: [] };
+    for (const w of list(l.work)) if (obj(w) && Object.hasOwn(at, w.station) && words(w.id)) at[w.station].push(w);
+    const idle = obj(l.idle) ? l.idle : {}, q = obj(l.queue) ? l.queue : {};
+    return { at, idle: m => (obj(idle[m]) ? idle[m] : null), ready: count(q.ready), next: list(q.next).map(words).filter(Boolean),
+      ship: list(l.ship).filter(t => obj(t) && words(t.id)) };
+  }
+
+  function drawLine() {
+    const box = $('line'), minute = Math.floor(Date.now() / 60000), drawn = JSON.stringify([stations, minute, !stations && !!said]);
+    if (drawn === lineDrawn) return;
+    lineDrawn = drawn;
+    if (!stations) return void box.replaceChildren(...(said ? [] : [el('p', 'floor-none', 'Reading your projects…')]));
+    if (!stations.length) return void box.replaceChildren();
+    const heads = COLUMNS.map(([key, label]) => el('div', `line-head line-head-${key}`, null,
+      MEMBERS.includes(key) && globalThis.SpeckFace ? SpeckFace.draw({ role: key, size: 20, look: 'dark' }) : null, el('span', 'line-head-label', label)));
+    box.replaceChildren(el('div', 'line-grid', null, el('div', 'line-heads', null, el('div', 'line-corner'), ...heads), ...stations.map(lineRow)));
+  }
+  function lineRow(s) {
+    const l = lineNow(s), off = !s.running || s.mood === 'asleep';
+    const idle = !!l && !off && MEMBERS.every(m => !l.at[m].length) && !l.ready && !l.ship.length;
+    const project = el('div', 'line-project', null, el('span', 'line-n', two(s.n)), el('span', 'line-name', s.name));
+    project.title = s.name;
+    const cells = !l ? COLUMNS.map(([key], i) => el('div', `line-cell line-${key}`, null, el('p', 'line-empty', i ? '–' : 'No line from this project')))
+      : [queueCell(l), ...MEMBERS.map(m => memberCell(m, l)), shipCell(l)];
+    const row = el('div', `line-row${off ? ' off' : idle ? ' idle' : ''}`, null, project, ...cells);
+    row.setAttribute('aria-label', `${s.name}${off ? ', off' : idle ? ', idle' : ''}`);
+    return row;
+  }
+  function queueCell(l) {
+    return el('div', 'line-cell line-queue', null, el('span', `queue-n${l.ready ? ' some' : ''}`, String(l.ready)),
+      el('span', 'queue-next', l.next.length ? `Next ${l.next.join(' · ')}` : 'Nothing ready'));
+  }
+  function memberCell(m, l) {
+    const cell = el('div', `line-cell line-${m}`);
+    if (l.at[m].length) for (const w of l.at[m]) cell.appendChild(slotOf(w, true));
+    else if (m === 'qa' && obj(l.idle('qa')) && l.idle('qa').set_up === false) cell.appendChild(el('div', 'slot none', 'No QA set up'));
+    else if (l.idle(m) && (words(l.idle(m).agent_name) || words(l.idle(m).agent))) cell.appendChild(slotOf(l.idle(m), false));
+    else cell.appendChild(el('div', 'slot none', 'Not known')); // its panel couldn't read its settings
+    return cell;
+  }
+  // A station's slot: lit with the ticket on it, or dimmed with what it would run on, its agent a stripe in its colour.
+  function slotOf(w, lit) {
+    const agent = words(w.agent_name) || words(w.agent), model = words(w.model), effort = words(w.effort), time = lit ? timeThere(w.since) : '', why = lit ? whyOf(w) : '';
+    const slot = el('div', `slot ${lit ? 'lit' : 'idle'} agent-${agentColour(w.agent)}`, null, el('span', 'slot-stripe'),
+      lit ? el('span', 'slot-top', null, el('span', 'slot-id', words(w.id)), time ? el('span', 'slot-time', time) : null) : null,
+      lit ? el('span', 'slot-title', words(w.title)) : null,
+      el('span', 'slot-runs', null, agent ? el('span', 'slot-agent', agent) : null, model ? el('span', 'slot-model', model) : null, effort ? el('span', 'slot-effort', effort) : null),
+      why ? el('span', 'slot-why', why) : null);
+    slot.title = [lit ? `${words(w.id)} · ${words(w.title)}` : 'Idle', [agent, model, effort].filter(Boolean).join(' · '), why, time ? `For ${time}` : ''].filter(Boolean).join('\n');
+    return slot;
+  }
+  function shipCell(l) {
+    if (!l.ship.length) return el('div', 'line-cell line-ship', null, el('p', 'line-empty', 'Nothing to ship'));
+    return el('div', 'line-cell line-ship', null, el('ol', 'ship-list', null, ...l.ship.map(t => {
+      const mark = t.shipping === true ? 'Shipping' : t.yours === true ? 'Waits for you' : '';
+      const item = el('li', `ship-item${t.yours === true && t.shipping !== true ? ' yours' : ''}${t.shipping === true ? ' shipping' : ''}`, null,
+        el('span', 'ship-id', words(t.id)), el('span', 'ship-title', words(t.title)), mark ? el('span', 'ship-mark', mark) : null);
+      item.title = `${words(t.id)} · ${words(t.title)}${mark ? `\n${mark}` : ''}`;
+      return item;
+    })));
   }
 
   // A station's look: orange while it needs you or something in it is moving, dim while its panel isn't answering.
