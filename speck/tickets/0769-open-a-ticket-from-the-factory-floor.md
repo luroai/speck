@@ -19,7 +19,7 @@ after: ["0765","0766"]                # ticket ids that must be done first
 created: 2026-11-26
 built_on: "0766"
 started: "2026-11-26T20:32:49.112Z"
-approved: "2026-11-26T21:00:13.932Z"
+approved: "2026-11-26T21:07:21.857Z"
 
 ---
 # 0769 · Open a ticket from the factory floor
@@ -59,12 +59,13 @@ Worth watching: a project still on an older speck opens the ticket too, but its 
 ## Review log
 Round 1 (codex): changes requested: F1 Navigation depends on every project having this new panel code, although speck serve serves each project's own copy.
 Round 2 (codex): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 317,345
-- Elapsed since build started: 27 min
+- Reviewer tokens: 479,626
+- Elapsed since build started: 35 min
 - Changed lines: 124 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
@@ -225,6 +226,85 @@ Follow-ups:
     ],
     "escalation_question": "",
     "summary": "Ticket cards and lit stations open the correct project's ticket, keyboard access works, and returning preserves the chosen station. The compatibility objection is withdrawn: older panels support ticket opening, and browser Back meets the return requirement. The recorded tests pass."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "2602e8dee2e97bee441e9f31be404fc8b12150a4",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a219a6-dc3e-7162-84a2-b3608918fa40",
+    "builder_response": "Merge round: main (with 0766 shipped and 0767, Virgil's dial) merged into this branch, conflicts resolved.\n- templates/floor.js (added-lines, 2 conflicts): both sides added. Kept both: the header comment now has 0769's paragraph then 0767's; the 0769 `opener` helper is followed by 0767's whole dial section, unchanged. draw() merged cleanly with both `openSaid` (0769) and `drawDial()` (0767). 0767's openNeed keeps its own hand-off (same `speck-open-ticket` key, without `from: 'floor'`), so a dial line opens the ticket with its lane back link, exactly as 0767 shipped it; not changed here, out of this ticket's scope.\n- docs/brief.md (logic, 1 conflict, the speck serve row): took main's row (with 0767's dial sentences) and inserted this ticket's three sentences at the same place as before, after \"as the panel's tabs have them.\"\n- Nothing else changed.\n- Tests run: test/floor-open-0769.test.mjs test/panel-0761.test.mjs test/floor-dial-0767.test.mjs test/floor-0765.test.mjs test/floor-line-0766.test.mjs (with commands.checks): 196 pass, 0 fail.\n",
+    "seconds": 16,
+    "usage": {
+      "input_tokens": 477734,
+      "cached_input_tokens": 394880,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1892,
+      "reasoning_output_tokens": 70
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 22032,
+      "cached": 139776,
+      "write": 0,
+      "output": 473
+    },
+    "cost_usd": 0.0627716,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-26T21:07:18.831Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "floor.js preserves openIn, opener, cardOf and slotOf after the merge. panel-header.js still opens the requested ticket. All AC1 tests in test/floor-open-0769.test.mjs pass."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The merged code retains location.assign('project/'), the stored station selection and floorBack handling for the Factory floor back link. All AC2 tests pass; browser Back remains available for older panels."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Cards and lit stations retain named native buttons and focus restoration across redraws. Both AC3 tests pass."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The fresh merged-branch run records 196 passes, zero failures and three skips across the ticket, panel, dial, floor and line tests. Conflict resolution preserves both opener and the existing dial implementation."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel-header.js",
+        "issue": "The earlier compatibility objection exceeded the criteria: older panels support ticket hand-offs, and browser Back satisfies the permitted return path.",
+        "suggested_fix": "No change required.",
+        "state": "dispute_accepted"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The merge preserves ticket opening, keyboard access and returning to the same station, alongside Virgil’s dial. The updated tests pass with no failures. No blocking findings remain."
   }
 }
 ```
