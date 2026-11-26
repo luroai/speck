@@ -513,6 +513,8 @@ const HELP = `speck: Plan in ten minutes. Come back to it shipped.
                                       list, each on its own copy of speck and port, until Ctrl+C, and show them all at one address, http://127.0.0.1:4777
                                       unless --port gives another, opening on All projects (--url: also there, behind a private tunnel;
                                       --background: on its own, until speck serve --stop, which stops its panels)
+  speck serve --install|--uninstall   make speck serve start by itself at boot or login and again if it stops (a systemd user service
+                                      on Linux, a launch agent on a Mac), or stop that and remove what --install wrote
   speck run [--background]            start a build for each ready ticket as it becomes ready, and ship approved ones auto_ship covers, until stopped (--background: on its own, as the panel's switch turns it on)
   speck pause <id>                    hold a build speck run launched where it is, until it's played
   speck play <id>                     carry a paused build on from where it was paused

@@ -29,7 +29,7 @@ const TICK_MS = 2000, START_MS = 15000, STOP_MS = 5000, POLL_MS = 100, SERVE_STO
 const startMs = () => (Number(process.env.SPECK_SERVE_START_MS) > 0 ? Number(process.env.SPECK_SERVE_START_MS) : START_MS);
 const RETRY_MS = [2000, 5000, 10000, 30000, 60000]; // before trying again after 1, 2, 3, 4, then 5 or more failed starts in a row
 const AWAY = 'SPECK_SERVE_AWAY'; // set for the speck serve --background starts
-const USAGE = 'speck serve [--port <n>] [--url https://<hostname>]   start a panel for every project on your list, and look after them\n                             until Ctrl+C, at one address that opens on All projects (http://127.0.0.1:4777 unless --port gives another)\n  speck serve --background   the same, on its own, after the shell that started it has ended\n  speck serve --stop         stop it, and every panel it started';
+const USAGE = 'speck serve [--port <n>] [--url https://<hostname>]   start a panel for every project on your list, and look after them\n                             until Ctrl+C, at one address that opens on All projects (http://127.0.0.1:4777 unless --port gives another)\n  speck serve --background   the same, on its own, after the shell that started it has ended\n  speck serve --stop         stop it, and every panel it started\n  speck serve --install      start it by itself at boot or login, and again if it stops (with --port and --url, if given)\n  speck serve --uninstall    stop that, and remove what --install wrote';
 const CLI = path.join(path.dirname(fileURLToPath(import.meta.url)), 'speck.mjs');
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -423,6 +423,14 @@ async function serveStop(env) {
 
 export function cmdServe(args = []) {
   const env = process.env;
+  // 0759: --install and --uninstall make it start by itself, as a service, or stop that.
+  for (const flag of ['--install', '--uninstall']) {
+    if (!args.includes(flag)) continue;
+    const other = ['--install', '--uninstall', '--background', '--stop'].find(f => f !== flag && args.includes(f));
+    if (other) throw new SpeckError(`Give ${flag} or ${other}, not both.`);
+    return import('./serve-install.mjs').then(m => { for (const line of (flag === '--install' ? m.serveInstall : m.serveUninstall)(args)) console.log(line); })
+      .catch(e => { console.error(e instanceof SpeckError ? e.message : `speck serve: ${e?.message || e}`); process.exit(1); });
+  }
   // --background, --stop, and --port and --url (0757) with a value after each, or after =.
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--background' || args[i] === '--stop' || /^--(port|url)=/.test(args[i])) continue;
