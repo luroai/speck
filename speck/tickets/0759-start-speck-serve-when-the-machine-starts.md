@@ -1,7 +1,7 @@
 ---
 id: "0759"
 title: "Start speck serve when the machine starts"                # one outcome, no "and"
-status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,12 +18,13 @@ source: "speck/ideas/2026-11-10-run-a-software-factory-from-one-speck-service.md
 after: ["0756"]                # ticket ids that must be done first
 created: 2026-11-25
 started: "2026-11-26T10:20:32.303Z"
-blocked_at: "2026-11-26T10:33:19.338Z"
+blocked_at: ""
+waited_seconds: 917
 
 ---
 # 0759 · Start speck serve when the machine starts
 
-**Status:** ⛔ blocked
+**Status:** 🔨 building
 
 ## Problem
 After a restart, nothing of speck comes back until someone starts it by hand, so the panel is unreachable from a phone and no work moves.
@@ -49,6 +50,7 @@ After a restart, nothing of speck comes back until someone starts it by hand, so
 - Failing before this build: none
 - `speck serve` takes no `--port` or `--url` yet: 0757 adds them. `--install` checks and passes them on as given, so a service installed with them starts properly once 0757 has shipped.
 - Self-check: WorkingDirectory is now `%h`, as systemd doesn't take a quoted path there (checked the unit with `systemd-analyze --user verify`); a failed install puts the old service file back and turns off lingering it turned on; the brief says `--stop` only stops an installed speck serve until the service starts it again.
+- Went with the recommendation: Wait for 0757 to ship, then finish this ticket's review (chosen by the user in the panel, 2026-11-26 10:48 UTC).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
