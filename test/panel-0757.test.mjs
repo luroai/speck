@@ -49,16 +49,18 @@ test('0757 AC2: speck serve\'s own page opens on All projects, with nothing to g
   assert.equal(p.byId('bridge').hidden, false, 'Escape leaves it open');
 });
 
-test('0757 AC2: pressing a project there shows its panel at the address, and a ticket\'s card keeps the ticket to open there', async () => {
+test('0757 AC2: pressing a project there shows its panel at the address, under project/, and a ticket\'s card keeps the ticket to open there', async () => {
   let reloaded = 0;
-  const p = fakePage([three, { ok: true }], { location: { reload: () => { reloaded++; } } }, SERVE_PAGE);
+  const went = [];
+  const p = fakePage([three, { ok: true }], { location: { reload: () => { reloaded++; }, assign: u => went.push(u) } }, SERVE_PAGE);
   await p.settle();
   press(within(p, 'bridge-row')[1]);
   await p.settle();
   assert.deepEqual(projectCalls(p).map(c => [c.url, c.opts.method]), [['/api/projects/4802', 'POST']], 'bravo, by its panel\'s port');
-  assert.equal(reloaded, 1, 'and the page reloads, as bravo\'s');
+  assert.deepEqual(went, ['project/'], 'and the browser goes to where the address shows it, so Back comes back to All projects');
+  assert.equal(reloaded, 0);
   const s = storage();
-  const q = fakePage([three, { ok: true }], { sessionStorage: s, location: { reload() {} } }, SERVE_PAGE);
+  const q = fakePage([three, { ok: true }], { sessionStorage: s, location: { reload() {}, assign() {} } }, SERVE_PAGE);
   await q.settle();
   press(within(q, 'bridge-card')[0]);
   await q.settle();

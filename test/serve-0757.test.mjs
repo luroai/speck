@@ -43,9 +43,9 @@ test('0757 AC1 AC2: speck serve --port --url answers there, opening on All proje
     const chose = await ask(port, { method: 'POST', pathName: `/api/projects/${pb}`, host: URL_HOST, origin: URL_ORIGIN });
     assert.equal(chose.status, 200, chose.body);
     const cookie = cookieOf(chose);
-    assert.match((await ask(port, { host: URL_HOST, cookie })).body, /The panel of bravo\./, 'bravo\'s own panel, at the same address');
+    assert.match((await ask(port, { pathName: '/project/', host: URL_HOST, cookie })).body, /The panel of bravo\./, 'bravo\'s own panel, at the same address');
     assert.equal(JSON.parse((await ask(port, { pathName: '/api/panel', host: URL_HOST, cookie })).body).repo, b);
-    assert.ok(isAllProjects((await ask(port, { host: URL_HOST })).body), 'and All projects in a browser that hasn\'t chosen');
+    assert.ok(isAllProjects((await ask(port, { host: URL_HOST, cookie })).body), 'and the address itself still opens on All projects');
   } finally { await endServe(s); }
   assert.equal(await answers(port), false, 'nothing answers there once it has stopped');
 });
@@ -126,7 +126,7 @@ test('0757 AC1: speck serve --background answers at the address given, and --sto
 test('0757 AC5: the brief and speck help describe speck serve\'s --port and --url, its address and that it opens on All projects', () => {
   const row = fs.readFileSync(path.join(ROOT, 'docs', 'brief.md'), 'utf8').split('\n').find(l => l.startsWith('| `speck serve'));
   assert.ok(row, 'the command table has a row for speck serve');
-  for (const fact of ['`speck serve [--port <n>] [--url https://<hostname>] [--background]`', '`http://127.0.0.1:4777`', 'All projects']) assert.ok(row.includes(fact), `its row has ${fact}`);
+  for (const fact of ['`speck serve [--port <n>] [--url https://<hostname>] [--background]`', '`http://127.0.0.1:4777`', 'All projects', '`/project/`']) assert.ok(row.includes(fact), `its row has ${fact}`);
   const lines = speck(os.tmpdir(), process.env, 'help').stdout.split('\n'), at = lines.findIndex(l => l.startsWith('  speck serve'));
   const help = lines.slice(at, at + lines.slice(at + 1).findIndex(l => /^ {2}speck /.test(l)) + 1).join('\n');
   for (const fact of ['--port <n>', '--url https://<hostname>', 'http://127.0.0.1:4777', 'All projects']) assert.ok(help.includes(fact), `speck help has ${fact}: ${help}`);

@@ -135,29 +135,39 @@ test('0757 AC2: a list that can\'t be read is said on All projects, with why', a
   assert.equal(JSON.parse(r.body).error, 'Can\'t read ~/.config/speck/projects.json: it isn\'t a list of projects. Delete it, then add your projects again with `speck projects add`.');
 });
 
-test('0757 AC2: choosing a project shows its own panel at the same address until the browser closes, and its own port goes back to All projects', async t => {
+test('0757 AC2: choosing a project shows its own panel at the same address, under /project/, while the address itself stays All projects', async t => {
   const dir = panelsHere(), a = await panel(t, dir, 'alpha'), b = await panel(t, dir, 'bravo');
   const f = await front(t, dir, [{ folder: '/x/alpha', name: 'alpha', port: a.port }, { folder: '/x/bravo', name: 'bravo', port: b.port }]);
   const chose = await choose(f, b.port);
   assert.equal(chose.status, 200, chose.body);
   assert.equal(chose.headers['x-speck-panel'], undefined);
-  const set = setCookieOf(chose);
-  assert.match(set, new RegExp(`^speck-serve-${f.port}=${b.port}; `));
-  assert.match(set, /Path=\//);
-  assert.match(set, /SameSite=Strict/);
-  assert.match(set, /HttpOnly/);
-  assert.doesNotMatch(set, /Max-Age|Expires/i, 'a cookie for the browser\'s session only, so the address opens on All projects again');
+  assert.equal(setCookieOf(chose), `speck-serve-${f.port}=${b.port}; Path=/; Max-Age=31536000; HttpOnly; SameSite=Strict`);
   const cookie = cookieOf(chose);
-  const page = await ask(f.port, { cookie });
+  const page = await ask(f.port, { pathName: '/project/', cookie });
   assert.match(page.body, /The panel of bravo\./, 'its page is its own panel\'s');
   assert.equal(page.headers['x-speck-panel'], b.id);
   assert.equal(page.headers['x-speck-serve'], '1', 'saying it\'s at speck serve\'s address');
-  assert.match((await ask(f.port)).body, /<meta name="speck-serve" id="speck-serve" content="1">/, 'without the cookie, All projects');
+  // Its page's files, which load from beside it, are its own panel's, asked of it as its own.
+  b.seen.length = 0;
+  const file = await ask(f.port, { pathName: '/project/panel.js?v=2', cookie });
+  assert.equal(file.headers['x-stand-in'], 'bravo');
+  assert.equal(b.seen[0].url, '/panel.js?v=2');
+  const bare = await ask(f.port, { pathName: '/project', cookie });
+  assert.equal(bare.status, 302);
+  assert.equal(bare.headers.location, '/project/', 'so its files load from under it');
+  // The address itself, and its own files, stay All projects', whatever is chosen: Back, or opening it again, goes there.
+  assert.match((await ask(f.port, { cookie })).body, /<meta name="speck-serve" id="speck-serve" content="1">/);
+  assert.equal((await ask(f.port, { pathName: '/panel.js', cookie })).body, fs.readFileSync(path.join(ROOT, 'templates', 'panel.js'), 'utf8'));
   // Its menu goes to another project, or back to All projects with the address's own port.
   assert.match(cookieOf(await choose(f, a.port)), new RegExp(`^speck-serve-${f.port}=${a.port}$`));
   const home = await choose(f, f.port);
   assert.equal(home.status, 200);
   assert.match(setCookieOf(home), new RegExp(`^speck-serve-${f.port}=; .*Max-Age=0`));
+  // With no project chosen, /project/ is All projects.
+  const none = await ask(f.port, { pathName: '/project/' });
+  assert.equal(none.status, 302);
+  assert.equal(none.headers.location, '/');
+  assert.equal(none.headers['set-cookie'], undefined);
 });
 
 test('0757 AC2: only a running panel can be chosen, and nothing reaches any other port', async t => {
@@ -176,15 +186,17 @@ test('0757 AC2: only a running panel can be chosen, and nothing reaches any othe
   assert.equal(st.status, 502);
   assert.equal(JSON.parse(st.body).gone, true);
   assert.equal((await ask(f.port, { method: 'POST', pathName: '/api/tickets/1/ready', origin: f.origin, cookie })).status, 502);
-  const page = await ask(f.port, { cookie });
-  assert.match(page.body, /<meta name="speck-serve" id="speck-serve" content="1">/, 'a reload shows All projects');
+  const page = await ask(f.port, { pathName: '/project/', cookie });
+  assert.equal(page.status, 302);
+  assert.equal(page.headers.location, '/', 'a reload goes to All projects');
   assert.match(setCookieOf(page), /Max-Age=0/, 'and forgets the choice');
+  assert.equal((await ask(f.port, { pathName: '/project/panel.js', cookie })).status, 404);
   assert.equal(reached, 0, 'nothing reached the other port');
   // A panel's own switcher cookie isn't this address's.
-  assert.match((await ask(f.port, { cookie: `speck-shown-${f.port}=${port}` })).body, /content="1"/);
+  assert.equal((await ask(f.port, { pathName: '/project/', cookie: `speck-shown-${f.port}=${port}` })).headers.location, '/');
 });
 
-test('0757 AC2: a project\'s page left at the address once its project stops being chosen reloads, and shows All projects', async t => {
+test('0757 AC2: a project\'s page left at the address once its project stops being chosen reloads, and goes to All projects', async t => {
   const f = await front(t, panelsHere()), id = panelIdOf((await ask(f.port)).body);
   const st = await ask(f.port, { pathName: '/api/state' });
   assert.equal(st.status, 404);
@@ -284,8 +296,8 @@ test('0757 AC4: the shown project\'s panel stopping is said on its page\'s strea
   assert.equal(JSON.parse(st.body).gone, true);
   const other = cookieOf(await choose(f, b.port));
   assert.equal((await ask(f.port, { pathName: '/api/state', cookie: other })).headers['x-stand-in'], 'bravo', 'another project still shows');
-  const page = await ask(f.port, { cookie });
-  assert.match(page.body, /content="1"/, 'a reload of the stopped one shows All projects');
+  const page = await ask(f.port, { pathName: '/project/', cookie });
+  assert.equal(page.headers.location, '/', 'a reload of the stopped one goes to All projects');
   assert.match(setCookieOf(page), /Max-Age=0/);
 });
 

@@ -107,14 +107,15 @@ export function summaryOf(to, via) {
 
 // Passes the request on to the panel on `to`, on this machine, as one made to it directly, and its answer back. `via`
 // is the port passing it on; `ours` is whether the request's Origin is an address passing it on, which the panel on
-// `to` then sees as its own; `gone` answers instead when that panel can't be reached.
-export function passOn(req, res, to, { via, ours, gone }) {
+// `to` then sees as its own; `gone` answers instead when that panel can't be reached; `path` is what to ask it for, the
+// request's own path unless an address shows the panel under a path of its own (0757).
+export function passOn(req, res, to, { via, ours, gone, path = req.url }) {
   const headers = {};
   for (const [k, v] of Object.entries(req.headers)) if (!HOP.has(k)) headers[k] = v;
   headers.host = `127.0.0.1:${to}`;
   headers['x-speck-via'] = String(via); // the panel on `to` answers it itself, never passing it on again
   if (ours) headers.origin = `http://127.0.0.1:${to}`;
-  const up = http.request({ host: '127.0.0.1', port: to, method: req.method, path: req.url, headers }, answer => {
+  const up = http.request({ host: '127.0.0.1', port: to, method: req.method, path, headers }, answer => {
     const back = {};
     for (const [k, v] of Object.entries(answer.headers)) if (!HOP.has(k)) back[k] = v;
     res.writeHead(answer.statusCode, back);

@@ -109,7 +109,7 @@ async function chooseProject(port) {
   if (!/^\d{1,5}$/.test(port)) return;
   let res = null, body = null;
   try { res = await fetch(`/api/projects/${port}`, { method: 'POST' }); body = await res.json(); } catch { /* answered below */ }
-  if (res && res.ok) return location.reload();
+  if (res && res.ok) return SERVE ? location.assign('project/') : location.reload(); // 0757: from All projects at speck serve's address, to where it shows the project chosen, so Back comes back
   cantShow((body && body.error) || `can't reach ${reached()}.`);
   projectsDrawn = null;
   drawProjects(); // the menu goes back to the project shown

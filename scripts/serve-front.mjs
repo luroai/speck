@@ -1,11 +1,12 @@
 // 0757: speck serve's one address. It answers on 127.0.0.1 at its port, 4777 unless --port gives another, and with
 // --url at that https address too, serving only the Host headers a panel serves and taking a choice only from a page
 // at the address, as its Origin says. It opens on All projects: the panel's own page, from this copy of speck, with only
-// the bridge on it (0596), listing every project on `speck projects`' list. Choosing one sets a cookie for this
-// address, which from then on passes each of the page's requests on to that project's panel, on its own port, and its
-// answers back, as a panel's project menu does (0516): its own page, with its own key, and its live updates, and every
-// write, which that panel checks as its own. The cookie lasts until the browser closes, so the address opens on All
-// projects again. A project's page says it's here by the X-Speck-Serve header on every answer.
+// the bridge on it (0596), listing every project on `speck projects`' list, at / whatever has been chosen. Choosing one
+// sets a cookie for this address and shows that project's panel under /project/, its page's files with it, as they
+// load from beside the page (0543); its requests to /api/ go by the cookie. Each is passed on to that project's panel,
+// on its own port, and its answer back, as a panel's project menu does (0516): its own page, with its own key, its live
+// updates and every write, which that panel checks as its own. So whatever its version, the browser's Back, or opening
+// the address again, goes back to All projects. Every answer says it's speck serve's address (X-Speck-Serve).
 import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
@@ -20,6 +21,7 @@ import { usageWarnings } from './subscriptions.mjs';
 import { BUILD_ENV } from './build-env.mjs';
 
 const PANEL_PORT = 4777; // a panel's own default, which speck serve's is too
+const SHOWN = '/project'; // where a chosen project's panel is shown; panel-header.js goes to it from All projects
 
 // speck serve's address from its arguments, checked as a panel's: { port, url }, url being { origin, host } or null.
 export const serveAddress = args => ({ port: panelPort(args), url: panelUrl(args) });
@@ -39,6 +41,7 @@ export async function startFront({ port, url = null, env = process.env, projects
   const json = (res, status, body, headers = {}) => { res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', ...headers }); res.end(JSON.stringify(body)); };
   const text = (res, status, body, type = 'text/plain', headers = {}) => { res.writeHead(status, { 'Content-Type': `${type}; charset=utf-8`, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', ...headers }); res.end(body); };
   const clear = () => `${cookie}=; Path=/; Max-Age=0; HttpOnly; SameSite=Strict`;
+  const redirect = (res, to, headers = {}) => { res.writeHead(302, { Location: to, 'Cache-Control': 'no-store', ...headers }); res.end(); };
   // The port of the panel this browser chose at the address, from its cookie, or null for All projects.
   const chosen = req => { const m = String(req.headers.cookie || '').match(new RegExp(`(?:^|;\\s*)${cookie}=(\\d{1,5})(?:;|$)`)); return m ? +m[1] : null; };
   // All projects: the panel's page, with no project, key or board of its own.
@@ -53,7 +56,7 @@ export async function startFront({ port, url = null, env = process.env, projects
     if (!ours(req)) return json(res, 403, { error: 'Forbidden: only a page at this address can do that. Reload it.' });
     if (to === at) return json(res, 200, { ok: true }, { 'Set-Cookie': clear() });
     if (!running(to)) return json(res, 404, { error: 'That project\'s panel isn\'t running any more, so it can\'t be shown. Pick another project.' });
-    return json(res, 200, { ok: true }, { 'Set-Cookie': `${cookie}=${to}; Path=/; HttpOnly; SameSite=Strict` });
+    return json(res, 200, { ok: true }, { 'Set-Cookie': `${cookie}=${to}; Path=/; Max-Age=31536000; HttpOnly; SameSite=Strict` });
   }
 
   // POST /api/projects/summary: 0595's summary of each project on the list, from its own panel, all at once, by name. A
@@ -76,12 +79,8 @@ export async function startFront({ port, url = null, env = process.env, projects
     return json(res, 200, { self: null, projects: out, usage: Array.isArray(usage) ? usage : [] });
   }
 
-  // The address's own answers, while no project is chosen: All projects and its files. A project's page asking here
-  // since its project stopped being chosen is told its project has gone (its stream) or answered as from another
-  // panel (anything else), so it reloads and shows All projects.
+  // The address's own: All projects at /, whatever has been chosen, and its files.
   function own(req, res, where) {
-    if (where === '/api/events') return goneAnswer(req, res, at, panels(), { serve: true });
-    if (where.startsWith('/api/')) return json(res, 404, { error: 'No project is shown at this address. Reload the page to see All projects.' });
     if (req.method !== 'GET') return text(res, 405, 'Method not allowed.\n', 'text/plain', { Allow: 'GET' });
     if (where === '/') {
       try { return text(res, 200, page(), 'text/html'); }
@@ -98,13 +97,18 @@ export async function startFront({ port, url = null, env = process.env, projects
     const where = req.url.split('?')[0], pick = where.match(/^\/api\/projects\/(\d{1,5})$/);
     if (pick) return choose(req, res, +pick[1]);
     if (where === '/api/projects/summary') return void summaries(req, res);
+    if (where === SHOWN) return redirect(res, `${SHOWN}/`); // so its page's files load from under it
+    const shown = where.startsWith(`${SHOWN}/`);
+    if (!shown && !where.startsWith('/api/')) return own(req, res, where);
     const to = chosen(req);
-    if (to !== null) {
-      if (running(to)) return passOn(req, res, to, { via: at, ours: ours(req), gone: () => goneAnswer(req, res, to, panels(), { serve: true }) });
-      if (where !== '/' || req.method !== 'GET') return goneAnswer(req, res, to, panels(), { serve: true });
-      res.setHeader('Set-Cookie', clear()); // its panel has stopped: a reload shows All projects, and forgets the choice
-    }
-    return own(req, res, where);
+    if (to !== null && running(to)) return passOn(req, res, to, { via: at, ours: ours(req), path: shown ? req.url.slice(SHOWN.length) : req.url, gone: () => goneAnswer(req, res, to, panels(), { serve: true }) });
+    // No project to show. Its page goes to All projects, forgetting a choice whose panel has stopped. A project's page
+    // still open is told on its stream that its project has gone, and its other requests are answered as from another
+    // panel, so it reloads, and goes there too.
+    if (shown) return where === `${SHOWN}/` && req.method === 'GET' ? redirect(res, '/', to === null ? {} : { 'Set-Cookie': clear() }) : text(res, 404, 'Not found.\n');
+    if (to !== null) return goneAnswer(req, res, to, panels(), { serve: true });
+    if (where === '/api/events') return goneAnswer(req, res, at, panels(), { serve: true });
+    return json(res, 404, { error: 'No project is shown at this address. Reload the page to see All projects.' });
   });
   await new Promise((resolve, reject) => {
     server.once('error', e => reject(e.code === 'EADDRINUSE'
