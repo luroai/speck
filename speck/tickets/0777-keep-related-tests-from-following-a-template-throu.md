@@ -1,7 +1,7 @@
 ---
 id: "0777"
 title: "Keep related tests from following a template through the panel's test support"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: "speck/ideas/done/2026-11-26-keep-related-tests-from-following-a-templat
 after: []                # ticket ids that must be done first
 created: 2026-11-26
 started: "2026-11-26T23:48:45.628Z"
+approved: "2026-11-26T23:57:33.441Z"
 
 ---
 # 0777 · Keep related tests from following a template through the panel's test support
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 `speck test --related` brings in every test that imports `test/support/panel.mjs` whenever any template that file can read changes. A change to the factory floor chose 533 test files, and 0766's build 625, so a build's related run outlasts the builder's 10-minute shell limit.
@@ -51,9 +52,15 @@ A build that changes the factory floor's page now runs only the handful of tests
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 ownOf strips comments when matching every changed file, including non-template code.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 330,833
+- Elapsed since build started: 9 min
+- Changed lines: 43 (limit 5000)
 - Follow-ups:
   - To the inbox: `speck/ideas/2026-11-26-bring-in-panel-tests-for-speck-face-and-mood-changes.md`. A change to `templates/speck-mood.js` or `templates/speck-face.js` doesn't bring in the panel tests, and 0696's in-repo test passes only because untracked changes carry over between its branches in the measured repo.
   - Not saved: the comment stripping in `code()` is a heuristic; a regex literal holding an unescaped `/*` inside a [class], or a backtick, could hide the code after it. Only templates' matching uses it.
