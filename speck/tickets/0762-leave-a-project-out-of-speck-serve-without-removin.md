@@ -154,3 +154,94 @@ A project can be turned off in the list: `speck serve` neither runs nor shows it
 ```
 
 </details>
+
+<details><summary>Round 2 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "12f9f1fa3a2e03ba3008d5230436cd2434ef84f0",
+    "session": "continued",
+    "thread_id": "01a217bc-1f8b-7063-84ed-47f831376c13",
+    "builder_response": "- Tests run: test/projects-0762.test.mjs test/serve-front-0762.test.mjs test/serve-0762.test.mjs test/serve-runs-0762.test.mjs, plus every existing test file naming panel-projects.mjs, serve-runs.mjs or serve-front.mjs, which this round changed: test/bridge-usage-0720.test.mjs test/build-panels-0619.test.mjs test/panel-0516.test.mjs test/panel-summary-0595.test.mjs test/serve-front-0757.test.mjs test/serve-0758.test.mjs test/serve-install-0759.test.mjs test/serve-front-panel-0757.test.mjs test/serve-0757.test.mjs (267 pass, 0 fail).\n- F1: fixed. The menu is now cut down on the server, so it holds whatever speck the project's page is from. `serve-front.mjs` `stateShown`/`cutState`: every `/api/state` answer passed on to a chosen panel has `projects.list` (the menu's list since 0516) cut down to the panels the address shows, plus the address's own record (which an older page lists as \"speck serve\", so its menu still goes back to All projects) and the page's own panel. An answer that gives only what changed (0188) and leaves the list out as unchanged gets the list that panel last sent through the address put in, cut down as it is now, so turning a project on or off reaches the page with the next board even when the panel's own list hasn't changed. Until the address has seen a list from that panel, `X-Speck-Have` is dropped from the request so the panel sends the whole board. `passOn` (panel-projects.mjs) takes an optional `rewrite` for this; without it nothing changes. The page-side header and `panel-header.js` change are removed, and the brief's older-speck caveat with them. Tests: serve-front-0762 \"the project menu's list in each board passed on…\" checks the whole board, a delta with the list, a delta without it (bravo turned on), a board with no list, and that the whole board is asked for first; and that without `shown` boards pass as they came.\n- F2: fixed. `runKeeper.check(folders, off)` (serve-runs.mjs) now takes the projects that are off, and keeps their remembered run (`last`) while they're off instead of forgetting it; they're still dropped from `looked`, so turning one on looks at it afresh. On an older speck, a run that ended by itself while off is started once the project is on (\"as it was on when the project was turned off\"); one that said `speck run stopped.` while off stays off; a project taken off the list is still forgotten. `serve.mjs` passes the off projects. Tests: test/serve-runs-0762.test.mjs, all three cases.\n",
+    "seconds": 34,
+    "usage": {
+      "input_tokens": 769287,
+      "cached_input_tokens": 674304,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2020,
+      "reasoning_output_tokens": 146
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 29400,
+      "cached": 512512,
+      "write": 0,
+      "output": 1055
+    },
+    "cost_usd": 0.1206012,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-26T12:06:17.881Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "projects.mjs turnProject preserves list membership and changes only home settings. The AC1 tests passed, including snapshots verifying neither project changes."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "serve.mjs pass excludes off projects from panel starts and run supervision and stops only owned panels. The real-service test passed, covering the 10-second deadline and hand-started processes."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "serve-front.mjs cutState now filters menu data for older pages, and response-filtering tests passed. However, changing the off list does not trigger a board request in an already open project page when its upstream board remains unchanged."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The real-service test checks restoration within 10 seconds. runKeeper.check now preserves last records for off projects; the three new legacy-run tests passed, covering unexpected exits, deliberate stops and removal."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The brief's command table describes off and on, checked by the passing AC5 command-fact test. This round reports 267 passing tests and no failures."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/serve-front.mjs",
+        "issue": "The menu fix remains incomplete for an already open project page. If another project's hand-started panel stays running when that project is turned off, the upstream panel's project list and board can remain unchanged. The service only filters subsequent /api/state responses; it does not notify the page that its visibility list changed. boardFeed announces changed boards only, and panel.js handles ordinary pings by rendering existing state without fetching it. The excluded project therefore remains in the menu until some unrelated board change or a reload. The new tests manually request every board, so they miss this case.",
+        "suggested_fix": "Ensure service visibility changes cause open project pages, including older pages, to fetch a filtered board even when their upstream board is unchanged. Add a test with an open event stream and an unchanged upstream board, then turn off a project whose hand-started panel remains running and verify its menu entry disappears without a reload or unrelated change.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/serve-runs.mjs",
+        "issue": "The previously reported loss of legacy run intent across off/on is fixed: excluded projects retain their remembered run records, while deliberate stops are still respected.",
+        "suggested_fix": "No further change required for this finding.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The run-restoration problem is fixed, and menu data is now filtered for older versions too. One gap remains: an already open project menu can keep showing a project after it is turned off, until the page reloads or something else changes."
+  }
+}
+```
+
+</details>

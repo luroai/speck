@@ -40,7 +40,8 @@ export const addressText = (port, origin) => `http://127.0.0.1:${port}/${origin 
 // 0762: `shown()`, when given, gives the ports of the panels the address may show, as a Set: those of the projects on
 // the list that aren't turned off. Any other running panel, started by hand for a project that's off or not listed, is
 // left out of the choices and of a project's menu, as the project lists in /api/state answers passed on are cut down to
-// them (stateShown), whatever speck the project's page is from.
+// them (stateShown), whatever speck the project's page is from. When they change, each open project page's stream is
+// told to read its board again (nudge), so its menu changes within a few seconds.
 export async function startFront({ port, url = null, env = process.env, projects, shown = null }) {
   const dir = panelsDir({ ...env, [BUILD_ENV]: undefined }); // your panels', as speck serve starts them, even from a build
   const showing = () => { if (!shown) return null; try { return shown(); } catch { return new Set(); } };
@@ -86,6 +87,27 @@ export async function startFront({ port, url = null, env = process.env, projects
     v.projects = cut(v.projects);
     return JSON.stringify(v);
   }
+
+  // 0762: each project page's stream passed on, which can be told to read its board again. A board's number of 0 makes
+  // its panel answer at once with the board it has (0177), which comes cut down to what the address shows now. It's
+  // told only between the panel's own events, so none is cut in two.
+  const streams = new Map(); // a stream's answer → its nudge()
+  function nudgeable(answer, res) {
+    let tail = '\n\n', owed = false;
+    const tell = () => { owed = false; res.write('data: 0\n\n'); };
+    streams.set(res, () => { if (tail === '\n\n') tell(); else owed = true; });
+    answer.on('data', d => { res.write(d); tail = (tail + String(d)).slice(-2); if (tail === '\n\n' && owed) tell(); });
+    answer.on('end', () => res.end());
+    res.on('close', () => streams.delete(res));
+  }
+  // Which panels it shows, looked at every 2 seconds: when they change, every project page's stream is told.
+  let lastShown = null;
+  const watcher = shown ? setInterval(() => {
+    const now = JSON.stringify([...(showing() || [])].sort((a, b) => a - b));
+    if (lastShown !== null && now !== lastShown) for (const nudge of streams.values()) nudge();
+    lastShown = now;
+  }, 2000) : null;
+  watcher?.unref();
 
   // POST /api/projects/<port>: show the project whose panel is on that port at this address, or All projects again
   // for this address's own port. Only from a page at this address: it may be a project's page, carrying its panel's key.
@@ -143,7 +165,8 @@ export async function startFront({ port, url = null, env = process.env, projects
     const to = chosen(req);
     if (to !== null && running(to)) {
       const rewrite = where === '/api/state' ? stateShown(req, to) : null; // 0762
-      return passOn(req, res, to, { via: at, ours: ours(req), path: shown ? req.url.slice(SHOWN.length) : req.url, gone: () => goneAnswer(req, res, to, panels(), { serve: true }), rewrite });
+      const pipe = where === '/api/events' && !shown ? nudgeable : null; // 0762
+      return passOn(req, res, to, { via: at, ours: ours(req), path: shown ? req.url.slice(SHOWN.length) : req.url, gone: () => goneAnswer(req, res, to, panels(), { serve: true }), rewrite, pipe });
     }
     // No project to show. Its page goes to All projects, forgetting a choice whose panel has stopped. A project's page
     // still open is told on its stream that its project has gone, and its other requests are answered as from another
@@ -166,5 +189,5 @@ export async function startFront({ port, url = null, env = process.env, projects
   id = crypto.createHash('sha256').update(`speck serve\0${at}`).digest('hex').slice(0, 16);
   cookie = `speck-serve-${at}`;
   const unregister = registerPanel({ port: at, name: 'speck serve', serve: true }, dir);
-  return { port: at, close: () => { unregister(); server.close(); server.closeAllConnections(); } };
+  return { port: at, close: () => { clearInterval(watcher); unregister(); server.close(); server.closeAllConnections(); } };
 }

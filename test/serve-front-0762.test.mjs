@@ -130,3 +130,29 @@ test('0762 AC3: without a list of what to show, a board is passed on as it came'
   assert.deepEqual(JSON.parse(r.body).projects.list, list);
   assert.equal(a.seen.at(-1)['x-speck-have'], 'e:1');
 });
+
+test('0762 AC3: when what the address shows changes, each open project page is told to read its board again, between its panel\'s own events', async t => {
+  const dir = panelsHere(), a = await panel(t, dir, 'alpha'), b = await panel(t, dir, 'bravo');
+  let ports = new Set([a.port, b.port]);
+  const f = await front(t, dir, () => [{ folder: '/x/alpha', name: 'alpha', port: a.port }], () => ports);
+  const cookie = cookieOf(await choose(f, a.port));
+  let got = '';
+  const req = http.get({ host: '127.0.0.1', port: f.port, path: '/api/events', headers: { Host: `127.0.0.1:${f.port}`, Cookie: cookie } }, res => res.setEncoding('utf8').on('data', d => { got += d; }));
+  req.on('error', () => {});
+  t.after(() => req.destroy());
+  const until = async (what, check, ms = 6000) => { for (const end = Date.now() + ms; !check(); await new Promise(r => setTimeout(r, 50))) if (Date.now() > end) assert.fail(`${what} didn't happen: ${JSON.stringify(got)}`); };
+  await until('the panel\'s first event', () => got.includes('data: 1\n\n'));
+  await new Promise(r => setTimeout(r, 2100)); // the address has looked at what it shows once
+  // bravo turned off, with its panel still running: the page is told within a few seconds.
+  ports = new Set([a.port]);
+  const off = Date.now();
+  await until('the page told to read its board again', () => got.includes('data: 0\n\n'));
+  assert.ok(Date.now() - off < 5000);
+  // An event of the panel's own, half sent when the address tells it again, stays whole.
+  a.send('event: log\ndata: {"id":"0001"');
+  await new Promise(r => setTimeout(r, 100));
+  ports = new Set([a.port, b.port]);
+  await new Promise(r => setTimeout(r, 2500));
+  a.send(',"text":"x"}\n\n');
+  await until('the rest of the panel\'s event, then the telling', () => got.endsWith('event: log\ndata: {"id":"0001","text":"x"}\n\ndata: 0\n\n'));
+});

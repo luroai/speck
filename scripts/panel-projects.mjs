@@ -111,8 +111,9 @@ export function summaryOf(to, via) {
 // is the port passing it on; `ours` is whether the request's Origin is an address passing it on, which the panel on
 // `to` then sees as its own; `gone` answers instead when that panel can't be reached; `path` is what to ask it for, the
 // request's own path unless an address shows the panel under a path of its own (0757). 0762: `rewrite(answer)`, when
-// given, may give a function that changes the answer's body, which is then read whole and sent changed.
-export function passOn(req, res, to, { via, ours, gone, path = req.url, rewrite = null }) {
+// given, may give a function that changes the answer's body, which is then read whole and sent changed; `pipe(answer,
+// res)`, when given, sends the answer's body on in place of answer.pipe(res).
+export function passOn(req, res, to, { via, ours, gone, path = req.url, rewrite = null, pipe = null }) {
   const headers = {};
   for (const [k, v] of Object.entries(req.headers)) if (!HOP.has(k)) headers[k] = v;
   headers.host = `127.0.0.1:${to}`;
@@ -137,7 +138,7 @@ export function passOn(req, res, to, { via, ours, gone, path = req.url, rewrite 
       return;
     }
     res.writeHead(answer.statusCode, back);
-    answer.pipe(res);
+    if (pipe) pipe(answer, res); else answer.pipe(res);
   });
   up.on('error', () => { if (!res.headersSent) gone(); else res.destroy(); });
   res.on('close', () => { if (!res.writableFinished) up.destroy(); });
