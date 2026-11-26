@@ -197,3 +197,51 @@ button.slot:hover { background: var(--edge); }
   .station.moving .station-state::before, .card.moving::before, .slot.lit .slot-stripe { animation: floor-pulse 1.6s ease-in-out infinite; }
 }
 @keyframes floor-pulse { 50% { opacity: .35; } }
+
+/* 0767: the line with Virgil's dial beside it, or under it in a window under 1024 px. */
+.floor-top { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 12px; align-items: start; }
+.floor-line-part, .floor-dial-part { min-width: 0; }
+.dial-box {
+  --corner: var(--mark);
+  display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 18px 16px 16px;
+  background:
+    linear-gradient(var(--corner), var(--corner)) left top / 12px 2px no-repeat,
+    linear-gradient(var(--corner), var(--corner)) left top / 2px 12px no-repeat,
+    linear-gradient(var(--corner), var(--corner)) right top / 12px 2px no-repeat,
+    linear-gradient(var(--corner), var(--corner)) right top / 2px 12px no-repeat,
+    linear-gradient(var(--corner), var(--corner)) left bottom / 12px 2px no-repeat,
+    linear-gradient(var(--corner), var(--corner)) left bottom / 2px 12px no-repeat,
+    linear-gradient(var(--corner), var(--corner)) right bottom / 12px 2px no-repeat,
+    linear-gradient(var(--corner), var(--corner)) right bottom / 2px 12px no-repeat,
+    var(--panel);
+  box-shadow: inset 0 0 0 1px var(--edge);
+}
+.dial { position: relative; width: 200px; height: 200px; flex: none; }
+.dial-rings { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.dial-rings circle { fill: none; stroke: var(--edge); stroke-width: 1px; }
+.dial-rings .ring-outer { stroke: var(--mark); }
+.dial-rings .ring-tick { stroke: var(--mark); stroke-width: 1.5px; }
+.dial-asking .dial-rings .ring-outer, .dial-asking .dial-rings .ring-tick, .dial-focused .dial-rings .ring-mid { stroke: var(--signal); }
+.dial-face { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+.dial-face .speck-face { display: block; margin-top: 18px; }
+.dial-count { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.dial-n { font: 300 64px/64px var(--font-ui); letter-spacing: -.03em; font-variant-numeric: tabular-nums; color: var(--muted); }
+.dial-count.some .dial-n { color: var(--signal); }
+.dial-label { font: 500 12px/16px var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.dial-none { margin: 0; font-size: 14px; line-height: 20px; color: var(--muted); }
+.dial-said { margin: 0; font-size: 14px; line-height: 20px; color: var(--signal); text-align: center; }
+.dial-needs { display: flex; flex-direction: column; gap: 4px; width: 100%; margin: 0; padding: 0; list-style: none; }
+.dial-need { min-width: 0; }
+.need-line {
+  position: relative; display: flex; align-items: baseline; gap: 8px; width: 100%; min-width: 0; padding: 6px 8px 7px 12px;
+  font: inherit; color: inherit; text-align: left; background: var(--raise); border: 0; border-radius: 0; cursor: pointer;
+}
+.need-line::before { content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 3px; background: var(--signal); }
+.need-line:hover { box-shadow: inset 0 0 0 1px var(--signal-edge); }
+.need-project { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 500 14px/19px var(--font-ui); }
+.need-id { flex: none; font: 500 12px/16px var(--font-mono); letter-spacing: .08em; color: var(--muted); }
+.need-why { flex: none; margin-left: auto; font: 500 12px/16px var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--signal); }
+
+@media (max-width: 1023.98px) {
+  .floor-top { grid-template-columns: minmax(0, 1fr); }
+}
