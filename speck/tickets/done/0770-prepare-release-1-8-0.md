@@ -1,7 +1,7 @@
 ---
 id: "0770"
 title: "Prepare release 1.8.0"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: ["0764","0765","0766","0767","0768","0769"]                # ticket ids t
 created: 2026-11-26
 started: "2026-11-26T21:22:17.067Z"
 approved: "2026-11-26T21:28:01.942Z"
+finished: "2026-11-26T21:31:04.012Z"
 
 ---
 # 0770 · Prepare release 1.8.0
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Since 1.7.0, `speck serve`'s address has a factory floor page for a laptop: project stations, the line with the model on every station, Virgil's dial, your subscriptions and each project's board side by side. Anyone updating speck still gets 1.7.0.
