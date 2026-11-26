@@ -210,7 +210,8 @@
         : `Resets ${new Date(at).getDate()} ${MONTHS[new Date(at).getMonth()]}`;
     }
     const d = typeof u.resets_on === 'string' ? /^(\d{4})-(\d{2})-(\d{2})$/.exec(u.resets_on) : null;
-    return d && +d[2] >= 1 && +d[2] <= 12 && +d[3] >= 1 && +d[3] <= 31 ? `Resets ${+d[3]} ${MONTHS[+d[2] - 1]}` : 'Reset not known';
+    const on = d ? new Date(+d[1], +d[2] - 1, +d[3]) : null; // such as 2027-02-31 isn't a day
+    return on && on.getFullYear() === +d[1] && on.getMonth() === +d[2] - 1 && on.getDate() === +d[3] ? `Resets ${+d[3]} ${MONTHS[+d[2] - 1]}` : 'Reset not known';
   }
   function drawSubs() {
     const box = $('subs'), minute = Math.floor(Date.now() / 60000), drawn = JSON.stringify([usage, stations, minute, !stations && !!said]);

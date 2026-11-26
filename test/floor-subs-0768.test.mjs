@@ -71,8 +71,8 @@ test('0768 AC1: under the line, the floor shows each subscription\'s name, share
   assert.equal(byClass(c, 'sub-gauge')[0].attrs['aria-valuenow'], '42');
   assert.deepEqual([subFacts(x).n, subFacts(x).resets, agentOf(x)], ['7', 'Resets in 40 min', 'codex']);
   assert.deepEqual([subFacts(u).resets, agentOf(u)], ['Resets 1 Dec', 'cursor']);
-  const q = await open([sub({ resets_at: null, resets_on: '2026-12-45' }), sub({ id: 'codex', name: 'Codex', resets_at: at(3 * 1440 + 30) })]);
-  assert.deepEqual(subsOf(q).map(s => textOf(s, 'sub-resets')), ['Reset not known', 'Resets 29 Nov']);
+  const q = await open([sub({ resets_at: null, resets_on: '2026-12-45' }), sub({ id: 'codex', name: 'Codex', resets_at: at(3 * 1440 + 30) }), sub({ id: 'cursor', name: 'Cursor', resets_at: null, resets_on: '2027-02-31' })]);
+  assert.deepEqual(subsOf(q).map(s => textOf(s, 'sub-resets')), ['Reset not known', 'Resets 29 Nov', 'Reset not known']);
 });
 
 // ---------- AC2: how many stations it's feeding ----------
@@ -109,6 +109,14 @@ test('0768 AC3: speck serve marks a window at 90% or more, or limited, as high, 
   const unnamed = codex(40, 60, { limit_reached: true, limit_type: 'something new' });
   assert.deepEqual(floorUsage({ codex: unnamed }, NOW).map(u => [u.label, u.used_percent, u.high, u.limited]), [['Week', 60, true, true]], 'a Codex limit naming no window, as the bridge warns');
   assert.deepEqual(floorUsage({ codex: codex(40, 60) }, NOW).map(u => u.limited), [false]);
+  const unknown = { read_at: at(-1), limit_reached: true, limit_type: 'unknown', windows: { five_hour: { used_percent: null, resets_at: at(60) } } };
+  assert.deepEqual(floorUsage({ codex: unknown }, NOW).map(u => [u.label, u.used_percent, u.high, u.limited]), [['5 hours', 100, true, true]], 'limited with no share used is still shown');
+});
+
+test('0768 AC3: a subscription limited with no share used shows orange as Limited', async () => {
+  const p = await open([sub({ id: 'codex', name: 'Codex', label: '5 hours', used_percent: 100, high: true, limited: true })]);
+  assert.ok(classes(subsOf(p)[0]).includes('high'));
+  assert.deepEqual([textOf(subsOf(p)[0], 'sub-n'), textOf(subsOf(p)[0], 'sub-warn')], ['100', 'Limited']);
 });
 
 test('0768 AC3: an agent with no reading shows none, and what isn\'t a reading is left out', async () => {

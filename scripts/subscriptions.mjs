@@ -168,12 +168,14 @@ export function floorUsage(usage, now = Date.now()) {
   return Object.keys(USAGE_NAMES).filter(id => Object.hasOwn(usage, id) && plain(usage[id])).flatMap(id => {
     const shown = readingShown(id, usage[id], now);
     if (!shown.read_at) return [];
-    const open = shown.windows.filter(w => stillOpen(w, now) && (w.limited || w.used_percent !== null));
+    // A limit_reached whose type names no window still limits it, as the bridge warns (usageWarnings), even when its
+    // windows give no share used.
+    const unnamed = codexLimitWindow(usage[id]) === null, still = shown.windows.filter(w => stillOpen(w, now));
+    const open = still.filter(w => w.limited || w.used_percent !== null || unnamed);
     if (!open.length) return [];
-    const rank = w => (w.limited ? 1000 : w.used_percent);
+    const rank = w => (w.limited ? 1000 : w.used_percent ?? -1);
     const w = open.reduce((a, b) => (rank(b) > rank(a) ? b : a));
-    // A limit_reached whose type names no window still limits it, as the bridge warns (usageWarnings).
-    const limited = w.limited || (!open.some(x => x.limited) && codexLimitWindow(usage[id]) === null);
+    const limited = w.limited || (!open.some(x => x.limited) && unnamed);
     return [{ id, name: USAGE_NAMES[id], label: w.label, used_percent: limited && w.used_percent === null ? 100 : w.used_percent,
       resets_at: w.resets_at, resets_on: w.resets_on, high: w.high || limited, limited }];
   });
