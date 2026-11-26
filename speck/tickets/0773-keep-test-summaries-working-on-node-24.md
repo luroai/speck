@@ -42,6 +42,7 @@ speck reads `node --test` output as TAP to say which test files failed and what 
 ## Notes
 - From 0741's note, checked with Node 24.18.1 (bundled with Cursor's server). This repo's `commands.test_files` is `node --test {files}`.
 - Decision: read the spec reporter's output too, rather than adding `--test-reporter=tap` to every project's settings.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
