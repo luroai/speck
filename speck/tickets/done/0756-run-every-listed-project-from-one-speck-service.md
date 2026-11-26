@@ -1,7 +1,7 @@
 ---
 id: "0756"
 title: "Run every listed project from one speck service"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -20,11 +20,12 @@ created: 2026-11-25
 built_on: "0755"
 started: "2026-11-26T09:39:22.799Z"
 approved: "2026-11-26T10:17:00.126Z"
+finished: "2026-11-26T10:20:21.642Z"
 
 ---
 # 0756 · Run every listed project from one speck service
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Each project needs its own `speck panel`, on its own port, started by hand in its own folder; a panel that stops stays stopped until someone notices. There's no one thing to start that brings up every project on the machine.

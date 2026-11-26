@@ -1,7 +1,8 @@
 // A stand-in for a project's own speck, for speck serve's tests (0756), copied into a project's .speck/scripts/ as its
 // speck.mjs. `panel --port <n>` does what speck serve relies on a real panel for, without the cost of starting one:
 // it serves GET /api/panel for the folder it was started in, on 127.0.0.1, and keeps a record of itself where real
-// panels do (SPECK_PANELS_DIR, which every test sets) while it runs. GET /copy says which file it runs from. SIGUSR2
+// panels do (SPECK_PANELS_DIR, which every test sets) while it runs. GET /copy says which file it runs from. 0757: it
+// gives speck serve's address what it asks a panel for: a summary of itself, asked as another speck, and its page. SIGUSR2
 // makes it another program with the same pid, as if the panel had stopped and its pid had been reused: it stops
 // serving, takes its record away and runs on under another name, ending on SIGTERM as most programs do.
 // `run` stands in for speck run (0758).
@@ -39,6 +40,8 @@ function startPanel() {
     res.setHeader('Content-Type', 'application/json');
     if (where === '/api/panel') return res.end(JSON.stringify({ repo, url: null }));
     if (where === '/copy') return res.end(JSON.stringify({ script: fileURLToPath(import.meta.url), pid: process.pid }));
+    if (where === '/api/projects/own' && req.headers['x-speck-via']) return res.end(JSON.stringify({ status: 'Idle', mood: 'watching', building: 0, needs_you: 0, needs: [] }));
+    if (where === '/') { res.setHeader('Content-Type', 'text/html'); return res.end(`<p>The panel of ${path.basename(repo)}.</p>`); }
     res.statusCode = 404;
     res.end('{}');
   });

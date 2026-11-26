@@ -230,3 +230,13 @@ test('0758: the brief names the files speck serve keeps runs going by, and that 
   for (const fact of ['`speck/.cache/runs/auto-build.json`', '`~/.config/speck/serve-runs.json`', 'at most 3 times an hour']) assert.ok(row.includes(fact), fact);
   assert.equal(RESTARTS_AN_HOUR, 3);
 });
+
+test('0758 AC4: the service speck serve --install writes stops only speck serve, so each speck run it started keeps running', async () => {
+  const { serveInstall, unitFile } = await import('../scripts/serve-install.mjs');
+  const home = tmp('speck-0758-install-');
+  const d = { platform: 'linux', home, user: 'robin', uid: 501, node: '/usr/bin/node', cli: '/opt/speck/scripts/speck.mjs',
+    env: { PATH: '/usr/bin', SPECK_HOME_SETTINGS_DIR: path.join(home, '.config', 'speck') },
+    run: (cmd, args) => (cmd === 'loginctl' && args[0] === 'show-user' ? { status: 0, stdout: 'yes\n', stderr: '', error: null } : { status: 0, stdout: '', stderr: '', error: null }) };
+  serveInstall(['--install'], d);
+  assert.match(fs.readFileSync(unitFile(d), 'utf8'), /^KillMode=process$/m);
+});

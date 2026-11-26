@@ -15,7 +15,7 @@ reviewer: ""             # blank: the reviewer your settings give when each revi
 reviewer_model: ""       # blank: your settings' reviewer_model (blank there too: the reviewer's default)
 reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low | medium | high | xhigh | max
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
-after: ["0755","0756","0757","0758","0759","0762"]                # ticket ids that must be done first
+after: ["0755","0756","0757","0758","0759","0762","0763"]                # ticket ids that must be done first
 created: 2026-11-25
 
 ---

@@ -65,9 +65,20 @@ export function removeProject(m, dir) {
   assert.equal(r.status, 0, r.stderr);
 }
 
+// A port on 127.0.0.1 that was free just now, found by a process of its own, so a helper can have one at once.
+export function freePortNow() {
+  const r = spawnSync(process.execPath, ['-e', 'const s = require("net").createServer().listen(0, "127.0.0.1", () => { process.stdout.write(String(s.address().port)); s.close(); })'], { encoding: 'utf8' });
+  const port = Number(r.stdout);
+  assert.ok(Number.isInteger(port) && port > 0, `no free port was found: ${r.stderr}`);
+  return port;
+}
+// 0757: speck serve answers at one address, 4777 unless --port gives another: each test's gets a free port of its own,
+// unless it gives one or stops speck serve, so none takes 4777 from a panel or speck serve of yours.
+const withPort = args => (args.includes('--stop') || args.some(a => /^--port(=|$)/.test(a)) ? args : [...args, '--port', String(freePortNow())]);
+
 // speck serve on the machine, as a process in the foreground, with all it prints. `extra` is added to its environment.
 export function startServe(m, args = [], extra = {}) {
-  const child = spawn(process.execPath, [CLI, 'serve', ...args], { cwd: os.tmpdir(), env: { ...m.env, ...extra } });
+  const child = spawn(process.execPath, [CLI, 'serve', ...withPort(args)], { cwd: os.tmpdir(), env: { ...m.env, ...extra } });
   let out = '';
   child.stdout.on('data', d => { out += d; });
   child.stderr.on('data', d => { out += d; });
@@ -75,7 +86,7 @@ export function startServe(m, args = [], extra = {}) {
 }
 
 // speck serve run to its end, as `speck serve --stop` or `--background` is, with what it printed.
-export const serveOnce = (m, ...args) => spawnSync(process.execPath, [CLI, 'serve', ...args], { cwd: os.tmpdir(), env: m.env, encoding: 'utf8', timeout: 60000 });
+export const serveOnce = (m, ...args) => spawnSync(process.execPath, [CLI, 'serve', ...withPort(args)], { cwd: os.tmpdir(), env: m.env, encoding: 'utf8', timeout: 60000 });
 
 // Waits for check() to give something truthy, and gives it, or fails naming `what` after `ms`.
 export async function until(what, check, ms = 10000) {
