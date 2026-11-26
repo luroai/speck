@@ -1,7 +1,7 @@
 ---
 id: "0769"
 title: "Open a ticket from the factory floor"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: ["0765","0766"]                # ticket ids that must be done first
 created: 2026-11-26
 built_on: "0766"
 started: "2026-11-26T20:32:49.112Z"
+approved: "2026-11-26T21:00:13.932Z"
 
 ---
 # 0769 · Open a ticket from the factory floor
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The factory floor shows tickets on the line and on the board, but reading one or acting on it needs its project's panel.
@@ -56,9 +57,15 @@ Worth watching: a project still on an older speck opens the ticket too, but its 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Navigation depends on every project having this new panel code, although speck serve serves each project's own copy.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 317,345
+- Elapsed since build started: 27 min
+- Changed lines: 124 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Inbox: speck/ideas/2026-11-26-steady-the-0761-ac2-wide-block-swipe-test.md, the 0761 AC2 real-browser swipe test failed once in this build's related run under load and passed on its own.
