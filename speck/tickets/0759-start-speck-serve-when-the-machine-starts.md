@@ -46,6 +46,8 @@ After a restart, nothing of speck comes back until someone starts it by hand, so
 - risk: high because it writes and enables a system service on the user's machine.
 - Checked 2026-11-26: `systemctl --user` (systemd 259 on the user's Linux box, its user manager running) and `loginctl enable-linger [USER]` (loginctl(1): starts the user's manager at boot and keeps it after logout) as the ticket says. `launchctl bootstrap gui/<uid> <plist>` and `launchctl bootout gui/<uid>/<label>` are launchctl(1)'s way to load and unload a login agent on current macOS; not run here, as this machine is Linux.
 - Failing before this build: none
+- `speck serve` takes no `--port` or `--url` yet: 0757 adds them. `--install` checks and passes them on as given, so a service installed with them starts properly once 0757 has shipped.
+- Self-check: WorkingDirectory is now `%h`, as systemd doesn't take a quoted path there (checked the unit with `systemd-analyze --user verify`); a failed install puts the old service file back and turns off lingering it turned on; the brief says `--stop` only stops an installed speck serve until the service starts it again.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
