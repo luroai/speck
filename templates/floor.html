@@ -17,10 +17,16 @@
 </header>
 <main class="floor">
   <p id="floor-said" class="floor-said" role="status" hidden></p>
-  <section class="floor-part" aria-labelledby="line-title">
-    <h2 id="line-title" class="floor-label">Line</h2>
-    <div id="line" class="line-box" role="region" aria-labelledby="line-title" tabindex="0"></div>
-  </section>
+  <div class="floor-top">
+    <section class="floor-part floor-line-part" aria-labelledby="line-title">
+      <h2 id="line-title" class="floor-label">Line</h2>
+      <div id="line" class="line-box" role="region" aria-labelledby="line-title" tabindex="0"></div>
+    </section>
+    <section class="floor-part floor-dial-part" aria-labelledby="dial-title">
+      <h2 id="dial-title" class="floor-label">Engineering manager</h2>
+      <div id="dial" class="dial-box"></div>
+    </section>
+  </div>
   <section class="floor-part" aria-labelledby="subs-title">
     <h2 id="subs-title" class="floor-label">Subscriptions</h2>
     <div id="subs" class="subs"></div>
