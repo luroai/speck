@@ -11,6 +11,8 @@
 // 0766: above the stations, the line: a row for each project through Queue, Builder, Reviewer, QA and Ship, from the line
 // its summary gives (0764's, scripts/panel-line.mjs), each lit station naming its ticket, agent, model and effort. The
 // members' faces on its headings are the panel's own (speck-face.js, which loads before this).
+// 0768: under the line, each subscription with a reading (the answer's usage): its tightest window's share used, as a
+// number and a segmented gauge in its agent's colour, when it resets and how many stations across all projects run on it.
 (() => {
   const FLOOR_MS = 2000, GIVE_UP_MS = 15000, KEPT = 'speck-floor-station', SVG = 'http://www.w3.org/2000/svg';
   const LANES = [['capture', 'Capture', 'Nothing captured'], ['plan', 'Plan', 'Nothing to plan'], ['build', 'Build', 'Nothing building or queued'], ['shipped', 'Shipped', 'Nothing shipped yet']];
@@ -43,8 +45,8 @@
   // stations: the last answer's. chosen: the station chosen here, which may have left the list. shown: the station whose
   // board is shown, the one chosen or, until one is, the first. board and boardName: its board, and the name speck serve
   // gave it, sent back so an unchanged one isn't sent again. boardGone: its panel gave none in the last answer.
-  let stations = null, chosen = keptStation(), shown = null, board = null, boardName = null, boardGone = false;
-  let said = null, asking = false, again = false, stationsDrawn = null, boardDrawn = null, lanesMade = null, lineDrawn = null;
+  let stations = null, usage = [], chosen = keptStation(), shown = null, board = null, boardName = null, boardGone = false;
+  let said = null, asking = false, again = false, stationsDrawn = null, boardDrawn = null, lanesMade = null, lineDrawn = null, subsDrawn = null;
 
   async function ask() {
     if (asking) { again = true; return; }
@@ -65,6 +67,7 @@
   }
   function took(body, want) {
     stations = body.stations.filter(s => s && typeof s === 'object' && typeof s.key === 'string' && typeof s.name === 'string');
+    usage = list(body.usage).filter(u => obj(u) && typeof u.id === 'string' && words(u.name) && Number.isFinite(u.used_percent));
     if (want !== chosen) return; // asked before another station was chosen: its board isn't the one wanted now
     const of = typeof body.chosen === 'string' ? body.chosen : null;
     if (of !== shown) { shown = of; board = null; boardName = null; }
@@ -88,6 +91,7 @@
     note.hidden = !said;
     note.textContent = said ? `Couldn't read your projects: ${said}` : '';
     drawLine();
+    drawSubs();
     drawStations();
     drawBoard();
   }
@@ -183,6 +187,56 @@
       item.title = `${words(t.id)} · ${words(t.title)}${mark ? `\n${mark}` : ''}`;
       return item;
     })));
+  }
+
+  // ---------- 0768: your subscriptions ----------
+
+  const SEGMENTS = 20;
+  // How many stations across all projects are running on agent `id` now: the tickets at their builders, reviewers and QA.
+  function feeding(id) {
+    let n = 0;
+    for (const s of list(stations)) {
+      const l = lineNow(s);
+      if (l) for (const m of MEMBERS) n += l.at[m].filter(w => agentColour(w.agent) === id).length;
+    }
+    return n;
+  }
+  // When a window resets, in a few words: in how long, by its time, or on its day.
+  function resetsWhen(u) {
+    const at = typeof u.resets_at === 'string' ? Date.parse(u.resets_at) : NaN;
+    if (Number.isFinite(at)) {
+      const m = Math.max(0, Math.ceil((at - Date.now()) / 60000));
+      return m < 1 ? 'Resets in under 1 min' : m < 60 ? `Resets in ${m} min` : m < 1440 ? `Resets in ${Math.floor(m / 60)} h${m % 60 ? ` ${m % 60} min` : ''}`
+        : `Resets ${new Date(at).getDate()} ${MONTHS[new Date(at).getMonth()]}`;
+    }
+    const d = typeof u.resets_on === 'string' ? /^(\d{4})-(\d{2})-(\d{2})$/.exec(u.resets_on) : null;
+    return d && +d[2] >= 1 && +d[2] <= 12 && +d[3] >= 1 && +d[3] <= 31 ? `Resets ${+d[3]} ${MONTHS[+d[2] - 1]}` : 'Reset not known';
+  }
+  function drawSubs() {
+    const box = $('subs'), minute = Math.floor(Date.now() / 60000), drawn = JSON.stringify([usage, stations, minute, !stations && !!said]);
+    if (drawn === subsDrawn) return;
+    subsDrawn = drawn;
+    if (!stations) return void box.replaceChildren(...(said ? [] : [el('p', 'floor-none', 'Reading your subscriptions…')]));
+    if (!usage.length) return void box.replaceChildren(el('p', 'floor-none', 'No usage readings yet: speck reads each agent\'s when a run on it ends.'));
+    box.replaceChildren(...usage.map(subOf));
+  }
+  function subOf(u) {
+    const used = Math.max(0, Math.min(100, Math.round(u.used_percent))), high = u.limited === true || u.high === true || used >= 90;
+    const lit = Math.round((used / 100) * SEGMENTS), n = feeding(agentColour(u.id)), when = resetsWhen(u);
+    const gauge = el('span', 'sub-gauge', null, ...Array.from({ length: SEGMENTS }, (_, i) => el('span', `sub-seg${i < lit ? ' on' : ''}`)));
+    gauge.setAttribute('role', 'meter');
+    gauge.setAttribute('aria-valuemin', '0');
+    gauge.setAttribute('aria-valuemax', '100');
+    gauge.setAttribute('aria-valuenow', String(used));
+    gauge.setAttribute('aria-label', `${words(u.name)}, ${used}% of its ${words(u.label) || 'window'} used`);
+    const warn = u.limited === true ? 'Limited' : high ? 'Nearly used up' : '';
+    const sub = el('div', `sub agent-${agentColour(u.id)}${high ? ' high' : ''}`, null,
+      el('span', 'sub-top', null, el('span', 'sub-name', words(u.name)), el('span', 'sub-window', words(u.label))),
+      el('span', 'sub-figure', null, el('span', 'sub-n', String(used)), el('span', 'sub-unit', '%'), warn ? el('span', 'sub-warn', warn) : null),
+      gauge,
+      el('span', 'sub-foot', null, el('span', 'sub-resets', when), el('span', `sub-feeding${n ? ' some' : ''}`, `Feeding ${n} station${n === 1 ? '' : 's'}`)));
+    sub.title = [`${words(u.name)} · ${words(u.label)}`, `${used}% used${warn ? ` · ${warn}` : ''}`, when, `Feeding ${n} station${n === 1 ? '' : 's'}`].join('\n');
+    return sub;
   }
 
   // A station's look: orange while it needs you or something in it is moving, dim while its panel isn't answering.

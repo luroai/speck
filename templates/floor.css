@@ -57,7 +57,7 @@ body {
 .floor-said[hidden] { display: none; }
 
 /* Panels: a faint frame, with a bracket at each corner, orange on the station chosen. */
-.station, .lane {
+.station, .lane, .sub {
   --corner: var(--mark);
   position: relative; min-width: 0;
   background:
@@ -182,6 +182,29 @@ body {
 .ship-id { font: 500 12px/16px var(--font-mono); letter-spacing: .08em; color: var(--muted); }
 .ship-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 500 14px/19px var(--font-ui); }
 .ship-mark { font: 500 12px/16px var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--signal); }
+
+/* 0768: your subscriptions, under the line: a panel each, with its share used as a big thin number over a segmented
+   gauge in its agent's colour, orange from 90% or once limited. */
+.subs { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+.sub { --agent: var(--agent-other); display: flex; flex-direction: column; gap: 8px; padding: 14px 16px 12px; }
+.sub.agent-claude { --agent: var(--agent-claude); }
+.sub.agent-codex { --agent: var(--agent-codex); }
+.sub.agent-cursor { --agent: var(--agent-cursor); }
+.sub.high { --agent: var(--signal); --corner: var(--signal); box-shadow: inset 0 0 0 1px var(--signal-edge); }
+.sub-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; min-width: 0; }
+.sub-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 500 16px/22px var(--font-ui); }
+.sub-window, .sub-warn { flex: none; font: 500 12px/16px var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.sub-figure { display: flex; align-items: baseline; gap: 2px; }
+.sub-n { font: 400 40px/44px var(--font-ui); letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.sub-unit { font: 400 16px/20px var(--font-ui); color: var(--muted); }
+.sub.high .sub-n, .sub.high .sub-unit, .sub-warn { color: var(--signal); }
+.sub-warn { margin-left: auto; }
+.sub-gauge { display: grid; grid-template-columns: repeat(20, minmax(0, 1fr)); gap: 2px; height: 10px; }
+.sub-seg { background: var(--edge); }
+.sub-seg.on { background: var(--agent); }
+.sub-foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 12px; font: 400 12px/16px var(--font-mono); color: var(--muted); }
+.sub-resets, .sub-feeding { white-space: nowrap; }
+.sub-feeding.some { color: var(--ink); }
 
 /* What's moving pulses, unless the computer asks for less motion. */
 @media (prefers-reduced-motion: no-preference) {

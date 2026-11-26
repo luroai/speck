@@ -158,3 +158,23 @@ export function usageWarnings(usage, now = Date.now()) {
     return windows.length ? [{ id, name: USAGE_NAMES[id], windows }] : [];
   });
 }
+
+// 0768: each subscription as the factory floor shows it, from speck's newest kept readings (newestUsage's), without
+// reading any of them again: [{ id, name, label, used_percent, resets_at, resets_on, high, limited }], in Claude Code,
+// Codex, Cursor order, each with its tightest window: a limited one, or else the one most used. A window whose reset
+// time has passed has reset since its reading, so it's left out; an agent with no reading, or no window left, isn't there.
+export function floorUsage(usage, now = Date.now()) {
+  if (!plain(usage)) return [];
+  return Object.keys(USAGE_NAMES).filter(id => Object.hasOwn(usage, id) && plain(usage[id])).flatMap(id => {
+    const shown = readingShown(id, usage[id], now);
+    if (!shown.read_at) return [];
+    const open = shown.windows.filter(w => stillOpen(w, now) && (w.limited || w.used_percent !== null));
+    if (!open.length) return [];
+    const rank = w => (w.limited ? 1000 : w.used_percent);
+    const w = open.reduce((a, b) => (rank(b) > rank(a) ? b : a));
+    // A limit_reached whose type names no window still limits it, as the bridge warns (usageWarnings).
+    const limited = w.limited || (!open.some(x => x.limited) && codexLimitWindow(usage[id]) === null);
+    return [{ id, name: USAGE_NAMES[id], label: w.label, used_percent: limited && w.used_percent === null ? 100 : w.used_percent,
+      resets_at: w.resets_at, resets_on: w.resets_on, high: w.high || limited, limited }];
+  });
+}
