@@ -43,6 +43,7 @@ Each project's summary lists the work at each station, with the agent, model and
 ## Notes
 - For the factory floor's line (see the ticket that shows it). A new page at `speck serve`'s address, for a laptop or desktop window. It doesn't replace or change the panel, which stays the phone and side-panel view (decided 2026-11-26).
 - `projectSummary` is in `scripts/panel-summary.mjs`; the front asks each panel through `/api/projects/own`. Builder models per ticket come from its level and fields (0662, `level_builds`); review rounds record their reviewer and model; QA has `qa_*` settings (0651).
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
