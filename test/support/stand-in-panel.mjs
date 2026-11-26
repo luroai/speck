@@ -1,7 +1,9 @@
 // A stand-in for a project's own speck, for speck serve's tests (0756), copied into a project's .speck/scripts/ as its
 // speck.mjs. `panel --port <n>` does what speck serve relies on a real panel for, without the cost of starting one:
 // it serves GET /api/panel for the folder it was started in, on 127.0.0.1, and keeps a record of itself where real
-// panels do (SPECK_PANELS_DIR, which every test sets) while it runs. GET /copy says which file it runs from.
+// panels do (SPECK_PANELS_DIR, which every test sets) while it runs. GET /copy says which file it runs from. SIGUSR2
+// makes it another program with the same pid, as if the panel had stopped and its pid had been reused: it stops
+// serving, takes its record away and runs on under another name, ending on SIGTERM as most programs do.
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -40,3 +42,11 @@ const bye = () => {
 };
 process.on('SIGTERM', bye);
 process.on('SIGINT', bye);
+process.on('SIGUSR2', () => {
+  server.close();
+  try { if (record && JSON.parse(fs.readFileSync(record, 'utf8')).pid === process.pid) fs.unlinkSync(record); } catch { /* gone already */ }
+  process.title = 'another-program';
+  process.removeAllListeners('SIGTERM');
+  process.on('SIGTERM', () => process.exit(0));
+  setInterval(() => {}, 1000);
+});

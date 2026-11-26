@@ -12,6 +12,7 @@ import { speck } from './support/cli.mjs';
 import { ROOT, CLI, machine, standInProject, addProject, removeProject, startServe, serveOnce, until, portOf, getJson, pidAlive, readJson, panelRecords, panelByHand, endServe, groupOf } from './support/serve.mjs';
 
 const nameOf = dir => path.basename(dir);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
 // The pid of the panel serving `dir` on `port`, once it does.
 const panelPid = (port, dir) => until(`${nameOf(dir)}'s panel answering on ${port}`, async () => (await getJson(port, '/api/panel'))?.repo === dir && (await getJson(port, '/copy'))?.pid);
 const gone = (pid, port, dir) => until(`${nameOf(dir)}'s panel stopping`, async () => !pidAlive(pid) && (await getJson(port, '/api/panel'))?.repo !== dir);
@@ -95,6 +96,25 @@ test('0756 AC2: a panel that won\'t start is tried again, saying why once, until
     assert.equal((await getJson(port, '/api/panel'))?.repo, a);
     await until('bravo tried again', () => tries(b) >= 2);
     assert.equal(s.out().match(/bravo's panel didn't start/g).length, 1, 'why is said once, not on each try');
+  } finally { await endServe(s); }
+});
+
+test('0756 AC2: a start that failed changes nothing once a later one has worked, even after its own time to answer has passed', async () => {
+  const m = machine(), a = standInProject('alpha'), own = path.join(a, '.speck', 'scripts', 'speck.mjs'), working = fs.readFileSync(own, 'utf8');
+  fs.writeFileSync(own, 'console.error("This copy of speck is broken."); process.exit(3);\n');
+  addProject(m, a);
+  const began = Date.now();
+  const s = startServe(m, [], { SPECK_SERVE_START_MS: '1000' }); // each start has a second to answer
+  try {
+    await until('the failure said', () => /alpha's panel didn't start/.test(s.out()));
+    fs.writeFileSync(own, working);
+    const port = await until('alpha started on its next try', () => portOf(s.out(), 'alpha'));
+    const pid = await panelPid(port, a);
+    await sleep(Math.max(0, began + 3000 - Date.now())); // past the failed start's second to answer, with room to spare
+    assert.doesNotMatch(s.out(), /didn't answer/, 'the failed start says nothing more');
+    assert.equal(s.out().match(/alpha's panel didn't start/g).length, 1);
+    assert.equal((await getJson(port, '/copy'))?.pid, pid, 'the panel that started is still the one serving');
+    assert.deepEqual(readJson(m.record).panels.map(p => p.pid), [pid], 'and the one its record names');
   } finally { await endServe(s); }
 });
 
@@ -185,6 +205,26 @@ test('0756 AC3: after a speck serve is killed, the next one looks after the pane
     await endServe(next);
     await gone(alpha, port, a);
   } finally { await endServe(next); }
+});
+
+test('0756 AC3: a panel taken over from a killed speck serve is never signalled once its pid is another program\'s', async () => {
+  const m = machine(), a = standInProject('alpha');
+  addProject(m, a);
+  const first = startServe(m);
+  const port = await until('alpha started', () => portOf(first.out(), 'alpha'));
+  const pid = await panelPid(port, a);
+  first.child.kill('SIGKILL');
+  await until('the first speck serve ending', () => first.child.exitCode !== null || first.child.signalCode !== null);
+  const s = startServe(m);
+  try {
+    await until('alpha\'s panel taken over', () => /alpha: http:\/\/127\.0\.0\.1:\d+\/ \(started by the last speck serve, looked after again\)/.test(s.out()));
+    process.kill(pid, 'SIGUSR2'); // the panel stops, and its pid is another program's
+    await until('alpha given a panel again', async () => { const c = await getJson(portOf(s.out(), 'alpha'), '/copy'); return c && c.pid !== pid; });
+    removeProject(m, a);
+    await until('alpha\'s new panel stopped', () => /alpha was taken off your list/.test(s.out()));
+    await endServe(s);
+    assert.ok(pidAlive(pid), 'the program with the old panel\'s pid is still running');
+  } finally { await endServe(s); try { process.kill(pid, 'SIGKILL'); } catch { /* gone */ } }
 });
 
 test('0756 AC3: --stop stops the panels of a speck serve that was killed, and only those', async () => {

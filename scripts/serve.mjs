@@ -21,6 +21,8 @@ import { timedMessage } from './run-times.mjs';
 import { BUILD_ENV } from './build-env.mjs';
 
 const TICK_MS = 2000, START_MS = 15000, STOP_MS = 5000, POLL_MS = 100, SERVE_STOP_MS = 30000, BACKGROUND_MS = 60000;
+// How long a panel has to answer once started, in ms. SPECK_SERVE_START_MS sets it directly, for speck's own tests.
+const startMs = () => (Number(process.env.SPECK_SERVE_START_MS) > 0 ? Number(process.env.SPECK_SERVE_START_MS) : START_MS);
 const RETRY_MS = [2000, 5000, 10000, 30000, 60000]; // before trying again after 1, 2, 3, 4, then 5 or more failed starts in a row
 const AWAY = 'SPECK_SERVE_AWAY'; // set for the speck serve --background starts
 const USAGE = 'speck serve                start a panel for every project on your list, and look after them until Ctrl+C\n  speck serve --background   the same, on its own, after the shell that started it has ended\n  speck serve --stop         stop it, and every panel it started';
@@ -118,15 +120,17 @@ const listenOn = port => new Promise(resolve => {
 });
 
 // Stops one panel speck serve started, as speck panel --stop stops one: SIGTERM to the process it started, which ends
-// the rest of the panel, then SIGKILL to all of it, in its own process group, if it hasn't gone within STOP_MS.
-async function stopPanel({ pid, port, folder }) {
+// the rest of the panel, then SIGKILL to all of it, in its own process group, if it hasn't gone within STOP_MS. `ours`
+// says whether its pid is still that process, so a pid since reused by another program is never signalled. Its group
+// is signalled only while that process, or a part of the panel still answering on its port, keeps the group's id its.
+async function stopPanel(p, ours) {
   const goneWithin = async ms => {
-    for (const until = Date.now() + ms; Date.now() < until; await sleep(POLL_MS)) if (!pidAlive(pid) && !(await panelAnswers(folder, port))) return true;
+    for (const until = Date.now() + ms; Date.now() < until; await sleep(POLL_MS)) if (!ours(p) && !(await panelAnswers(p.folder, p.port))) return true;
     return false;
   };
-  try { process.kill(pid, 'SIGTERM'); } catch { /* gone already */ }
+  if (ours(p)) { try { process.kill(p.pid, 'SIGTERM'); } catch { /* gone already */ } }
   if (await goneWithin(STOP_MS)) return true;
-  try { process.kill(-pid, 'SIGKILL'); } catch { /* gone already */ }
+  if (ours(p) || (await panelAnswers(p.folder, p.port))) { try { process.kill(-p.pid, 'SIGKILL'); } catch { /* gone already */ } }
   return goneWithin(STOP_MS);
 }
 
@@ -178,6 +182,9 @@ async function serve(env, away) {
     }
   };
   const note = (folder, text) => { if (noted.get(folder) !== text) { noted.set(folder, text); say(text); } };
+  // Whether a panel it has is still running as that panel: its child until it has exited, or, for one it took over from
+  // a speck serve that was killed, a process ps still shows as that project's panel, as its pid may since be another's.
+  const alive = p => (p.child ? p.child.exitCode === null && p.child.signalCode === null : isOurPanel(p));
 
   function failed(folder, why, logFile) {
     const r = retry.get(folder) ?? { fails: 0, said: null };
@@ -187,13 +194,19 @@ async function serve(env, away) {
     if (why !== r.said) say(`${nameOf(folder)}'s panel didn't start: ${why}. speck serve tries again in ${wait / 1000} seconds, then less and less often, saying so again only if it fails another way.${logFile ? ` The panel's output is in ${logFile}.` : ''}`);
   }
 
+  // Its panel `p` has exited. That attempt is over, whatever it was doing, so its start() stops waiting for it to answer
+  // and only the next attempt changes when to try again.
   function exited(p, code, signal, logFile, from) {
+    const was = p.state;
+    p.state = 'gone';
     if (owned.get(p.folder) === p) owned.delete(p.folder);
-    if (p.state === 'stopping') return save();
-    try { process.kill(-p.pid, 'SIGKILL'); } catch { /* nothing of it is left */ }
+    if (was === 'gone') return;
+    if (was === 'stopping') return save();
+    // Anything of it still answering on its port, which keeps its process group's id its: ended with it.
+    void panelAnswers(p.folder, p.port).then(up => { if (up) try { process.kill(-p.pid, 'SIGKILL'); } catch { /* gone meanwhile */ } });
     // What it said last, when it ended with an error by itself: what went wrong, rather than how it started.
     const said = !signal && code ? lastWords(logFile, from) : '', how = `stopped (${signal ? `by ${signal}` : `exit code ${code}`})${said ? `, saying: ${said}` : ''}`;
-    if (p.state === 'starting') failed(p.folder, `it ${how}`, logFile);
+    if (was === 'starting') failed(p.folder, `it ${how}`, logFile);
     else { retry.set(p.folder, { fails: 0, at: 0, port: p.port, said: null }); say(`${p.name}'s panel ${how}. Starting it again.`); }
     save();
     queueTick();
@@ -217,10 +230,16 @@ async function serve(env, away) {
     } catch (e) { owned.delete(folder); return failed(folder, `it couldn't be started (${e.code || e.message})`); }
     finally { if (fd !== undefined) fs.closeSync(fd); }
     p.pid = p.child.pid;
-    p.child.on('error', e => { if (owned.get(folder) === p) owned.delete(folder); if (p.state === 'starting') failed(folder, `it couldn't be started (${e.code || e.message})`); save(); });
+    p.child.on('error', e => {
+      const was = p.state;
+      p.state = 'gone';
+      if (owned.get(folder) === p) owned.delete(folder);
+      if (was === 'starting') failed(folder, `it couldn't be started (${e.code || e.message})`);
+      save();
+    });
     p.child.on('exit', (code, signal) => exited(p, code, signal, logFile, from));
     save();
-    for (const until = Date.now() + START_MS; Date.now() < until && p.state === 'starting'; await sleep(POLL_MS)) {
+    for (const until = Date.now() + startMs(); Date.now() < until && p.state === 'starting'; await sleep(POLL_MS)) {
       if (!(await panelAnswers(folder, p.port)) || p.state !== 'starting') continue;
       p.state = 'running';
       retry.set(folder, { fails: 0, at: 0, port: p.port, said: null });
@@ -229,14 +248,15 @@ async function serve(env, away) {
     }
     if (p.state !== 'starting') return;
     await stopOne(p);
-    failed(folder, `it didn't answer at ${address(p.port)} within ${START_MS / 1000} seconds, so it was stopped`, logFile);
+    failed(folder, `it didn't answer at ${address(p.port)} within ${startMs() / 1000} seconds, so it was stopped`, logFile);
   }
 
   function stopOne(p, message) {
     if (p.state === 'stopping') return p.stopped;
+    if (p.state === 'gone') return Promise.resolve();
     p.state = 'stopping';
     p.stopped = (async () => {
-      if (p.pid && !(p.child && (p.child.exitCode !== null || p.child.signalCode !== null))) await stopPanel(p);
+      if (p.pid && alive(p)) await stopPanel(p, alive);
       if (owned.get(p.folder) === p) owned.delete(p.folder);
       save();
       if (message) say(message);
@@ -254,8 +274,9 @@ async function serve(env, away) {
     const listed = new Set(folders), starts = [];
     for (const p of owned.values()) {
       if (!listed.has(p.folder)) void stopOne(p, `${p.name} was taken off your list, so the panel speck serve started for it was stopped.`);
-      // One it took over from an earlier speck serve isn't its child, so it's missed here rather than by its exit.
-      else if (!p.child && p.state === 'running' && !pidAlive(p.pid)) { owned.delete(p.folder); retry.set(p.folder, { fails: 0, at: 0, port: p.port, said: null }); say(`${p.name}'s panel stopped. Starting it again.`); }
+      // One it took over from an earlier speck serve isn't its child, so it's missed here rather than by its exit: once
+      // its pid has gone, or is another program's, it's forgotten, never signalled, and the project gets a panel again.
+      else if (!p.child && p.state === 'running' && !alive(p)) { p.state = 'gone'; owned.delete(p.folder); retry.set(p.folder, { fails: 0, at: 0, port: p.port, said: null }); say(`${p.name}'s panel stopped. Starting it again.`); }
     }
     for (const folder of folders) {
       if (owned.has(folder)) continue;
@@ -359,15 +380,16 @@ async function serveStop(env) {
   };
   // Stops those still running, which it didn't get to: all of them, when it was killed.
   const stopLeft = async all => {
-    const left = all.filter(isOurPanel), stopped = await Promise.all(left.map(stopPanel));
+    const left = all.filter(isOurPanel), stopped = await Promise.all(left.map(p => stopPanel(p, isOurPanel)));
     const stuck = left.filter((p, i) => !stopped[i]);
     if (stuck.length) throw new SpeckError(`These panels speck serve started didn't stop: ${stuck.map(p => `${nameOf(p.folder)} (process ${p.pid})`).join(', ')}. Stop those processes yourself.`);
     return left;
   };
   if (isServe(held.pid)) {
-    const goneWithin = async ms => { for (const until = Date.now() + ms; Date.now() < until; await sleep(POLL_MS)) if (!pidAlive(held.pid)) return true; return false; };
+    // Gone once its pid is no longer speck serve's, so one since reused by another program is never signalled.
+    const goneWithin = async ms => { for (const until = Date.now() + ms; Date.now() < until; await sleep(POLL_MS)) if (!isServe(held.pid)) return true; return false; };
     try { process.kill(held.pid, 'SIGTERM'); } catch { /* gone already */ }
-    if (!(await goneWithin(SERVE_STOP_MS))) { try { process.kill(held.pid, 'SIGKILL'); } catch { /* gone already */ } }
+    if (!(await goneWithin(SERVE_STOP_MS)) && isServe(held.pid)) { try { process.kill(held.pid, 'SIGKILL'); } catch { /* gone already */ } }
     if (!(await goneWithin(STOP_MS))) throw new SpeckError(`speck serve (process ${held.pid}) didn't stop. Stop that process yourself.`);
     const all = started();
     await stopLeft(all);

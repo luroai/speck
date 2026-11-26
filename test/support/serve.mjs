@@ -65,9 +65,9 @@ export function removeProject(m, dir) {
   assert.equal(r.status, 0, r.stderr);
 }
 
-// speck serve on the machine, as a process in the foreground, with all it prints.
-export function startServe(m, args = []) {
-  const child = spawn(process.execPath, [CLI, 'serve', ...args], { cwd: os.tmpdir(), env: m.env });
+// speck serve on the machine, as a process in the foreground, with all it prints. `extra` is added to its environment.
+export function startServe(m, args = [], extra = {}) {
+  const child = spawn(process.execPath, [CLI, 'serve', ...args], { cwd: os.tmpdir(), env: { ...m.env, ...extra } });
   let out = '';
   child.stdout.on('data', d => { out += d; });
   child.stderr.on('data', d => { out += d; });
