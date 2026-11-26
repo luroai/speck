@@ -103,7 +103,8 @@ function removeProject(given, env) {
 }
 
 // The ports of the panels running for `folder`, from their records in the home folder, read without changing them.
-function panelPorts(folder, env) {
+// 0756: speck serve leaves a project with one as it is.
+export function panelPorts(folder, env) {
   const dir = panelsDir({ ...env, [BUILD_ENV]: undefined }); // your panels, even when a build asks
   let names = [];
   try { names = fs.readdirSync(dir).filter(n => /^\d{1,5}\.json$/.test(n)); } catch { return []; }
