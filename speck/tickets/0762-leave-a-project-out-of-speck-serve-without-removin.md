@@ -50,7 +50,11 @@ A project can be turned off in the list: `speck serve` neither runs nor shows it
 - Pictures: none, because the only visible change is that the project menu at speck serve's address lists fewer projects; the fake page tests show the menu's options.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+You can now turn a project off without taking it off your list. `speck projects off <name>` keeps it on the list but marks it off: within a few seconds speck serve stops the panel it started for it, doesn't start that panel or its automatic building again, and leaves it out of All projects, the project menu and the totals, even if you started a panel for it yourself. `speck projects on <name>` brings it back: its panel starts within a few seconds, its automatic building too if Auto-build was on, and it shows again. `speck projects` says which projects are off. Nothing inside the project changes.
+
+To see it, run speck serve with two projects listed, turn one off and watch it disappear from All projects and the menu, then turn it back on.
+
+Worth keeping an eye on: automatic building that was already running in a project you turn off keeps running until you turn Auto-build off; speck serve just doesn't start it again.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -60,6 +64,11 @@ A project can be turned off in the list: `speck serve` neither runs nor shows it
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+### Follow-ups
+- Inbox: speck/ideas/2026-11-26-stop-a-project-s-speck-run-when-it-s-turned-off.md (a run speck serve started keeps running after its project is turned off).
+- Known limit: a project turned off is left out of an open project page's menu once the address next looks at what it shows (every 2 seconds) and the page reads its board again; this relies on a panel answering board number 0 at once, as every panel since 0177 does.
+- Tidy-up: the address reads the list and the panels' records for each answer and every 2 seconds; fine for a handful of projects, worth a cache if lists grow large.
+
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -240,6 +249,97 @@ A project can be turned off in the list: `speck serve` neither runs nor shows it
     ],
     "escalation_question": "",
     "summary": "The run-restoration problem is fixed, and menu data is now filtered for older versions too. One gap remains: an already open project menu can keep showing a project after it is turned off, until the page reloads or something else changes."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "2294b1d11ffb28da939cdb875a691fe456d8b8a6",
+    "session": "continued",
+    "thread_id": "01a217bc-1f8b-7063-84ed-47f831376c13",
+    "builder_response": "- Tests run: test/projects-0762.test.mjs test/serve-front-0762.test.mjs test/serve-0762.test.mjs test/serve-runs-0762.test.mjs test/bridge-usage-0720.test.mjs test/build-panels-0619.test.mjs test/panel-0516.test.mjs test/panel-summary-0595.test.mjs test/serve-front-0757.test.mjs test/serve-0758.test.mjs test/serve-install-0759.test.mjs test/serve-front-panel-0757.test.mjs test/serve-0757.test.mjs (268 pass, 0 fail).\n- F1: fixed. `serve-front.mjs`: every project page's `/api/events` stream passed on to a chosen panel now goes through `nudgeable` (via a new optional `pipe` hook in `passOn`, panel-projects.mjs), and the address looks at which panels it shows every 2 seconds. When that changes, each open stream is sent `data: 0`, which every page since 0187 handles by `load('0')`: it asks `/api/state` with board number 0, which the panel answers at once with the board it has (`askState`: `latest.version >= told`), and that answer comes back through `cutState`, which puts in the list cut down as the address shows it now, even when the delta itself has no changes. The nudge is written only between the panel's own events (it tracks the last two characters written), so an event half sent is never cut in two. Test: serve-front-0762 \"when what the address shows changes, each open project page is told to read its board again…\", with an open stream, an unchanged upstream panel and bravo's panel still running: turning bravo off reaches the stream as `data: 0` within 5 seconds, and a panel event half sent when it changes again is finished before the nudge.\n",
+    "seconds": 19,
+    "usage": {
+      "input_tokens": 967343,
+      "cached_input_tokens": 866304,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2620,
+      "reasoning_output_tokens": 164
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 6056,
+      "cached": 192000,
+      "write": 0,
+      "output": 600
+    },
+    "cost_usd": 0.037312,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-26T12:08:00.717Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "projects.mjs turnProject retains projects and persists their off state in home settings only. Passing AC1 tests cover names, folders, repeated commands, invalid selections and unchanged project snapshots."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "serve.mjs pass stops owned panels and excludes off projects from panel starts and run supervision. The passing real-service test checks stopping within 10 seconds, no restart while off and preservation of hand-started processes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "serve-front.mjs filters summaries, choices and full or partial board menu data. Its watcher now nudges open event streams when visibility changes; panel.js fetches the board and cutState filters it. Passing tests cover excluded running panels, unchanged upstream boards and safe notification between events."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The passing real-service test checks panel, run and visibility restoration within 10 seconds. Passing serve-runs-0762 tests verify legacy run intent survives off/on while deliberate stops remain respected."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The brief's command table describes projects off and on, verified by the passing AC5 test. This round reports 268 passing tests, zero failures and three skips."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/serve-front.mjs",
+        "issue": "Resolved: visibility changes now notify open project pages even when the upstream board is unchanged, prompting a freshly filtered menu.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/serve-runs.mjs",
+        "issue": "Resolved: off projects retain remembered legacy run intent, and deliberate run stops are still respected when restored.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Projects can now be left out of the service without being forgotten and restored when needed. Open menus update, older projects retain their run settings, and hand-started processes stay running. Both previous findings are resolved; the reported tests pass."
   }
 }
 ```
