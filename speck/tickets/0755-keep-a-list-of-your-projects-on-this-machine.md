@@ -46,6 +46,7 @@ speck only knows a project while its panel is running, as each panel registers i
 - Keep the list beside the other home-folder files (`homeSettingsDir()` in `scripts/home-settings.mjs`, `~/.config/speck/`), not in any repo: it holds personal folder paths.
 - A project's name is its folder's name, as the project menu shows it today (`scripts/panel-projects.mjs`).
 - Failing before this build: none
+- Self-check: `speck projects add` now says git can't be run, rather than that the folder isn't a git repository, when git isn't installed.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
