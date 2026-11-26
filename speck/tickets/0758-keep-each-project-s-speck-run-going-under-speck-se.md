@@ -57,7 +57,9 @@ Each project's `speck run` is started by hand or by its panel's Auto-build switc
 - Answer (2026-11-26): 0763 has shipped on main, so an answered escalation at the review limit now gets the review rounds it allowed. Carry on with the review round.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck serve now keeps each project's automatic building going. When it starts, for example after the machine restarts, it turns Auto-build back on in every project that had it on, and leaves the rest off. If a project's Auto-build stops without anyone turning it off, speck serve starts it again within a few seconds, up to 3 times an hour, and the project's Pipeline log says so each time. Turning Auto-build off in a project's panel keeps it off, even after speck serve restarts. Stopping speck serve leaves Auto-build running in every project and tells you which ones are still on. To see it, turn Auto-build on in a project, stop and start speck serve, and look at that project's Pipeline log.
+
+Worth keeping an eye on: projects still on an older speck can't record their switch. For those, speck serve goes by what the run writes in its log. A run turned off within 10 seconds of stopping speck serve, followed by a machine restart, is turned back on. Updating speck in that project removes this. If you installed speck serve as a service before this change, run `speck serve --install` again, or stopping the service will still stop every project's Auto-build.
 
 ## Blocked question
 This ticket waits for a separate ticket that fixes speck so a ticket whose last review round was an escalation you've answered can be reviewed again (speck stops at the escalation in scripts/review-limit.mjs before it looks at rounds you allowed). That ticket doesn't exist yet, and a build can't make one on the base branch: make it with /speck-ticket and set it ready. Once it has shipped, answer this question saying so, and the build carries on with the review round.
@@ -66,7 +68,12 @@ This ticket waits for a separate ticket that fixes speck so a ticket whose last 
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - To the inbox: speck/ideas/2026-11-26-update-speck-serve-services-installed-before-0758.md (units installed before this keep KillMode=mixed).
+  - Skipped: test/usage-limit-0622.test.mjs's "0622 AC1 AC2 AC3: a build that hit the limit while speck run was off ..." failed once in the related run of about 500 files and passed on its own; already named in speck/ideas/done/2026-11-10-steady-the-0622-and-0549-ac1-run-tests-under-load.md.
+  - Known limit: a project's run turned on with its panel's switch while a serve-started start-up is in flight could start twice; the second refuses on the lock.
+  - Known limit: a serve-started run that a user stops from a terminal with kill (not the switch) is taken as a crash and started again while Auto-build is on.
+  - Merge of main (0757, 0759, 0763) changed the --install unit to KillMode=process, as AC4 needs runs to outlive speck serve under the service.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -430,6 +437,98 @@ This ticket waits for a separate ticket that fixes speck so a ticket whose last 
     ],
     "escalation_question": "For older project versions that cannot reliably distinguish Auto-build off from machine shutdown, should reboot recovery require upgrading the project's speck, or may an explicit off within 10 seconds of stopping serve be overridden after reboot?",
     "summary": "Startup, crash recovery and stopping the service pass the reported tests. Older projects still have one acknowledged ambiguity: an explicit Auto-build off can be mistaken for machine shutdown and undone after reboot. Accepting that exception requires the product owner's decision."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 5 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 5,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "f0259134cf4c90c0c248165a9d8136aaacee7150",
+    "allowed": true,
+    "session": "continued",
+    "thread_id": "01a2176a-0afa-76b1-bc66-ef6eed17c472",
+    "builder_response": "- Tests run: test/serve-0758.test.mjs test/serve-0756.test.mjs test/serve-0756-old.test.mjs test/serve-0757.test.mjs test/serve-front-0757.test.mjs test/serve-install-0759.test.mjs test/review-limit-0763.test.mjs test/usage-limit-0622.test.mjs\n- F1 (escalation): the user's decision is recorded in the ticket's Notes: option (a), an older project's run that said it stopped within 10 seconds of speck serve stopping is started after a machine restart. Coverage within the 10-second interval is the case \"turned off within 10 seconds of speck serve stopping, then the machine restarted\" (expects it started), beside the cases outside it, which stay off. The brief's serve row documents the exception and that updating speck in that project removes it.\n- Since your last round, main was merged in (0757's one address, 0759's --install, 0763's review-limit fix), as speck's review of an answered escalation needs 0763's code on this branch. Conflicts, all class logic, resolved keeping both sides:\n  - scripts/serve.mjs: header comments, imports, USAGE (0757/0759's text, plus \"and their speck runs\" and \"leaving each speck run on\"), the keeper beside 0757's `front` variable, and shutdown calling keeper.stopping() then 0757's front.close().\n  - docs/brief.md: main's serve row, with this ticket's --stop clause and sentences after the --stop sentence, before --install's.\n  - test/support/stand-in-panel.mjs: main's version (0757's extra routes) with this ticket's `run` command added again and the panel moved into startPanel().\n- One change beyond the conflicts, needed for AC4 now that 0759 has shipped: the systemd unit `speck serve --install` writes had KillMode=mixed, which SIGKILLs everything left in the service once speck serve exits, so every speck run serve started (and their builds) died on `speck serve --stop` or any restart of the service. It's now KillMode=process: systemd stops only speck serve, which stops its panels itself, and runs keep going. Test: \"0758 AC4: the service speck serve --install writes stops only speck serve ...\". The brief says so. (A Mac's launchd agent already only stops serve's own process group; runs start in their own.) Units installed before this keep mixed until `speck serve --install` is run again.\n",
+    "seconds": 23,
+    "usage": {
+      "input_tokens": 905977,
+      "cached_input_tokens": 774400,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 4267,
+      "reasoning_output_tokens": 336
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 29776,
+      "cached": 229248,
+      "write": 0,
+      "output": 703
+    },
+    "cost_usd": 0.0895068,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-26T11:48:19.432Z"
+  },
+  "verdict": {
+    "round": 5,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "runKeeper.check and wantedAtStart select saved runs and recorded on switches. Passing AC1 tests cover startup selection, persisted state and older-project reboot recovery."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Passing AC2 tests cover persistent off requests and off during startup. The older-version 10-second exception is explicitly accepted in the ticket's Notes, documented in the brief and exercised by a regression case."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing tests cover crash recovery for current and older projects, three retries per rolling hour and Pipeline messages. The process integration test checks recovery within 30 seconds."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The process integration test confirms --stop reports and preserves running projects. serve-install now generates KillMode=process, covered by the added unit-generation test."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Reported targeted run: 256 passed, zero failed, three skipped, including the merged address, installation and review-limit tests. Merge resolutions preserve front-server startup and shutdown alongside the keeper."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/serve-runs.mjs",
+        "issue": "The older-version reboot ambiguity has an explicitly accepted exception recorded in the ticket: a stop within 10 seconds of serve stopping may be restarted after reboot.",
+        "suggested_fix": "No further change required. The accepted behaviour is documented and tested; upgrading the project's speck removes this exception.",
+        "state": "dispute_accepted"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/serve-runs.mjs",
+        "issue": "The startup race is fixed by rechecking the recorded switch after startup and stopping the new run when an off request arrived.",
+        "suggested_fix": "No further change required; the delayed-start regression test passes.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Approved with the recorded older-version exception. The service restores enabled runs, recovers crashes within the retry limit, and leaves runs running when stopped. All reported tests pass, including checks for the merged service features."
   }
 }
 ```
