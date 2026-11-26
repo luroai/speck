@@ -1,7 +1,7 @@
 ---
 id: "0767"
 title: "Show Virgil on the factory floor"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: ["0765","0766"]                # ticket ids that must be done first
 created: 2026-11-26
 built_on: "0766"
 started: "2026-11-26T20:32:22.248Z"
+approved: "2026-11-26T20:48:43.414Z"
 
 ---
 # 0767 · Show Virgil on the factory floor
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The factory floor needs one place that says what needs you across every project. Virgil, the engineering manager, is the panel's character for that.
@@ -56,9 +57,14 @@ To see it, open speck serve's address and go to Factory floor. In a narrower win
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 270,021
+- Elapsed since build started: 16 min
+- Changed lines: 138 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - Inbox: speck/ideas/2026-11-26-keep-related-tests-from-following-a-template-through-panel-support.md (`speck test --related` chose 533 files because test/support/panel.mjs reads floor.html, and ran past the shell's limit).
