@@ -11,12 +11,13 @@ import { CLAUDE_MODELS, providerModelName } from './settings.mjs';
 const AGENT_NAMES = { claude: 'Claude Code', codex: 'Codex', cursor: 'Cursor' };
 
 // An agent by the name the Builder's row gives it: speck's own by theirs, a model provider by its label, any other as named.
-const agentName = (id, providers) => {
+// 0764: and a station's on the factory floor's line (panel-line.mjs), as are its models.
+export const agentName = (id, providers) => {
   const p = findProvider(id, providers);
   return p && p.name === id ? p.label : Object.hasOwn(AGENT_NAMES, id) ? AGENT_NAMES[id] : id;
 };
 // A model by the name the Builder's list gives it, where speck knows it without asking the agent; otherwise its slug.
-function modelName(id, slug, providers) {
+export function modelName(id, slug, providers) {
   const p = findProvider(id, providers);
   if (p && p.name === id) return providerModelName(p, slug);
   if (id === 'claude') return CLAUDE_MODELS.find(m => m.slug === slug)?.display_name ?? slug;

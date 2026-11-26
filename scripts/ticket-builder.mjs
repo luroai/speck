@@ -100,7 +100,8 @@ export const launchAgent = (cfg, command, t) => (buildsEachTicket(command ?? '')
 // reason is said once until it changes, and kept in `failed` as { kind, why } for the Foreman's record. `chat` makes a
 // Cursor chat and `installed` checks the PATH, so tests can stand in. 0659: `record` is what its run record keeps of
 // the ticket's own builder_model and builder_effort (ticketRecord), which go to Claude Code too when build_command is yours.
-export function launchPlan(cfg, t, { command, words, repo, failed, chat = createChat, installed = onPath }) {
+// 0764: and, with `standIn` when it starts on a stand-in from builder_bench (0647), the builder it stands in for.
+export function launchPlan(cfg, t, { command, words, repo, failed, chat = createChat, installed = onPath, standIn = false }) {
   const stay = (kind, why) => {
     if (failed.get(t.id)?.why !== why) console.log(`${t.id} wasn't started, and stays ready: ${why}. speck run tries again on its next check.`);
     failed.set(t.id, { kind, why });
@@ -116,7 +117,7 @@ export function launchPlan(cfg, t, { command, words, repo, failed, chat = create
     tag = made.session;
   }
   failed.delete(t.id);
-  return { ...plan, tag, record: ticketRecord(mine) };
+  return { ...plan, tag, record: { ...ticketRecord(mine), ...(standIn ? { stand_in: { for: configBuilder(cfg) } } : {}) } };
 }
 
 // The one line speck run says as it starts when build_command is one you've written yourself (0324) and a ticket on the board records a builder other
