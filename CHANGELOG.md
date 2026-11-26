@@ -1,5 +1,28 @@
 # Changelog
 
+## 1.8.0 · 26 November 2026
+
+What's new since 1.7.0. A minor release that gives `speck serve` a factory floor: a page for a laptop or desktop window, at `speck serve`'s address under `/floor`, that shows every project at once. It has a station for each project, the line showing which ticket each builder, reviewer and QA is on and on which agent, model and effort, Virgil's dial with everything that needs you, your subscriptions' use, and a chosen project's whole board side by side. Pressing a ticket on it opens that ticket in its project's panel. The panel itself is unchanged, apart from a link to the floor on All projects. Costs speck works out itself are still estimates at API list prices.
+
+### Getting started
+
+- Install this release with `npx github:luroai/speck#v1.8.0 init`.
+
+### The factory floor
+
+- `/floor` at `speck serve`'s address opens the factory floor, in a dark look like an instrument panel, and All projects has a Factory floor link to it. It updates by itself within a few seconds of a change in any project. In a window narrower than 1024 px it lays a project's lanes out two by two and its stations in two rows, with no sideways scroll.
+- A station for each project on the list that isn't turned off, numbered in the order `speck projects` lists them, with its name, its state, how many tickets are building, queued, need you and shipped in the last 7 days, and a small line of tickets shipped each day over the last 14 days. Choosing a station shows that project's Capture, Plan, Build and Shipped side by side underneath, each with its count and its cards, and the page remembers your choice when you reload it.
+- The line: a row for each project through Queue, Builder, Reviewer, QA and Ship, with the builder's, reviewer's and QA's faces on their headings. A station with a ticket on it lights up with the ticket, how long it's been there, its agent as a stripe in that agent's colour, its model and effort, and why it's on them: its level, its own choice, your settings, or a stand-in while an agent is at its usage limit. An idle station shows faintly what it would use next, and QA says so when a project hasn't got it set up. Queue shows how many tickets are ready and which come next, and Ship lists what's waiting there, marking what waits for you. A quiet project's row is faint, one whose `speck run` is off is dimmer still, and in a narrow window the line scrolls sideways in its own box.
+- Virgil's dial: the engineering manager drawn large inside a ring dial, in the busiest mood among all your projects, over a big count of everything that needs you across all of them and one line for each, saying which project, which ticket and why. Pressing a line opens that ticket in its project's panel. With nothing needing you, the count is 0 and it says so.
+- Subscriptions: for each agent speck has a usage reading for, a panel with the share used of its tightest limit, as a number and a bar in that agent's colour, when that limit resets, and how many stations across all your projects are running on it now. At 90% or more, or once it's limited, the number and bar turn orange and it says Nearly used up or Limited. The readings are the ones speck saves when a build or review ends, so they can be a little behind.
+- Pressing a card on a project's board, or a lit ticket on the line, opens that ticket in its project's panel at the same address. Its back link then reads Factory floor and takes you back to the floor with the same station chosen, as the browser's Back does. Every card and lit ticket can be reached with Tab and opened with Enter or Space.
+- Each project needs this release for the floor to show its line, and for its tickets to lead back to the floor. A project still on an older speck shows "No line from this project" in its row, and its tickets' back links go to its own lane.
+
+### Prices
+
+- The shipped price table has been refreshed with this release's rates, taken on 26 November 2026.
+
+
 ## 1.7.0 · 26 November 2026
 
 What's new since 1.6.1. A minor release that runs every project on your machine from one speck service. `speck projects` keeps a list of your projects, and `speck serve` starts a panel for each one, keeps it and its `speck run` going, and shows them all at one address that opens on All projects, from this machine or from your phone. It can start by itself when the machine starts, and you can turn a project off without taking it off the list. Costs speck works out itself are still estimates at API list prices.
