@@ -51,6 +51,8 @@ speck is ready to be released as 1.8.0.
 - speck (2026-11-26 21:09 UTC) I'll resume 0770 at 22:00 UTC: 0770 has to come after 0768 and 0769, which are approved but still shipping (0769 is shipping now and 0768's ship was handed back to its build), so starting now would only be refused again; by 22:00 UTC both should have landed. Its instruction: Check that 0768 and 0769 have both shipped to main, then start 0770 on top of the latest main and build it; if either still hasn't shipped, stop again without changing anything.
 - 2026-11-26: its first build stopped before starting, as 0768 and 0769 were approved but not yet shipped. Set ready again once both shipped.
 - Failing before this build: none
+- Self-check: narrowed the release notes' claim that the floor's back link works from Virgil's lines: only cards and lit tickets carry it (0769).
+- Pictures: none, because nothing anyone sees in the panel or on the floor changes; the README changes only its status line and figures.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
