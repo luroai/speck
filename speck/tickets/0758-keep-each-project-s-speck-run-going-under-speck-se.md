@@ -1,7 +1,7 @@
 ---
 id: "0758"
 title: "Keep each project's speck run going under speck serve"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,13 +19,13 @@ after: ["0756"]                # ticket ids that must be done first
 created: 2026-11-25
 built_on: "0756"
 started: "2026-11-26T10:17:16.586Z"
-blocked_at: ""
+blocked_at: "2026-11-26T10:42:33.409Z"
 waited_seconds: 15
 
 ---
 # 0758 · Keep each project's speck run going under speck serve
 
-**Status:** 🔨 building
+**Status:** ⛔ blocked
 
 ## Problem
 Each project's `speck run` is started by hand or by its panel's Auto-build switch, and stays off after the machine restarts until someone turns it on again. Under one service, work in every project should carry on by itself.
@@ -55,12 +55,13 @@ Each project's `speck run` is started by hand or by its panel's Auto-build switc
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
 
 ## Blocked question
-For projects still on an older speck (before this change), whose panel doesn't record the Auto-build switch, after the machine restarts should speck serve (a) start a run that stopped within 10 seconds of speck serve itself stopping, taking it as stopped by the shutdown, which means an Auto-build off made in those 10 seconds just after `speck serve --stop`, followed by a restart, gets undone, or (b) never start a run that said it stopped, so a run is never turned back on against your wish, but older projects' runs stay off after every machine restart until their speck is updated? Projects on this version of speck are unaffected either way: their switch is recorded, so both cases work exactly. I recommend (a): the 10-second gap needs a deliberate off right after stopping speck serve and then a restart before it starts again, while (b) loses the point of this ticket for every older project at every restart.
+No approval after 4 review rounds. The only open point was the product question you've now answered (option a, older projects' 10-second exception), which is in the code, tested and in the brief, but no review round has checked it yet because the round limit is used up. Allow 2 more review rounds so the reviewer can check it, or stop the ticket here?
 
-Recommended: (a) start it after a restart when it stopped within 10 seconds of speck serve
-Other options: (b) never start an older project's run that said it stopped, so it stays off after a restart until its speck is updated
-Changes what you'd notice: yes
-Clear winner: no
+Recommended: allow 2 more review rounds
+Other options: stop the ticket here and reshape it
+Changes what you'd notice: no
+Clear winner: yes
+Review limit: yes
 
 ## Review log
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
