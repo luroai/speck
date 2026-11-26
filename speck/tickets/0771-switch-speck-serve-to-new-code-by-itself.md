@@ -1,7 +1,7 @@
 ---
 id: "0771"
 title: "Switch speck serve to new code by itself"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -21,7 +21,7 @@ created: 2026-11-26
 ---
 # 0771 · Switch speck serve to new code by itself
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 The panel and `speck run` switch to new code when speck changes, but `speck serve` keeps running the code it started with. On 2026-11-26 the factory floor shipped and stayed a 404 until `speck serve` was restarted by hand, and every update to speck would need the same.
