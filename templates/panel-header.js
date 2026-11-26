@@ -302,6 +302,9 @@ function openTicket(id, m = panelModel(state)) {
   const t = [...m.drafts, ...m.queue, ...m.shipped].find(x => String(x.id) === id);
   if (t) openFull(t);
 }
+// 0769: kept by the factory floor (floor.js) with from: 'floor', so the ticket's back link goes back there, or with a
+// note's path in place of an id, which opens Capture with that note open.
+let floorBack = null; // the id of the ticket whose full view was opened from the factory floor, or null
 function openAskedTicket(m) {
   const kept = askedTicket();
   if (kept === null) return;
@@ -309,7 +312,16 @@ function openAskedTicket(m) {
   let v = null;
   try { v = JSON.parse(kept); } catch { return; }
   // 0757: at speck serve's address with this project's panel the only one running, it's the one chosen there
-  if (v && state && (state.projects ? v.port === state.projects.self : atServe)) openTicket(String(v.id), m);
+  if (!v || !state || !(state.projects ? v.port === state.projects.self : atServe)) return;
+  if (typeof v.note === 'string') return openAskedNote(v.note, m);
+  if (v.from === 'floor') floorBack = String(v.id);
+  openTicket(String(v.id), m);
+}
+function openAskedNote(at, m) {
+  if (!m.capture.some(i => i.path === at)) return;
+  openNotes.add(at);
+  openTab('capture');
+  render();
 }
 // 0410: Plan, Build and Shipped are tabs under the header (0520: with Capture first), and only the open one's lane shows. 0582: each says
 // how many its lane holds. Build opens with the
