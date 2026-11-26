@@ -20,7 +20,7 @@ import { criteriaText, criteriaChange, criteriaChanges, shippedCriteriaChanged }
 import { cmdMergeCheck } from './merge-check.mjs';
 import { cmdDetect } from './detect.mjs';
 import { cmdKeys } from './keys.mjs'; import { cmdLogins } from './logins.mjs'; // 0635
-import { cmdProjects } from './projects.mjs'; // 0755
+import { cmdProjects } from './projects.mjs'; import { cmdServe } from './serve.mjs'; // 0755. 0756: speck serve
 import { boardBuilders } from './build-model.mjs'; import { levelNames } from './levels.mjs'; import { levelBuilds, ticketBuild } from './level-builds.mjs'; import { knownProviders } from './custom-providers.mjs'; // 0662. 0667: what each level builds with. 0669: and each ticket
 import { cmdAgents } from './your-agents.mjs';
 import { cmdConfig } from './config.mjs'; import { cmdConfigShow } from './settings.mjs';
@@ -509,6 +509,8 @@ const HELP = `speck: Plan in ten minutes. Come back to it shipped.
   speck status [--json]               tickets by status, blocked first (--json: everything, for programs)
   speck panel [--port <n>]           a control panel in your browser, at http://127.0.0.1:4777 (--url https://<hostname>: also
                                       there, behind a private tunnel; --background: on its own, until speck panel --stop)
+  speck serve [--background|--stop]   start and look after a panel for every project on speck projects' list, each on its own copy of
+                                      speck and port, until Ctrl+C (--background: on its own, until speck serve --stop, which stops its panels)
   speck run [--background]            start a build for each ready ticket as it becomes ready, and ship approved ones auto_ship covers, until stopped (--background: on its own, as the panel's switch turns it on)
   speck pause <id>                    hold a build speck run launched where it is, until it's played
   speck play <id>                     carry a paused build on from where it was paused
@@ -549,7 +551,7 @@ const HELP = `speck: Plan in ten minutes. Come back to it shipped.
   speck dismiss <id>                  dismiss speck's question about a ticket
 `;
 
-const COMMANDS = { init: cmdInit, doctor: cmdDoctor, detect: cmdDetect, agents: cmdAgents, new: cmdNew, check: cmdCheck, lint: cmdCheck, set: cmdSet, config: args => args[0] === 'show' ? cmdConfigShow(args.slice(1)) : cmdConfig(args), keys: cmdKeys, logins: cmdLogins, projects: cmdProjects, start: cmdStart, cancel: cmdCancel, status: cmdStatus, panel: cmdPanel, run: args => args.includes('--background') ? import('./run-background.mjs').then(m => m.runBackground()) : cmdRun(), pause: cmdPause, play: cmdPlay, stop: cmdStop, diffstat: cmdDiffstat, test: cmdTest,
+const COMMANDS = { init: cmdInit, doctor: cmdDoctor, detect: cmdDetect, agents: cmdAgents, new: cmdNew, check: cmdCheck, lint: cmdCheck, set: cmdSet, config: args => args[0] === 'show' ? cmdConfigShow(args.slice(1)) : cmdConfig(args), keys: cmdKeys, logins: cmdLogins, projects: cmdProjects, serve: cmdServe, start: cmdStart, cancel: cmdCancel, status: cmdStatus, panel: cmdPanel, run: args => args.includes('--background') ? import('./run-background.mjs').then(m => m.runBackground()) : cmdRun(), pause: cmdPause, play: cmdPlay, stop: cmdStop, diffstat: cmdDiffstat, test: cmdTest,
   review: cmdReview, record: cmdRecord, prompt: cmdPrompt, 'reviewer-settings': cmdReviewerSettings, 'review-running': cmdReviewRunning, diff: cmdDiff, close: cmdClose, next: cmdNext, pack: cmdPack, picture: cmdPicture, app: cmdApp, prices: cmdPrices, spend: cmdSpend, output: cmdOutput, 'merge-check': cmdMergeCheck, changes: cmdChanges, ship: cmdShip, pr: cmdPr, watch: cmdWatch, 'split-off': cmdSplitOff, 'built-on': cmdBuiltOn, answer: a => cmdForeman(['answer', ...a]), dismiss: a => cmdForeman(['dismiss', ...a]), foreman: cmdForeman }; // 0486: foreman still works
 
 // Runs one command line, as `node speck.mjs <args>` does: a SpeckError it ends with is thrown.
