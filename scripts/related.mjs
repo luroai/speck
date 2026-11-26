@@ -1,5 +1,5 @@
 // The tests a branch's change affects (0437), for `speck test --related`: every test file under test/ whose text names
-// a file the branch changed since it left the base branch, or that imports a module under test/support/ whose code names one
+// a file the branch changed since it left the base branch, or that imports a module under test/support/ that names one
 // few of those modules name (0447). Files under speck/ don't count.
 
 import fs from 'node:fs';
@@ -40,7 +40,7 @@ function walk(repo, dir) {
 const read = (repo, rel) => { try { return fs.readFileSync(path.join(repo, rel), 'utf8'); } catch { return ''; } };
 const escape = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-// `text` without its // and /* */ comments, so a support module that names a file only in a comment, as
+// `text` without its // and /* */ comments, so a support module that names a template only in a comment, as
 // test/support/panel.mjs names the factory floor's page, doesn't load it (0777). A quoted string keeps its // (a URL),
 // and so does a regex literal; a '- or "-quoted string ends at the line's end, so a stray quote can't hide the rest.
 export function code(text) {
@@ -101,7 +101,8 @@ function supportImports(text, rel) {
 
 // [{ test, because, through }] for each test file the change in `repo` since it left `base` affects, in path order:
 // `because` is the changed file that brought it in, `through` the support module that names it, when it's that. A
-// support module names a file when its text does or a support module it imports does. A test comes in through one
+// support module names a file when its text does, not counting comments for a file under templates/ (0777), or a
+// support module it imports does. A test comes in through one
 // only for a changed file at most a quarter of the support modules name, and never for a SKILL.md (0447): the CLI
 // that nearly every one runs would otherwise bring in nearly the whole suite. A changed file at most one in twenty of
 // them name in their own text, such as a file test/support/panel.mjs loads into the page, also brings in each test that
@@ -116,7 +117,7 @@ export function relatedTests(repo, base) {
   const ownOf = mod => {
     if (!own.has(mod)) {
       const text = read(repo, mod), named = code(text);
-      own.set(mod, { files: changed.filter(c => c.named.test(named)).map(c => c.file), deps: supportImports(text, mod) });
+      own.set(mod, { files: changed.filter(c => c.named.test(c.file.startsWith('templates/') ? named : text)).map(c => c.file), deps: supportImports(text, mod) });
     }
     return own.get(mod);
   };

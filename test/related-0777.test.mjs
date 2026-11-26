@@ -89,3 +89,12 @@ test('0777 self-check: code() drops line and block comments but keeps a // insid
   assert.equal(code("const u = `a // not a comment\n k.js`;\n").includes('k.js'), true);
   assert.equal(code("/* never closed floor.html"), ' ');
 });
+
+test('0777 F1: a file outside templates/ that a support module names only in a comment still brings in its tests', () => {
+  const dir = repo({ 'scripts/serve.mjs': '',
+    'test/support/serve.mjs': "// Starts the front of scripts/serve.mjs for a test.\nexport const start = () => {};\n",
+    'test/serve-a.test.mjs': "import { start } from './support/serve.mjs';\n",
+    'test/other.test.mjs': '', 'test/support/a.mjs': '', 'test/support/b.mjs': '', 'test/support/c.mjs': '' });
+  assert.deepEqual(pickedFor(dir, relatedTests, 'serve', ['scripts/serve.mjs']),
+    [{ test: 'test/serve-a.test.mjs', because: 'scripts/serve.mjs', through: 'test/support/serve.mjs' }]);
+});

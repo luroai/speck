@@ -1,7 +1,7 @@
 ---
 id: "0777"
 title: "Keep related tests from following a template through the panel's test support"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -22,7 +22,7 @@ started: "2026-11-26T23:48:45.628Z"
 ---
 # 0777 · Keep related tests from following a template through the panel's test support
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 `speck test --related` brings in every test that imports `test/support/panel.mjs` whenever any template that file can read changes. A change to the factory floor chose 533 test files, and 0766's build 625, so a build's related run outlasts the builder's 10-minute shell limit.
@@ -55,3 +55,84 @@ A changed template brings in only the tests that load that template.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "51598eb67f759148886e11d00d59a659b587fb9a",
+    "session": "fresh",
+    "thread_id": "01a21a48-71f2-7423-83ed-e67a831dc499",
+    "builder_response": "- Tests run: `speck test --related test/related-0777.test.mjs` (151 files: the ticket's own, the other related-* tests and every test naming docs/brief.md or scripts/related.mjs); 1697 pass, 0 fail.\n- Cause: test/support/panel.mjs names `floor.html` only in a comment (fakePage's doc), so a floor.html change counted it as loading the floor and brought in every test importing panel.mjs (485 picked). With comments stripped from support modules (`code()` in scripts/related.mjs), a floor.html change picks 8 tests: those that import test/support/floor.mjs or name floor.html themselves.\n- AC4 is checked by the related run above; `speck ship` runs the full suite.\n",
+    "seconds": 27,
+    "usage": {
+      "input_tokens": 186579,
+      "cached_input_tokens": 135040,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 824,
+      "reasoning_output_tokens": 37
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 51539,
+      "cached": 135040,
+      "write": 0,
+      "output": 824
+    },
+    "cost_usd": 0.124822,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-26T23:55:12.183Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "test/related-0777.test.mjs AC1 tests exercise both a fixture and this repository: floor.html selects floor tests without unrelated panel tests. Both passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "AC2 tests exercise panel HTML, JavaScript and styles, checking that panel support importers remain selected. Both passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "AC3 checks changes to the support module itself in a fixture and this repository; all direct importers remain selected. Passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Recorded related run: 1697 passed, 0 failed, 3 skipped. Existing tests were not weakened. The whole suite remains the shipping check."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/related.mjs:118",
+        "issue": "ownOf strips comments when matching every changed file, including non-template code. This violates the explicit exclusion of changes to related-test discovery for non-template code. For example, test/support/serve-front.mjs names scripts/serve-front.mjs only in its opening comment; that association is now removed.",
+        "suggested_fix": "Use comment-stripped support text only for changed templates, preserving the previous matching behaviour for other files. Add a regression test for a non-template file named only in a support module's comment, and narrow the documentation accordingly.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The change successfully limits factory-floor template changes to the relevant tests, while retaining panel coverage. The reported tests pass. Before approval, narrow the implementation: it also changes test selection for non-template code, which this ticket explicitly excludes."
+  }
+}
+```
+
+</details>
