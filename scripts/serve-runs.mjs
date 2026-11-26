@@ -58,7 +58,8 @@ export function wantedAtStart(sw, last) {
 
 // speck serve's record in the home folder: { runs, boot }. `runs` gives each project whose run it last saw on, or, on
 // an older speck, kept going: { [folder]: { since, log } }, when that run took its lock and how long its run.log was
-// then. `boot` is when the machine started, as that record was written, or null.
+// then. `boot` is which start of the machine that was (bootMark), and `stopped` when speck serve was told to stop, in
+// ms, or null.
 export function readRunsRecord(file) {
   const runs = Object.create(null);
   try {
@@ -66,8 +67,8 @@ export function readRunsRecord(file) {
     for (const [folder, r] of Object.entries(v?.runs ?? {})) {
       if (path.isAbsolute(folder) && r && typeof r === 'object') runs[folder] = { since: typeof r.since === 'string' ? r.since : null, log: Number.isInteger(r.log) && r.log >= 0 ? r.log : 0 };
     }
-    return { runs, boot: Number.isFinite(v?.boot) || (typeof v?.boot === 'string' && v.boot) ? v.boot : null };
-  } catch { return { runs, boot: null }; }
+    return { runs, boot: Number.isFinite(v?.boot) || (typeof v?.boot === 'string' && v.boot) ? v.boot : null, stopped: Number.isFinite(v?.stopped) ? v.stopped : null };
+  } catch { return { runs, boot: null, stopped: null }; }
 }
 
 // Which start of the machine this is: Linux's boot id, or else when it started, in ms. restartedSince says whether the
@@ -81,6 +82,12 @@ export function restartedSince(boot, now = bootMark()) {
   if (typeof boot === 'number' && typeof now === 'number') return Math.abs(now - boot) > 2 * 60 * 1000;
   return false;
 }
+
+// When run.log was last written to, in ms, or null.
+const logTime = runs => { try { return fs.statSync(path.join(runs, 'run.log')).mtimeMs; } catch { return null; } };
+// How close a run's stop has to be to speck serve's own for both to have been the machine shutting down, which stops
+// every process at once.
+const TOGETHER_MS = 10000;
 
 // Whether speck run said it stopped as it was told to (Ctrl+C, the Auto-build switch or SIGTERM), in its run.log from
 // `from` on: every speck run since before 1.5.0 says "speck run stopped." then, and one that ends any other way doesn't.
@@ -151,7 +158,10 @@ const clock = ms => { const d = new Date(ms), two = n => String(n).padStart(2, '
 // the projects whose runs are on. `start`, `state` and `now` can be stood in for by tests.
 export function runKeeper({ file, env, say, start = startRun, stop = stopRun, state = runState, now = Date.now, records = recordsSwitch, boot = bootMark }) {
   const before = readRunsRecord(file), atStart = before.runs; // as speck serve last left it
-  const restarted = restartedSince(before.boot, boot()); // the machine has started again since, which stopped every run
+  // The machine has started again since, and speck serve was told to stop as it shut down: a run that stopped then was
+  // stopped by the machine, not turned off.
+  const restarted = restartedSince(before.boot, boot());
+  const byShutdown = runs => { const at = logTime(runs); return restarted && before.stopped !== null && at !== null && Math.abs(at - before.stopped) <= TOGETHER_MS; };
   const last = Object.create(null);
   for (const f of Object.keys(atStart)) last[f] = atStart[f];
   let saved = null, saveError = null;
@@ -160,8 +170,9 @@ export function runKeeper({ file, env, say, start = startRun, stop = stopRun, st
   const held = new Map(); // folder → until when it's left off, once said
   const name = folder => path.basename(folder);
 
+  let stoppedAt = null;
   function save() {
-    const record = { boot: boot(), runs: last }, text = JSON.stringify(last);
+    const record = { boot: boot(), runs: last, ...(stoppedAt === null ? {} : { stopped: stoppedAt }) }, text = JSON.stringify(record.runs) + stoppedAt;
     if (text === saved) return;
     try { fs.mkdirSync(path.dirname(file), { recursive: true, mode: 0o700 }); writeJson(file, record); saved = text; saveError = null; } catch (e) {
       if (saveError !== (e.code || e.message)) say(`can't write ${file} (${saveError = e.code || e.message}), so the next speck serve may not know which runs were on.`);
@@ -223,7 +234,8 @@ export function runKeeper({ file, env, say, start = startRun, stop = stopRun, st
         delete last[folder];
         if (own && sw?.on) void launch(folder, 'its Auto-build switch was last turned on', 0, sw, own);
         else if (own && wantedAtStart(sw, atStart[folder])) void launch(folder, 'it was on when speck serve last stopped', 0, sw, own);
-        else if (!own && was && (restarted || !told)) void launch(folder, restarted ? 'it was on when the machine last stopped' : 'it was on when speck serve last stopped', 0, sw, own);
+        else if (!own && was && !told) void launch(folder, 'it was on when speck serve last stopped', 0, sw, own);
+        else if (!own && was && byShutdown(runs)) void launch(folder, 'it was on when the machine last stopped', 0, sw, own);
         continue;
       }
       const keep = own ? sw?.on : was && !told;
@@ -250,7 +262,10 @@ export function runKeeper({ file, env, say, start = startRun, stop = stopRun, st
   }
 
   const stillOn = folders => folders.filter(f => { try { return state(runsIn(f)).on; } catch { return false; } });
-  return { check, stillOn, save };
+  // speck serve has been told to stop: recorded, with the time, so the next one can tell a run the machine stopped as
+  // it shut down from one turned off.
+  const stopping = () => { stoppedAt = now(); save(); };
+  return { check, stillOn, save, stopping };
 }
 
 // What speck serve says as it stops about the runs it leaves on.

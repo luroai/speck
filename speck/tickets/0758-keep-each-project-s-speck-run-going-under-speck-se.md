@@ -244,3 +244,94 @@ Each project's `speck run` is started by hand or by its panel's Auto-build switc
 ```
 
 </details>
+
+<details><summary>Round 3 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "14a25ab01956413ae85b024c623beee82053a1f0",
+    "session": "continued",
+    "thread_id": "01a2176a-0afa-76b1-bc66-ef6eed17c472",
+    "builder_response": "- Tests run: test/serve-0758.test.mjs test/serve-0756.test.mjs test/usage-limit-0622.test.mjs\n- F1: fixed, without excluding older projects. Every speck run since before 1.5.0 (the oldest speck serve supports) prints \"speck run stopped.\" when Ctrl+C, the Auto-build switch (SIGINT) or SIGTERM stops it, and a run that ends any other way doesn't (checked in v1.5.0 and v1.6.0's scripts/run.mjs). So for a project whose speck doesn't record the switch, the keeper keeps its run going once it has seen it on: serve-runs.json keeps the project, with how long its run.log was when that run was first seen on (or before serve started it). When the run is off, stoppedAsTold reads run.log from there: a stop line means it was turned off, so it's dropped from the record and never started again; no stop line means it ended by itself, so it's started again under the same 3-an-hour limit, saying so in the Pipeline log. At speck serve's start the same check runs on the record it left, so an off just before serve stopped is honoured, and a crash meanwhile is started. Because a machine shutting down SIGTERMs runs (which also prints the stop line), the record carries a boot mark (Linux boot_id, else boot time from os.uptime): after the machine has started again, a run the record has is started regardless. Tests: \"on an older speck ... a run turned off stays off and one that ends by itself is started again\" (crash restart, panel off, next serve) and \"on an older speck, a run turned off just before speck serve stopped stays off ... and one that ended by itself, or that the machine stopping stopped, is started\". The serve's own Pipeline lines now say \"ended\" rather than \"stopped\", and the stop-line match is anchored to the start of a line, so they can't be read as a run's own stop.\n- F2: resolved in round 2; unchanged except that the turned-off recheck applies to projects that record the switch.\n",
+    "seconds": 22,
+    "usage": {
+      "input_tokens": 445695,
+      "cached_input_tokens": 358016,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2799,
+      "reasoning_output_tokens": 322
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 18234,
+      "cached": 154880,
+      "write": 0,
+      "output": 804
+    },
+    "cost_usd": 0.059996,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-26T10:39:19.106Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "runKeeper.check implements startup selection for recorded switches and older projects. Passing AC1 tests cover saved runs, switch selection and machine restart."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "For older projects, runKeeper.check uses (restarted || !told), so a machine restart overrides even an explicit off recorded in run.log while serve was stopped."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Older projects now use stoppedAsTold to distinguish crashes from requested stops and share the rolling restart limit. Passing tests cover older-project recovery, restart limits, Pipeline messages and process recovery within 30 seconds."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The passing process integration test verifies --stop leaves the run alive and names its project."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Reported targeted tests: 206 passed, zero failed, three skipped. No existing tests were weakened."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/serve-runs.mjs",
+        "issue": "Older-project crash recovery is fixed, but off persistence still fails across a machine restart. Reproduction: serve observes an older project's run on; stop serve, which leaves the run running; turn Auto-build off in that project's panel; reboot; start serve. The saved entry remains, and (restarted || !told) starts the run despite its explicit stop line. The new test treats every stop followed by a boot change as machine shutdown, so it misses this distinction.",
+        "suggested_fix": "Distinguish an explicit off before machine shutdown from a run stopped by shutdown, and preserve that off state across reboot. Add the reproduction above as a regression test. If supported older versions cannot provide that distinction, obtain a product decision about the compatibility guarantee.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/serve-runs.mjs",
+        "issue": "The startup race remains fixed for projects that record the switch: launch rechecks off requests after startup and stops the newly started run.",
+        "suggested_fix": "No further change required for this finding; the delayed-start regression test passes.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Crash recovery now works for older projects, and all reported tests pass. One compatibility gap remains: turning Auto-build off while the service is stopped can be forgotten after a reboot, causing work to start again against the user's choice."
+  }
+}
+```
+
+</details>

@@ -136,14 +136,24 @@ test('0758 AC2, AC3: on an older speck, whose panel doesn\'t record its switch, 
   assert.deepEqual(two.started, []);
 });
 
-test('0758 AC1, AC2: on an older speck, a run turned off just before speck serve stopped stays off when it starts again, and one that ended by itself, or that the machine stopping stopped, is started', async () => {
-  for (const [how, boot, want] of [['turned off', 'boot-a', 0], ['ended by itself', 'boot-a', 1], ['stopped as the machine stopped', 'boot-b', 1]]) {
+test('0758 AC1, AC2: on an older speck, a run turned off before speck serve starts again stays off, and one that ended by itself, or that the machine stopped as it shut down, is started', async () => {
+  const later = dir => { const t = new Date(Date.now() + 5 * 60 * 1000); fs.utimesSync(path.join(runsIn(dir), 'run.log'), t, t); };
+  for (const [how, boot, want] of [
+    ['turned off just before speck serve stopped', 'boot-a', 0],
+    ['ended by itself', 'boot-a', 1],
+    ['stopped with speck serve as the machine shut down', 'boot-b', 1],
+    ['turned off after speck serve was stopped, then the machine restarted', 'boot-b', 0],
+    ['turned off, then speck serve was killed and the machine restarted', 'boot-b', 0],
+  ]) {
     const file = path.join(tmp('speck-0758-home-'), 'serve-runs.json');
     const dir = project('alpha');
     const one = keeper(file, { old: true });
     one.on.add(dir);
-    one.k.check([dir]); // speck serve saw it on, then stopped before its next look
-    if (how !== 'ended by itself') saysStopped(dir);
+    one.k.check([dir]); // speck serve saw it on, and didn't look again
+    if (how.startsWith('turned off just') || how.startsWith('turned off, then')) saysStopped(dir);
+    if (how.startsWith('stopped with') || how.startsWith('turned off after')) one.k.stopping();
+    if (how.startsWith('stopped with')) saysStopped(dir);
+    if (how.startsWith('turned off after')) { saysStopped(dir); later(dir); }
     const two = keeper(file, { old: true, boot });
     two.k.check([dir]); await tick(); await tick();
     assert.equal(two.started.length, want, how);

@@ -307,6 +307,7 @@ async function serve(env, away) {
     if (stopping) return;
     stopping = true;
     clearInterval(timer);
+    keeper.stopping(); // 0758
     const mine = [...owned.values()];
     await Promise.all(mine.map(p => stopOne(p)));
     try { forgetRecord(files.record, process.pid); } catch { /* the next speck serve or --stop finds nothing of it running */ }
