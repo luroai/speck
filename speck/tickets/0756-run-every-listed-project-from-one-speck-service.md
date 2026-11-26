@@ -1,7 +1,7 @@
 ---
 id: "0756"
 title: "Run every listed project from one speck service"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: ["0755"]                # ticket ids that must be done first
 created: 2026-11-25
 built_on: "0755"
 started: "2026-11-26T09:39:22.799Z"
+approved: "2026-11-26T10:17:00.126Z"
 
 ---
 # 0756 · Run every listed project from one speck service
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Each project needs its own `speck panel`, on its own port, started by hand in its own folder; a panel that stops stays stopped until someone notices. There's no one thing to start that brings up every project on the machine.
@@ -62,9 +63,15 @@ Worth keeping an eye on: each project gets a new address whenever `speck serve` 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 When a panel exits during startup, exited() schedules a retry but leaves p.state as 'starting'.; F2 Panels adopted from a killed service have no child handle.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 392,268
+- Elapsed since build started: 38 min
+- Changed lines: 425 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (Delivery log only, none sent to the inbox):
 - Each project gets a new port whenever `speck serve` starts, so its own address changes. Skipped: 0757 puts every project behind `speck serve`'s one address.
