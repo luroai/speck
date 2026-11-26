@@ -144,6 +144,9 @@ test('0758 AC1, AC2: on an older speck, a run turned off before speck serve star
     ['stopped with speck serve as the machine shut down', 'boot-b', 1],
     ['turned off after speck serve was stopped, then the machine restarted', 'boot-b', 0],
     ['turned off, then speck serve was killed and the machine restarted', 'boot-b', 0],
+    // As chosen for 0758: on an older speck, an off within 10 seconds of speck serve stopping can't be told from the
+    // machine shutting down, so after a restart it's started.
+    ['turned off within 10 seconds of speck serve stopping, then the machine restarted', 'boot-b', 1],
   ]) {
     const file = path.join(tmp('speck-0758-home-'), 'serve-runs.json');
     const dir = project('alpha');
@@ -153,6 +156,7 @@ test('0758 AC1, AC2: on an older speck, a run turned off before speck serve star
     if (how.startsWith('turned off just') || how.startsWith('turned off, then')) saysStopped(dir);
     if (how.startsWith('stopped with') || how.startsWith('turned off after')) one.k.stopping();
     if (how.startsWith('stopped with')) saysStopped(dir);
+    if (how.startsWith('turned off within')) { one.k.stopping(); saysStopped(dir); const t = new Date(Date.now() + 8000); fs.utimesSync(path.join(runsIn(dir), 'run.log'), t, t); }
     if (how.startsWith('turned off after')) { saysStopped(dir); later(dir); }
     const two = keeper(file, { old: true, boot });
     two.k.check([dir]); await tick(); await tick();
