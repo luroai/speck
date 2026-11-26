@@ -1,7 +1,7 @@
 ---
 id: "0758"
 title: "Keep each project's speck run going under speck serve"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: ["0756"]                # ticket ids that must be done first
 created: 2026-11-25
 built_on: "0756"
 started: "2026-11-26T10:17:16.586Z"
+blocked_at: "2026-11-26T10:41:31.415Z"
 
 ---
 # 0758 · Keep each project's speck run going under speck serve
 
-**Status:** 🔍 reviewing
+**Status:** ⛔ blocked
 
 ## Problem
 Each project's `speck run` is started by hand or by its panel's Auto-build switch, and stays off after the machine restarts until someone turns it on again. Under one service, work in every project should carry on by itself.
@@ -52,7 +53,12 @@ Each project's `speck run` is started by hand or by its panel's Auto-build switc
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
 
 ## Blocked question
-<!-- Filled in by speck only when status is blocked. -->
+For projects still on an older speck (before this change), whose panel doesn't record the Auto-build switch, after the machine restarts should speck serve (a) start a run that stopped within 10 seconds of speck serve itself stopping, taking it as stopped by the shutdown, which means an Auto-build off made in those 10 seconds just after `speck serve --stop`, followed by a restart, gets undone, or (b) never start a run that said it stopped, so a run is never turned back on against your wish, but older projects' runs stay off after every machine restart until their speck is updated? Projects on this version of speck are unaffected either way: their switch is recorded, so both cases work exactly. I recommend (a): the 10-second gap needs a deliberate off right after stopping speck serve and then a restart before it starts again, while (b) loses the point of this ticket for every older project at every restart.
+
+Recommended: (a) start it after a restart when it stopped within 10 seconds of speck serve
+Other options: (b) never start an older project's run that said it stopped, so it stays off after a restart until its speck is updated
+Changes what you'd notice: yes
+Clear winner: no
 
 ## Review log
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
@@ -330,6 +336,98 @@ Each project's `speck run` is started by hand or by its panel's Auto-build switc
     ],
     "escalation_question": "",
     "summary": "Crash recovery now works for older projects, and all reported tests pass. One compatibility gap remains: turning Auto-build off while the service is stopped can be forgotten after a reboot, causing work to start again against the user's choice."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 4 · codex · escalate · extra round</summary>
+
+```json
+{
+  "meta": {
+    "round": 4,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "01698019a0bb87a6158a12322bb711995e1e7ce2",
+    "extra": true,
+    "session": "continued",
+    "thread_id": "01a2176a-0afa-76b1-bc66-ef6eed17c472",
+    "builder_response": "- Tests run: test/serve-0758.test.mjs test/serve-0756.test.mjs test/usage-limit-0622.test.mjs\n- F1: fixed. A stop line in an older project's run.log now always means turned off, unless it was the machine shutting down: speck serve records the time it was told to stop (runKeeper.stopping(), called first thing in serve's shutdown, for SIGTERM, SIGINT or SIGHUP, so also when the machine shuts down), and after a restart of the machine a run whose run.log was last written within 10 seconds of that time is taken as stopped by the shutdown, which SIGTERMs both at once, and started. Your reproduction (serve stopped, then the run turned off in its panel, then a reboot) leaves it off: its stop line comes later than serve's stop, and is a regression case in \"on an older speck, a run turned off before speck serve starts again stays off ...\", alongside a serve killed without recording a stop (stays off), a crash (started) and a shutdown (started). The one case it can't tell apart is a run turned off in its panel within 10 seconds of `speck serve --stop`, followed by a reboot before serve starts again; older speck writes the same line either way, so nothing in an older project can tell those apart. The brief's serve row says how older projects are handled.\n",
+    "seconds": 22,
+    "usage": {
+      "input_tokens": 646953,
+      "cached_input_tokens": 545152,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 3564,
+      "reasoning_output_tokens": 336
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 14122,
+      "cached": 187136,
+      "write": 0,
+      "output": 765
+    },
+    "cost_usd": 0.0546076,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-26T10:41:19.498Z"
+  },
+  "verdict": {
+    "round": 4,
+    "verdict": "escalate",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "runKeeper.check implements startup selection. Passing AC1 tests cover saved runs, recorded switches and simulated machine shutdown."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "serve-runs.mjs byShutdown treats any log write within 10 seconds of serve stopping as machine shutdown after a reboot. An explicit panel off in that interval is therefore overridden."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing tests exercise older-project crash recovery, the rolling three-restart limit and Pipeline messages. The process integration test verifies recovery within 30 seconds."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The passing process integration test verifies --stop leaves the run alive and names its project."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Reported targeted run: 206 passed, zero failed, three skipped. No existing tests were weakened."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/serve-runs.mjs",
+        "issue": "The timing heuristic narrows the compatibility gap but still violates AC2. Stop serve, turn an older project's Auto-build off within 10 seconds, then reboot before starting serve again: byShutdown overrides the explicit off and starts the run. The regression test moves the log timestamp five minutes forward, covering only stops outside this interval. The builder acknowledges that older versions cannot distinguish these cases.",
+        "suggested_fix": "Obtain an explicit product decision about older-version guarantees. Either require switch-recording support for guaranteed reboot recovery, or approve and document a specific exception to the ticket's off-persistence requirement. Add coverage for the chosen behaviour within the 10-second interval.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/serve-runs.mjs",
+        "issue": "The startup race remains resolved for projects that record the switch.",
+        "suggested_fix": "No further change required; the delayed-start regression test passes.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "For older project versions that cannot reliably distinguish Auto-build off from machine shutdown, should reboot recovery require upgrading the project's speck, or may an explicit off within 10 seconds of stopping serve be overridden after reboot?",
+    "summary": "Startup, crash recovery and stopping the service pass the reported tests. Older projects still have one acknowledged ambiguity: an explicit Auto-build off can be mistaken for machine shutdown and undone after reboot. Accepting that exception requires the product owner's decision."
   }
 }
 ```
