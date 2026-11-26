@@ -48,6 +48,7 @@ speck is ready to be released as 1.7.0.
 - `npm run prices` fetches LiteLLM's price list from GitHub, so this build needs the network.
 - After it ships, check that the `v1.7.0` tag and its GitHub release page appeared. If not: `gh release create v1.7.0 --target main --title "speck 1.7.0" --notes-file docs/releases/v1.7.0.md`.
 - Checked 2026-11-25: `v1.6.1` is tagged on origin.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
