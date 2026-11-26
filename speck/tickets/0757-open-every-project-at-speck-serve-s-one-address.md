@@ -147,3 +147,86 @@ Even with `speck serve`, each project's panel is on its own port, and only one s
 ```
 
 </details>
+
+<details><summary>Round 2 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "0cbe8e4b642820032b9b3ec7a34f54632aa79845",
+    "session": "continued",
+    "thread_id": "01a2177f-986f-7842-9b83-105beb5df781",
+    "builder_response": "- Tests run: `speck test --files test/panel-0757.test.mjs test/serve-0757.test.mjs test/serve-front-0757.test.mjs test/serve-front-panel-0757.test.mjs test/serve-0756.test.mjs test/panel-0516.test.mjs` (209 passed, 0 failed, 3 of 0078's long-standing skips): this ticket's files, the 0756 file it changed, and 0516's, as the switcher's shared `passOn` changed.\n- F1: fixed. The way back to All projects no longer depends on the project's page code. The address's root `/`, and its own page files, are now always All projects, whatever has been chosen; a chosen project's panel is shown under `/project/` on the same address (`SHOWN` in `scripts/serve-front.mjs`). Its page there loads its files from beside it, as every supported speck's page does since 0543, and they're passed to its own panel with the `/project` taken off (`passOn` takes the `path` to ask for); its `/api/` requests still go by the cookie. `/project` redirects to `/project/`, and `/project/` with no running panel chosen redirects to `/` (forgetting a stale choice). All projects at `/` now goes to `project/` with `location.assign` after a choice (`chooseProject` in `templates/panel-header.js`), so it's a new page in the browser's history: Back from any project's page, of any version, comes back to All projects, and opening the address again does too, as the home-screen app does from its start, `./` of the root page's manifest. A page from an older speck still switches between projects with its own menu (it reloads `/project/`). The cookie lasts a year again, as the switcher's does, since the address no longer needs it to end to open on All projects. Compatibility test added (`test/serve-front-panel-0757.test.mjs`, \"a project on an older speck, its panel the only one running…\"): a project set up by speck 1.6.1's own init, from its tag, its real panel the only one running, beside a listed project that isn't answering. It checks that All projects lists both. It checks that the project's 1.6.1 page and files are served under `/project/`, and that its board has no project menu and its `panel-header.js` shows the menu only with two panels running. And it checks that the address itself is All projects with the choice still set. Tests changed to match: `serve-front-0757` (the page under `/project/`, its files from its panel, `/` and `/panel.js` staying the address's own while a project is chosen, the redirects), `panel-0757` (the choice goes to `project/`), `serve-0757` (bravo's page at `/project/`, `/` All projects with the cookie; the brief's row names `/project/`). The brief says where a chosen project shows and that Back, or opening the address again, goes back to All projects.\n",
+    "seconds": 31,
+    "usage": {
+      "input_tokens": 634840,
+      "cached_input_tokens": 521856,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2418,
+      "reasoning_output_tokens": 559
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 29167,
+      "cached": 298112,
+      "write": 0,
+      "output": 1154
+    },
+    "cost_usd": 0.0996852,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-26T11:02:28.925Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "startFront retains the panel's port/URL parsing and Host/Origin checks. Passing serve-front-0757 and serve-0757 tests cover local and tunnel addresses, rejected headers and background operation."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "The root now always serves All projects, and choosing a project navigates to /project/. However, the new older-speck compatibility test explicitly verifies that the project's page has no project menu when only its panel is running. Browser Back provides a workaround, but the required menu route back to All projects is still absent."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "passOn strips /project from page and asset requests while preserving API requests, tokens and permitted Origin rewriting. Passing real-panel tests cover writes, Settings and live updates; proxy tests cover bodies, delayed replies and streamed events."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing summary and page tests retain unavailable projects as Not answering, exclude them from figures and verify that another project's requests continue working."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The brief documents --port, --url, All projects and /project/; the documentation fact test passes. The round's output records 209 passing tests, zero failures and three skips."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/serve-front.mjs",
+        "issue": "The fix makes All projects reachable through browser history or reopening the root address, but older supported project pages still have no project menu when only one panel is running. The new compatibility test confirms this absence rather than verifying a visible return control. This leaves the explicit acceptance requirement unmet and matters especially when using the phone's home-screen app without visible browser navigation.",
+        "suggested_fix": "Provide a visible All projects navigation control at the shared address independently of the project's version, including with only one panel running. Extend the compatibility test to exercise that control rather than relying on a separate request to the root.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The address now reliably opens on All projects, and panel actions still pass their tests. Older project pages still lack the required navigation back: browser Back helps, but a visible return control is needed."
+  }
+}
+```
+
+</details>
