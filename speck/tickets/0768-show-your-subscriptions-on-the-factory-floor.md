@@ -19,7 +19,7 @@ after: ["0764","0765","0766"]                # ticket ids that must be done firs
 created: 2026-11-26
 built_on: "0766"
 started: "2026-11-26T20:32:28.875Z"
-approved: "2026-11-26T21:10:25.465Z"
+approved: "2026-11-26T21:18:17.093Z"
 
 ---
 # 0768 · Show your subscriptions on the factory floor
@@ -59,12 +59,13 @@ To see it, open the factory floor at speck serve's address. The readings are the
 Round 1 (codex): changes requested: F1 floorUsage() hides an explicitly limited Codex reading when its window percentages are unknown.
 Round 2 (codex): approve.
 Round 3 (codex, merge round): approve.
+Round 4 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 3, 1 of them a merge round
+- Review rounds: 4, 2 of them merge rounds
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 373,213
-- Elapsed since build started: 38 min
+- Reviewer tokens: 497,146
+- Elapsed since build started: 46 min
 - Changed lines: 124 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
@@ -327,6 +328,93 @@ Follow-ups:
     ],
     "escalation_question": "",
     "summary": "The merge preserves subscription usage panels alongside Virgil’s dial. Both earlier fixes remain intact, and the combined tests pass. No blocking concerns remain."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 4 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 4,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "3b0786dea40558b67f666b392e9e8578ba9e3397",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a219a8-2a47-77f0-a2e1-1987216908c9",
+    "builder_response": "Merge of main (0769, open a ticket from the factory floor) into the approved 0768.\n- templates/floor.js (added-lines, 1 hunk): both sides added a block after shipCell(): 0768's subscriptions block (feeding, resetsWhen, drawSubs, subOf) and 0769's opener(). Kept both whole, 0768's closed with its `}` and then 0769's opener, followed by the shared closing brace. No other change. floor.html and floor.css merged cleanly; Subscriptions is still under the line and dial and above the stations.\n- Tests run: test/floor-subs-0768.test.mjs test/floor-open-0769.test.mjs test/floor-dial-0767.test.mjs test/floor-line-0766.test.mjs test/floor-0765.test.mjs test/floor-line-browser-0766.test.mjs test/floor-browser-0765.test.mjs (207 tests, 0 failed).\n",
+    "seconds": 20,
+    "usage": {
+      "input_tokens": 494129,
+      "cached_input_tokens": 430208,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 3017,
+      "reasoning_output_tokens": 127
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 5832,
+      "cached": 117504,
+      "write": 0,
+      "output": 597
+    },
+    "cost_usd": 0.0293844,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-26T21:18:14.209Z"
+  },
+  "verdict": {
+    "round": 4,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "floorUsage(), drawSubs() and subOf() remain intact after the merge. floor.html retains subscriptions below the line and dial. All five AC1 tests pass."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "feeding() still aggregates matching agents across projects' summary lines. The AC2 test covering multiple projects, Claude subagents and zero stations passes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Limit handling, orange styling and absent-reading filtering remain intact. All four AC3 tests pass, including the unknown-percentage limit regression."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The reported combined run has 204 passes, zero failures and three skips, including subscription and ticket-opening tests. Independent JavaScript syntax validation passes."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/subscriptions.mjs",
+        "issue": "An explicitly limited reading with an unknown percentage previously disappeared.",
+        "suggested_fix": "Fixed: the unnamed-limit fallback and its passing regression coverage remain intact.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "minor",
+        "file": "templates/floor.js",
+        "issue": "Impossible calendar dates previously appeared as valid reset dates.",
+        "suggested_fix": "Fixed: complete calendar-date validation and its passing regression coverage remain intact.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The merge preserves both subscription panels and ticket opening. Earlier fixes remain intact, and the combined tests pass. No blocking concerns remain."
   }
 }
 ```
