@@ -1,7 +1,7 @@
 ---
 id: "0773"
 title: "Keep test summaries working on Node 24"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -21,7 +21,7 @@ created: 2026-11-26
 ---
 # 0773 · Keep test summaries working on Node 24
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 speck reads `node --test` output as TAP to say which test files failed and what to run next. On Node 24 the default output is the spec reporter, so a failing `speck test --related` run ends without the command to run next and the reviewer gets the whole output.
