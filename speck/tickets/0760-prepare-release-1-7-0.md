@@ -1,7 +1,7 @@
 ---
 id: "0760"
 title: "Prepare release 1.7.0"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -21,7 +21,7 @@ created: 2026-11-25
 ---
 # 0760 · Prepare release 1.7.0
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Since 1.6.1, `speck projects` and `speck serve` run every project on a machine from one service at one address, keep each project's `speck run` going, can leave a project out without forgetting it, and can start at boot. Anyone following the setup prompt, or updating speck in a project, still gets 1.6.1.
