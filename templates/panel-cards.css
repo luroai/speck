@@ -9,6 +9,10 @@
   .lane-n { grid-row: 1; grid-column: 1; min-width: 0; padding: 8px 16px 0; font-family: var(--font-ui); font-size: 13px; line-height: 18px; text-align: right; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .lane-n[hidden] { display: none; }
   .lane-list { grid-row: 2; grid-column: 1; min-height: 0; margin: 0; padding: 0 16px; overflow-y: auto; overscroll-behavior: contain; color: var(--text); background: var(--panel); }
+  /* 0761: a list scrolls only up and down. What's wider than it is cut off at its edges rather than scrolled to, so a
+     sideways swipe that starts on it always changes lane (see scrollsSideways), and the page keeps it from being scrolled
+     sideways by script */
+  .lane-list { overflow-x: hidden; }
   .group { padding: 7px 14px; font-family: var(--font-ui); font-size: 12px; color: var(--muted); border-bottom: 1px solid var(--line-soft); background: var(--raise); }
   .group.attn { color: var(--warn); }
   .group.run { color: var(--run); }
@@ -362,6 +366,8 @@
   .prio-menu.builder-menu { max-height: min(60vh, 420px); overflow-y: auto; } /* an agent can list hundreds of models: the menu scrolls */
   /* its words can wrap: inline, with the tap area's height in padding, which takes no room from the line under it */
   .item.ticket .facts .set-builder, #full-ticket .facts .set-builder { display: inline; min-height: 0; margin: 0; padding: 11px 0; }
+  /* 0761: and they do wrap, inside their cell, rather than running past it and the row */
+  .item.ticket .facts .value.pick:has(.set-builder), #full-ticket .facts .value.pick:has(.set-builder) { white-space: normal; overflow-wrap: anywhere; }
   .facts .bfrom { display: block; margin-top: 2px; font-size: 12px; line-height: 16px; color: var(--muted); }
   .facts .level-refused { margin-top: 4px; font-size: 12px; line-height: 16px; white-space: pre-wrap; overflow-wrap: anywhere; }
   /* 0467: an open ticket's dependency box, under its table. Chain: five even slots on a line, each a circle over its

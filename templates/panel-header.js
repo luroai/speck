@@ -387,6 +387,11 @@ function stepLane(step) {
 }
 // Whether a node, or one it's in, inside the lanes scrolls sideways itself, as a wide code block does: a swipe or a
 // sideways scroll that starts there scrolls it instead.
+// 0761: a lane's list never scrolls sideways. Its style cuts off what's wider (overflow-x: hidden), which still lets a
+// script scroll it, so one scrolled sideways goes straight back.
+for (const list of document.querySelectorAll?.('.lane-list') || []) {
+  list.addEventListener('scroll', () => { if (list.scrollLeft) list.scrollLeft = 0; }, { passive: true });
+}
 function scrollsSideways(n) {
   for (; n && n !== lanesBox && n.nodeType === 1; n = n.parentNode) {
     if (n.scrollWidth > n.clientWidth + 1 && /^(auto|scroll)$/.test(getComputedStyle(n).overflowX)) return true;
