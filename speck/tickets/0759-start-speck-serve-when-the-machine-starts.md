@@ -1,7 +1,7 @@
 ---
 id: "0759"
 title: "Start speck serve when the machine starts"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -21,7 +21,7 @@ created: 2026-11-25
 ---
 # 0759 · Start speck serve when the machine starts
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 After a restart, nothing of speck comes back until someone starts it by hand, so the panel is unreachable from a phone and no work moves.
