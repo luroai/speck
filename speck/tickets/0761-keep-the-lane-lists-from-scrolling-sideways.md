@@ -1,7 +1,7 @@
 ---
 id: "0761"
 title: "Keep the lane lists from scrolling sideways"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-25
+started: "2026-11-26T09:32:41.906Z"
 
 ---
 # 0761 · Keep the lane lists from scrolling sideways
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 On an iPhone in Safari, the Plan list can scroll sideways: its rows slide left under the finger with a horizontal scrollbar, and the swipe no longer changes lane. The lists scroll up and down (`overflow-y: auto`), which lets them scroll sideways too once anything in them is wider, and the panel hands a swipe to the lanes only when it doesn't start in something that scrolls sideways (`scrollsSideways`).
