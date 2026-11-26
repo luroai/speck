@@ -11,11 +11,14 @@
 // 0766: above the stations, the line: a row for each project through Queue, Builder, Reviewer, QA and Ship, from the line
 // its summary gives (0764's, scripts/panel-line.mjs), each lit station naming its ticket, agent, model and effort. The
 // members' faces on its headings are the panel's own (speck-face.js, which loads before this).
+// 0769: each lit station and each card on the board is a button that opens its ticket, or its note in Capture, in its
+// project's panel at this address, as All projects' cards do (0596): it chooses that project here, keeps what to open
+// for the page that comes next, and goes there. That ticket's back link comes back here, to the station chosen as it was.
 // 0767: beside the line, Virgil's dial: the engineering manager drawn large, in the busiest mood among the projects as
 // All projects works it out, inside rings, over a count of everything that needs you and a line for each, which opens
 // that ticket in its project's panel at this address.
 (() => {
-  const FLOOR_MS = 2000, GIVE_UP_MS = 15000, KEPT = 'speck-floor-station', SVG = 'http://www.w3.org/2000/svg';
+  const FLOOR_MS = 2000, GIVE_UP_MS = 15000, KEPT = 'speck-floor-station', ASKED = 'speck-open-ticket', SVG = 'http://www.w3.org/2000/svg';
   const LANES = [['capture', 'Capture', 'Nothing captured'], ['plan', 'Plan', 'Nothing to plan'], ['build', 'Build', 'Nothing building or queued'], ['shipped', 'Shipped', 'Nothing shipped yet']];
   const $ = id => document.getElementById(id);
   const list = v => (Array.isArray(v) ? v : []);
@@ -86,10 +89,40 @@
     ask();
   }
 
+  // 0769: opens `what` ({ id } for a ticket, { note } for a note in Capture) in the project whose panel is on `port`, at
+  // this address: chooses that project here, keeps what to open in this tab's sessionStorage, which the project's page
+  // reads once its board is here (panel-header.js, openAskedTicket), and goes to where the address shows it. Says why
+  // here when it can't, keeping nothing.
+  let opening = false, openSaid = null; // why the last press couldn't open its ticket, till the next press
+  async function openIn(port, what, project) {
+    if (opening) return;
+    openSaid = null;
+    if (!Number.isInteger(port)) { openSaid = `${project}'s panel isn't running, so its tickets can't be opened. speck serve's output says why.`; return draw(); }
+    opening = true;
+    const kept = v => { try { if (v === null) sessionStorage.removeItem(ASKED); else sessionStorage.setItem(ASKED, JSON.stringify(v)); } catch { /* opens the project only */ } };
+    kept({ port, ...what, from: 'floor' });
+    let res = null, body = null;
+    try { res = await fetch(`api/projects/${port}`, { method: 'POST' }); try { body = await res.json(); } catch { /* said below */ } } catch { /* said below */ }
+    opening = false;
+    if (res && res.ok) return void location.assign('project/');
+    kept(null);
+    openSaid = res ? (body && typeof body.error === 'string' && body.error ? body.error : `speck serve refused (${res.status}).`) : 'can\'t reach speck serve.';
+    draw();
+  }
+  // Puts the focus back on the opener for the same thing in `box` after it's drawn again, when one had it before.
+  const openerFocused = box => { const a = document.activeElement; return a && a.openKey !== undefined && within(a, box) ? a.openKey : undefined; };
+  function within(n, box) { for (let x = n; x; x = x.parentNode) if (x === box) return true; return false; }
+  function refocus(box, key) {
+    if (key === undefined) return;
+    const find = n => { if (n.openKey === key) return n; for (const c of n.children || []) { const f = find(c); if (f) return f; } return null; };
+    const to = find(box);
+    if (to && to.focus) to.focus();
+  }
+
   function draw() {
     const note = $('floor-said');
-    note.hidden = !said;
-    note.textContent = said ? `Couldn't read your projects: ${said}` : '';
+    note.hidden = !said && !openSaid;
+    note.textContent = said ? `Couldn't read your projects: ${said}` : openSaid ? `Couldn't open that: ${openSaid}` : '';
     drawLine();
     drawDial();
     drawStations();
@@ -140,9 +173,11 @@
     lineDrawn = drawn;
     if (!stations) return void box.replaceChildren(...(said ? [] : [el('p', 'floor-none', 'Reading your projects…')]));
     if (!stations.length) return void box.replaceChildren();
+    const focused = openerFocused(box);
     const heads = COLUMNS.map(([key, label]) => el('div', `line-head line-head-${key}`, null,
       MEMBERS.includes(key) && globalThis.SpeckFace ? SpeckFace.draw({ role: key, size: 20, look: 'dark' }) : null, el('span', 'line-head-label', label)));
     box.replaceChildren(el('div', 'line-grid', null, el('div', 'line-heads', null, el('div', 'line-corner'), ...heads), ...stations.map(lineRow)));
+    refocus(box, focused); // 0769: a redraw keeps the focus on the station it was on
   }
   function lineRow(s) {
     const l = lineNow(s), off = !s.running || s.mood === 'asleep';
@@ -150,7 +185,7 @@
     const project = el('div', 'line-project', null, el('span', 'line-n', two(s.n)), el('span', 'line-name', s.name));
     project.title = s.name;
     const cells = !l ? COLUMNS.map(([key], i) => el('div', `line-cell line-${key}`, null, el('p', 'line-empty', i ? '–' : 'No line from this project')))
-      : [queueCell(l), ...MEMBERS.map(m => memberCell(m, l)), shipCell(l)];
+      : [queueCell(l), ...MEMBERS.map(m => memberCell(m, l, s)), shipCell(l)];
     const row = el('div', `line-row${off ? ' off' : idle ? ' idle' : ''}`, null, project, ...cells);
     row.setAttribute('aria-label', `${s.name}${off ? ', off' : idle ? ', idle' : ''}`);
     return row;
@@ -159,23 +194,25 @@
     return el('div', 'line-cell line-queue', null, el('span', `queue-n${l.ready ? ' some' : ''}`, String(l.ready)),
       el('span', 'queue-next', l.next.length ? `Next ${l.next.join(' · ')}` : 'Nothing ready'));
   }
-  function memberCell(m, l) {
+  function memberCell(m, l, s) {
     const cell = el('div', `line-cell line-${m}`);
-    if (l.at[m].length) for (const w of l.at[m]) cell.appendChild(slotOf(w, true));
+    if (l.at[m].length) for (const w of l.at[m]) cell.appendChild(slotOf(w, true, s));
     else if (m === 'qa' && obj(l.idle('qa')) && l.idle('qa').set_up === false) cell.appendChild(el('div', 'slot none', 'No QA set up'));
     else if (l.idle(m) && (words(l.idle(m).agent_name) || words(l.idle(m).agent))) cell.appendChild(slotOf(l.idle(m), false));
     else cell.appendChild(el('div', 'slot none', 'Not known')); // its panel couldn't read its settings
     return cell;
   }
   // A station's slot: lit with the ticket on it, or dimmed with what it would run on, its agent a stripe in its colour.
-  function slotOf(w, lit) {
+  // 0769: a lit one is a button that opens its ticket in `s`'s project's panel.
+  function slotOf(w, lit, s = null) {
     const agent = words(w.agent_name) || words(w.agent), model = words(w.model), effort = words(w.effort), time = lit ? timeThere(w.since) : '', why = lit ? whyOf(w) : '';
-    const slot = el('div', `slot ${lit ? 'lit' : 'idle'} agent-${agentColour(w.agent)}`, null, el('span', 'slot-stripe'),
+    const slot = el(lit ? 'button' : 'div', `slot ${lit ? 'lit' : 'idle'} agent-${agentColour(w.agent)}`, null, el('span', 'slot-stripe'),
       lit ? el('span', 'slot-top', null, el('span', 'slot-id', words(w.id)), time ? el('span', 'slot-time', time) : null) : null,
       lit ? el('span', 'slot-title', words(w.title)) : null,
       el('span', 'slot-runs', null, agent ? el('span', 'slot-agent', agent) : null, model ? el('span', 'slot-model', model) : null, effort ? el('span', 'slot-effort', effort) : null),
       why ? el('span', 'slot-why', why) : null);
     slot.title = [lit ? `${words(w.id)} · ${words(w.title)}` : 'Idle', [agent, model, effort].filter(Boolean).join(' · '), why, time ? `For ${time}` : ''].filter(Boolean).join('\n');
+    if (lit && s) opener(slot, s, { id: words(w.id) }, `${words(w.id)} ${words(w.title)}`.trim());
     return slot;
   }
   function shipCell(l) {
@@ -187,6 +224,15 @@
       item.title = `${words(t.id)} · ${words(t.title)}${mark ? `\n${mark}` : ''}`;
       return item;
     })));
+  }
+
+  // 0769: makes `b` a button that opens `what` in `s`'s project's panel, named for it and the project.
+  function opener(b, s, what, name) {
+    b.type = 'button';
+    b.setAttribute('aria-label', `Open ${name} in ${s.name}`);
+    b.openKey = `${s.key} ${what.id !== undefined ? `t ${what.id}` : `n ${what.note}`}`;
+    b.addEventListener('click', () => openIn(s.port, what, s.name));
+    return b;
   }
 
   // ---------- 0767: Virgil's dial ----------
@@ -314,17 +360,22 @@
     const box = $('lanes');
     if (!s) return void box.replaceChildren();
     if (!lanes) return void box.replaceChildren(el('p', 'floor-none', boardGone ? `${s.name}'s panel isn't giving its board, so it can't be shown.` : `Reading ${s.name}'s board…`));
+    const focused = openerFocused(box);
     box.replaceChildren(...(boardGone ? [el('p', 'board-gone', `${s.name}'s panel isn't giving its board, so this is the last one it gave.`)] : []),
-      ...LANES.map(([key, label, empty]) => laneOf(label, key, empty, lanes[key])));
+      ...LANES.map(([key, label, empty]) => laneOf(label, key, empty, lanes[key], s)));
+    refocus(box, focused); // 0769: a redraw keeps the focus on the card it was on
   }
-  function laneOf(label, key, empty, lane) {
+  function laneOf(label, key, empty, lane, s) {
     const section = el('section', `lane lane-${key}`, null, el('div', 'lane-head', null, el('h3', 'lane-label', label), el('span', 'lane-n', String(lane.n))),
-      lane.cards.length ? el('ol', 'cards', null, ...lane.cards.map(cardOf)) : el('p', 'lane-empty', empty));
+      lane.cards.length ? el('ol', 'cards', null, ...lane.cards.map(c => cardOf(c, s))) : el('p', 'lane-empty', empty));
     section.setAttribute('aria-label', `${label}, ${lane.n}`);
     return section;
   }
-  function cardOf(c) {
-    const card = el('li', `card ${c.tone}`, null, el('span', 'card-id', c.id), el('span', 'card-title', c.title), el('span', 'card-detail', c.detail));
+  // 0769: its whole card is a button that opens it in the project's panel: a ticket's full view, or a note in Capture.
+  function cardOf(c, s) {
+    const b = opener(el('button', 'card-open', null, el('span', 'card-id', c.id), el('span', 'card-title', c.title), el('span', 'card-detail', c.detail)),
+      s, c.open, c.open.id !== undefined ? `${c.id} ${c.title}` : `the note ${c.title}`);
+    const card = el('li', `card ${c.tone}`, null, b);
     card.title = `${c.id} · ${c.title}\n${c.detail}`;
     return card;
   }
@@ -336,7 +387,8 @@
     return lanesMade.lanes;
   }
   // The board's four lanes, each { n, cards }, from the panel's model: n as the panel's tab counts it, and each card
-  // { id, title, tone, detail }, its tone being needs or moving (orange), shipped (green) or still.
+  // { id, title, tone, detail, open }, its tone being needs or moving (orange), shipped (green) or still, and open what
+  // pressing it opens in the project's panel (0769): { id } for a ticket, { note } for a note's path.
   function lanesOf(state) {
     const m = panelModel(state), f = state.foreman && typeof state.foreman === 'object' ? state.foreman : {};
     const name = typeof f.name === 'string' && f.name.trim() ? f.name.trim() : 'speck';
@@ -356,7 +408,7 @@
   function noteCard(i) {
     const on = capturedOn(i.body), from = i.from ? `From ${i.from}` : null;
     const detail = on ? (from ? `${from} · ${on}` : `Captured ${on}`) : from || 'No capture date';
-    return { id: String(i.status).trim() === 'inbox' ? 'Inbox' : 'Idea', title: String(i.title || ''), tone: 'still', detail };
+    return { id: String(i.status).trim() === 'inbox' ? 'Inbox' : 'Idea', title: String(i.title || ''), tone: 'still', detail, open: { note: String(i.path || '') } };
   }
   // A note's `Captured: <YYYY-MM-DD>` day, as "20 Nov", with its year when it isn't this one, or null.
   function capturedOn(body) {
@@ -371,20 +423,20 @@
     const waits = list(t.waiting_on).map(String);
     const facts = [t.priority !== undefined && t.priority !== null && t.priority !== '' ? `P${t.priority}` : null, t.size ? String(t.size) : null, t.risk ? `${t.risk} risk` : null,
       t.type === 'bug' || t.type === 'fix' ? t.type : null, t.kind === 'task' ? 'task' : null, waits.length ? `after ${waits.join(', ')}` : null];
-    return { id: String(t.id), title: String(t.title || ''), tone: 'still', detail: facts.filter(Boolean).join(' · ') || 'Draft' };
+    return { id: String(t.id), title: String(t.title || ''), tone: 'still', detail: facts.filter(Boolean).join(' · ') || 'Draft', open: { id: String(t.id) } };
   }
   // A ticket in Build: where it is, in the words of its row in the panel, and the tickets a ready one waits on.
   function buildCard({ t, d, a, group }, name) {
     const said = a ? `${name} has a question` : !t.inFlight ? 'Ready' : d.round !== null && d.round !== undefined ? `Reviewing · round ${d.round}` : d.word;
     const waits = !t.inFlight ? list(t.waiting_on).map(String) : [], after = waitsToShipAfter(t), dot = rowDot(group, d);
-    return { id: String(t.id), title: String(t.title || ''), tone: dot === 'needs' ? 'needs' : dot === 'run' ? 'moving' : 'still',
+    return { id: String(t.id), title: String(t.title || ''), open: { id: String(t.id) }, tone: dot === 'needs' ? 'needs' : dot === 'run' ? 'moving' : 'still',
       detail: [said, waits.length ? `after ${waits.join(', ')}` : null, after ? `ships after ${after}` : null].filter(Boolean).join(' · ') };
   }
   // A shipped ticket: when it shipped, its review rounds and how long it took; one merged but not pushed needs you.
   function shippedCard(t) {
     const figures = [t.roundCount > 0 ? `${t.roundCount} round${t.roundCount === 1 ? '' : 's'}` : null, Number.isFinite(t.minutes) ? `${t.minutes} min` : null];
     const detail = [t.unpushed ? 'Merged, but not pushed' : null, t.end !== null ? t.when : null, ...figures].filter(Boolean).join(' · ') || 'Shipped';
-    return { id: String(t.id), title: String(t.title || ''), tone: t.unpushed ? 'needs' : 'shipped', detail };
+    return { id: String(t.id), title: String(t.title || ''), tone: t.unpushed ? 'needs' : 'shipped', detail, open: { id: String(t.id) } };
   }
 
   document.addEventListener('DOMContentLoaded', () => {

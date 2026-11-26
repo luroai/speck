@@ -488,11 +488,12 @@ function packBlocks(text, marks = b => b) {
 // Markdown formatted; then, for an approved ticket, the bar with its actions, and for a draft (0617) the bar with Set ready.
 // 0584: a ticket in the Build lane has its live section under its track and facts.
 function fullTicket(t, draft, steps, barShown) {
-  const lane = LANE_OF[backList()], back = el('span', 'close', lane);
+  const toFloor = floorBack === String(t.id); // 0769: opened from speck serve's factory floor, so its back link goes there
+  const lane = LANE_OF[backList()], back = el('span', 'close', toFloor ? 'Factory floor' : lane);
   back.tabIndex = 0;
   back.setAttribute('role', 'link');
-  back.setAttribute('aria-label', `Back to ${lane}`);
-  back.addEventListener('click', closeFull);
+  back.setAttribute('aria-label', toFloor ? 'Back to the factory floor' : `Back to ${lane}`);
+  back.addEventListener('click', toFloor ? () => location.assign('../floor') : closeFull);
   back.addEventListener('keydown', pressWithKeys);
   const body = el('div', null, null, draft ? paneReadiness(t) : null);
   liveBox = liveShows(t) ? liveSection(t) : null;
@@ -790,7 +791,7 @@ function backToTicket() {
 }
 function closeFull() {
   if (packOf && packFromFull) { packOf = null; packFromFull = false; render(); const pane = $('full-ticket'); if (pane.focus) pane.focus({ preventScroll: true }); return; } // 0583: back to the full view
-  fullId = null; packOf = null; focusBack = true; render(); // 0362: the pop-up goes with it (renderFull)
+  fullId = null; packOf = null; focusBack = true; floorBack = null; render(); // 0362: the pop-up goes with it (renderFull)
 }
 // 0326: once the pane has closed and the board is drawn, the focus goes back to the Full ticket button that opened it,
 // the one drawn in its place since, or, when its ticket has none on the board now, to the top of the list it was in.
