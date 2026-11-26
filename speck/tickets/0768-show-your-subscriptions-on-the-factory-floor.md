@@ -43,6 +43,7 @@ Under the line, the factory floor shows each of your subscriptions' use, when it
 ## Notes
 - Design: mockup D, "Stations, instrument panel", on the user's private design canvas (2026-11-25/26): near-black ground with faint grid lines, one signal orange (#FF6A1F) for anything moving or needing you, green for shipped, small spaced-out monospace capitals for labels, big thin numbers, panels with corner-bracket marks. Use the fonts the panel already ships and no fonts from the network.
 - Readings come from `GET /api/usage` (`scripts/subscriptions.mjs`), as Settings and the bridge's warning (0720) use them.
+- Failing before this build: not checked
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
