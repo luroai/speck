@@ -147,13 +147,13 @@ test('0231 AC3: the shared helper runs a command in this process', () => {
   assert.equal(Number(fs.readFileSync(pid, 'utf8').trim()), process.pid);
 });
 
-test('0231 AC3: no shared helper starts the speck CLI as a process, except for panel and run', () => {
+test('0231 AC3: no shared helper starts the speck CLI as a process, except for panel, run and serve', () => {
   const dir = path.join(ROOT, 'test', 'support');
   const offenders = [];
-  // cli.mjs is the helper itself, which starts a process for panel and run.
+  // cli.mjs is the helper itself, which starts a process for panel and run. 0756: serve keeps running too.
   for (const f of fs.readdirSync(dir).filter(n => n.endsWith('.mjs') && n !== 'cli.mjs')) {
     fs.readFileSync(path.join(dir, f), 'utf8').split('\n').forEach((line, i) => {
-      if (/spawn(Sync)?\(process\.execPath, \[(CLI|cli)\b/.test(line) && !/'(panel|run)'/.test(line)) offenders.push(`${f}:${i + 1}`);
+      if (/spawn(Sync)?\(process\.execPath, \[(CLI|cli)\b/.test(line) && !/'(panel|run|serve)'/.test(line)) offenders.push(`${f}:${i + 1}`);
     });
   }
   assert.deepEqual(offenders, []);
