@@ -18,14 +18,17 @@ const runLog = dir => { try { return fs.readFileSync(path.join(runsIn(dir), 'run
 const lockOf = dir => { try { return Number(fs.readFileSync(path.join(runsIn(dir), 'run.lock'), 'utf8').trim()) || null; } catch { return null; } };
 
 // A keeper over stood-in runs: `on` holds the folders whose run is on, and each start is recorded and turns it on.
-function keeper(file, { now = () => Date.now(), startOk = true } = {}) {
-  const on = new Set(), started = [], said = [];
+// `old` stands in for a project on a speck from before 0758, whose panel doesn't record its switch. `during` runs while a
+// start is under way, before the run has taken its lock.
+function keeper(file, { now = () => Date.now(), startOk = true, old = false, during = () => {} } = {}) {
+  const on = new Set(), started = [], said = [], stopped = [];
   const k = runKeeper({
-    file, env: {}, say: t => said.push(t), now,
+    file, env: {}, say: t => said.push(t), now, records: () => !old,
+    stop: async pid => { stopped.push(pid); on.clear(); return true; },
     state: runs => ({ on: on.has(path.dirname(path.dirname(path.dirname(runs)))), pid: 1 }),
-    start: async folder => { started.push(folder); if (!startOk) return { why: 'it stopped (exit code 1)' }; on.add(folder); return { pid: 4242 }; },
+    start: async folder => { started.push(folder); await during(folder); if (!startOk) return { why: 'it stopped (exit code 1)' }; on.add(folder); return { pid: 4242 }; },
   });
-  return { k, on, started, said };
+  return { k, on, started, said, stopped };
 }
 
 test('0758 AC1: as it starts, speck serve starts the runs that were on when it last stopped or whose switch was last turned on, and no others', async () => {
@@ -90,6 +93,43 @@ test('0758 AC2: the Auto-build switch turned off is recorded, so speck serve nei
   assert.deepEqual(two.started, []);
 });
 
+test('0758 AC2: Auto-build turned off while speck serve is starting the run stops it once it has started, and it stays off after a restart', async () => {
+  const file = path.join(tmp('speck-0758-home-'), 'serve-runs.json');
+  const dir = project('alpha');
+  setSwitch(dir, true, '2026-11-20T10:00:00.000Z');
+  const one = keeper(file, { during: async folder => { await panelRunOff(folder); } });
+  one.k.check([dir]);
+  await until('the run stopped', () => one.stopped.length === 1);
+  await tick();
+  assert.deepEqual(one.stopped, [4242]);
+  assert.match(runLog(dir), /speck serve: Auto-build was turned off while speck serve was starting speck run \(process 4242\), so it was stopped\./);
+  one.k.check([dir]); one.k.check([dir]); await tick();
+  assert.equal(one.started.length, 1, 'not started again while it runs');
+  assert.equal(readAutoBuild(runsIn(dir)).on, false);
+  const two = keeper(file);
+  two.k.check([dir]); await tick();
+  assert.deepEqual(two.started, [], 'nor after speck serve restarts');
+});
+
+test('0758 AC2: a project on an older speck, whose panel doesn\'t record its switch, is started as it starts when its run was on, but never started again', async () => {
+  const file = path.join(tmp('speck-0758-home-'), 'serve-runs.json');
+  const dir = project('alpha');
+  fs.writeFileSync(file, JSON.stringify({ runs: { [dir]: { since: '2026-11-20T10:00:00.000Z' } } }));
+  const { k, on, started, said } = keeper(file, { old: true });
+  k.check([dir]); await tick(); await tick();
+  assert.deepEqual(started, [dir], 'on when speck serve last stopped');
+  assert.equal(readAutoBuild(runsIn(dir)), null, 'nothing recorded for its switch');
+  k.check([dir]);
+  on.clear(); // turned off by its own panel, which records nothing
+  k.check([dir]); k.check([dir]); await tick();
+  assert.equal(started.length, 1, 'not started again');
+  assert.equal(runLog(dir).match(/This project's speck is too old to say when Auto-build is turned off, so speck serve doesn't start it again/g)?.length, 1, 'said once in the Pipeline log');
+  assert.ok(said.some(t => t.startsWith('alpha: speck run stopped. This project')));
+  const two = keeper(file, { old: true });
+  two.k.check([dir]); await tick();
+  assert.deepEqual(two.started, [], 'and not as speck serve starts again, as its run was off when it stopped');
+});
+
 test(`0758 AC3: a run that stops without being turned off is started again, at most ${RESTARTS_AN_HOUR} times an hour, saying so in the Pipeline log`, async () => {
   const file = path.join(tmp('speck-0758-home-'), 'serve-runs.json');
   const dir = project('alpha');
@@ -128,6 +168,7 @@ test('0758 AC3: a run that fails to start is said in the Pipeline log and counts
 test('0758 AC1, AC3, AC4: a real speck serve starts the run, starts it again when it stops, and --stop leaves it on and says so', async () => {
   const m = machine(), a = standInProject('alpha'), b = standInProject('bravo');
   addProject(m, a); addProject(m, b);
+  fs.copyFileSync(path.join(import.meta.dirname, '..', 'scripts', 'serve-runs.mjs'), path.join(a, '.speck', 'scripts', 'serve-runs.mjs')); // a speck that records its switch
   writeAutoBuild(runsIn(a), true, 'test');
   const s = startServe(m);
   let pid;

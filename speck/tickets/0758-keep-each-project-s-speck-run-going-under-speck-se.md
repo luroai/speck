@@ -1,7 +1,7 @@
 ---
 id: "0758"
 title: "Keep each project's speck run going under speck serve"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -23,7 +23,7 @@ started: "2026-11-26T10:17:16.586Z"
 ---
 # 0758 · Keep each project's speck run going under speck serve
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Each project's `speck run` is started by hand or by its panel's Auto-build switch, and stays off after the machine restarts until someone turns it on again. Under one service, work in every project should carry on by itself.
@@ -59,3 +59,97 @@ Each project's `speck run` is started by hand or by its panel's Auto-build switc
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "cf40a1eb05523ccb073b557ab9db0c7eea5fbd80",
+    "session": "fresh",
+    "thread_id": "01a2176a-0afa-76b1-bc66-ef6eed17c472",
+    "builder_response": "- Tests run: test/serve-0758.test.mjs test/usage-limit-0622.test.mjs test/serve-0756.test.mjs (after one `--related` run, whose only other failure was test/support/stand-in-panel.mjs, a support file I wrongly passed as a test file, and 0622's usage-limit resume test, which passes on its own and touches nothing this ticket changes)\n- Design: the panel's Auto-build switch (panelRunOn on success, panelRunOff first thing) records how it was last turned in speck/.cache/runs/auto-build.json. speck serve records which listed projects' runs it last saw on, with when each took its lock, in ~/.config/speck/serve-runs.json, kept after it stops. At its first look at a project it starts the run when the switch was last turned on, or the run was on when it last stopped and the switch wasn't turned off after that run took its lock (AC1, AC2). Starting one records the switch on, so serve keeps it going. Later, a run that's off while the switch is on is started again, at most 3 times in a rolling hour, each time and the hold said in the project's run.log, which the Pipeline log shows (AC3). serve never stops a run; --stop and Ctrl+C name the listed projects whose run is still on (AC4).\n- Projects on an older speck have panels that don't record the switch, so for them serve goes by whether the run was on.\n",
+    "seconds": 32,
+    "usage": {
+      "input_tokens": 137252,
+      "cached_input_tokens": 85632,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1157,
+      "reasoning_output_tokens": 211
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 51620,
+      "cached": 85632,
+      "write": 0,
+      "output": 1157
+    },
+    "cost_usd": 0.1233732,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-26T10:33:07.162Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "runKeeper.check and wantedAtStart implement startup selection. The two AC1 tests cover switch state, saved runs and projects left off; the integration test covers actual process startup."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "panelRunOff records off, but runKeeper.launch does not check for an off request during startup. Older supported project panels do not write this record at all."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "runKeeper.check limits retries within its rolling hour and writes run.log messages. AC3 tests cover the limit and log; the integration test checks restart within 30 seconds."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "serve shutdown leaves runs untouched. The AC4 integration test confirms --stop reports alpha and leaves its run alive."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Reported targeted run: 203 passed, zero failed, three skipped. No existing tests were weakened."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/serve-runs.mjs",
+        "issue": "Supported projects using an older copy of speck cannot reliably turn Auto-build off. serve starts their run and writes auto-build.json as on, but their existing panelRunOff does not update that file. Once their panel stops the run, serve sees the saved on value and starts it again. serve deliberately launches each project's own installed copy, so changing this repository's panel handler does not fix those panels.",
+        "suggested_fix": "Provide a compatible way to recognise explicit stops in supported project versions, or explicitly detect and handle versions without persistent switch support. Add coverage using a project panel that does not write auto-build.json.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/serve-runs.mjs",
+        "issue": "Turning Auto-build off during a serve-initiated startup can leave the run on. launch writes on and starts asynchronously. If panelRunOff runs before the child takes its lock, it records off and returns 'off already'. The child then takes its lock; launch accepts it without rechecking the switch, and subsequent checks leave every live run alone. The existing AC2 test only exercises an idle keeper.",
+        "suggested_fix": "Coordinate startup with explicit off requests so a run still starting is cancelled or stopped when a newer off request arrives. Add a delayed-start test that turns the switch off before lock acquisition and verifies the run remains off, including after restarting serve.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Startup, crash recovery and leaving runs running after stopping the service are covered by passing tests. However, Auto-build can turn itself back on for projects using older panels, and an off request during startup can be ignored. Both need fixing before merge."
+  }
+}
+```
+
+</details>
