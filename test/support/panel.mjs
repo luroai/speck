@@ -196,8 +196,9 @@ export const round = (n, tokens) => ({ round: n, reviewer: 'codex', verdict: 'ap
 // `made`, when given, is called with each element the page creates, for example to give it a browser's sizes (0052).
 // `ids` gives elements of the page, by id, what the server put in them before its scripts run, for example 0757's
 // { 'speck-serve': { content: '1' } } for speck serve's own page. `templates` is the folder to take the page and its
-// scripts from, for example an older speck's own (0757); this repo's templates/ by default.
-export function fakePage(responses, globals = {}, { made = () => {}, ids = {}, templates = path.join(ROOT, 'templates') } = {}) {
+// scripts from, for example an older speck's own (0757); this repo's templates/ by default. `page` is the page's file in
+// it: the panel's, or another page's, such as 0765's factory floor (floor.html).
+export function fakePage(responses, globals = {}, { made = () => {}, ids = {}, templates = path.join(ROOT, 'templates'), page = 'panel.html' } = {}) {
   const nodes = new Map();
   const make = tag => {
     const n = { tagName: tag, className: '', hidden: false, children: [], listeners: {}, _text: '' };
@@ -255,7 +256,7 @@ export function fakePage(responses, globals = {}, { made = () => {}, ids = {}, t
   // 0473: every script the page loads, in its order, each from its file in templates/, with what the server puts on its
   // tag (0433: the stamp and token on /panel.js's) as document.currentScript while it runs.
   const scripts = []; // the scripts it ran, in order
-  for (const { src, attrs } of pageScripts(fs.readFileSync(path.join(templates, 'panel.html'), 'utf8'))) {
+  for (const { src, attrs } of pageScripts(fs.readFileSync(path.join(templates, page), 'utf8'))) {
     const code = fs.readFileSync(path.join(templates, src), 'utf8');
     document.currentScript = { dataset: Object.fromEntries([...attrs.matchAll(/data-(\w+)="([^"]*)"/g)].map(m => [m[1], m[2]])) };
     vm.runInContext(code, ctx, { filename: src });
