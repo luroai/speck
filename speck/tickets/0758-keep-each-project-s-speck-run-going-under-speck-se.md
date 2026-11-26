@@ -1,7 +1,7 @@
 ---
 id: "0758"
 title: "Keep each project's speck run going under speck serve"                # one outcome, no "and"
-status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,12 +19,13 @@ after: ["0756"]                # ticket ids that must be done first
 created: 2026-11-25
 built_on: "0756"
 started: "2026-11-26T10:17:16.586Z"
-blocked_at: "2026-11-26T10:41:31.415Z"
+blocked_at: ""
+waited_seconds: 15
 
 ---
 # 0758 · Keep each project's speck run going under speck serve
 
-**Status:** ⛔ blocked
+**Status:** 🔨 building
 
 ## Problem
 Each project's `speck run` is started by hand or by its panel's Auto-build switch, and stays off after the machine restarts until someone turns it on again. Under one service, work in every project should carry on by itself.
@@ -48,6 +49,7 @@ Each project's `speck run` is started by hand or by its panel's Auto-build switc
 - Self-check: a project taken off the list and put back is looked at afresh (no stale restart count); the brief's serve row now says what it keeps on and where, with a test for the file names.
 - Pictures: none, because nothing anyone sees in the panel changes: speck serve is a command, and its only panel effect is lines in the Pipeline log.
 - `panelRunOn` and `runState` (`scripts/panel-run.mjs`, `scripts/run-switch.mjs`) start a run and tell whether one is on; the run lock is `speck/.cache/runs/run.lock`.
+- Went with the recommendation: (a) start it after a restart when it stopped within 10 seconds of speck serve (chosen by speck, as watch is decide, 2026-11-26 10:41 UTC).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
