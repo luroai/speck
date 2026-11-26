@@ -1,7 +1,7 @@
 ---
 id: "0765"
 title: "Open a factory floor page at speck serve's address"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-26
 started: "2026-11-26T19:39:37.424Z"
+approved: "2026-11-26T20:14:09.444Z"
 
 ---
 # 0765 · Open a factory floor page at speck serve's address
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 On a laptop the panel is one narrow column showing one lane of one project at a time. The user wants a page for a wide window that shows every project as a station and a project's whole board side by side.
@@ -59,9 +60,14 @@ Worth keeping an eye on: with a lot of projects, the one row of stations gets na
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 264,176
+- Elapsed since build started: 35 min
+- Changed lines: 534 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 ### Follow-ups
 - None saved to the inbox: round 1 approved with no findings, and none of these is a bug or a test failing on main.
