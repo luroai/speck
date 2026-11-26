@@ -1,7 +1,7 @@
 ---
 id: "0755"
 title: "Keep a list of your projects on this machine"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: "speck/ideas/2026-11-10-run-a-software-factory-from-one-speck-service.md
 after: []                # ticket ids that must be done first
 created: 2026-11-25
 started: "2026-11-26T09:32:23.220Z"
+approved: "2026-11-26T09:38:11.231Z"
 
 ---
 # 0755 · Keep a list of your projects on this machine
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 speck only knows a project while its panel is running, as each panel registers itself in the home folder (0516). A service that runs every project needs a list of them that lasts, whether their panels are running or not.
@@ -55,9 +56,14 @@ speck can now keep a list of your projects on this machine that lasts whether th
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 160,682
+- Elapsed since build started: 6 min
+- Changed lines: 158 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (Delivery log only, none sent to the inbox):
 - A panel started from one of a project's worktrees records the worktree's folder, so `speck projects` shows that project's panel as off. Match records against the project's worktrees if the service needs it.
