@@ -48,6 +48,8 @@ Each project needs its own `speck panel`, on its own port, started by hand in it
 - Each project keeps its own panel process and `.speck/` version; this supervises them rather than running them in one process. `speck panel --background` (`scripts/panel-background.mjs`) and the panels registry (`scripts/panel-projects.mjs`) can be reused.
 - Only one `speck serve` may run per machine at a time; a second says where the first is and exits.
 - Failing before this build: not checked
+- Self-check: a restart no longer takes its own panel's server, still going away, for one started by hand; a home folder it can't write to gives a plain message rather than a stack trace; the record is written only when it changes, and a failed write is said once rather than ending speck serve; `--stop` also stops a panel started after it read the record; a process counts as speck's only when `ps` says so; a panel that won't start is tried again when that's due rather than at the next 2-second check; tests added for each panel's `speck/.cache/panel.log`, restarting on the same port and a panel that won't start.
+- Pictures: none, because nothing anyone sees in the panel changes: `speck serve` is a command, and the panels it starts are the projects' own.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
