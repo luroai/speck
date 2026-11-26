@@ -44,6 +44,8 @@ An answered escalation at the review limit is followed by the review rounds the 
 - Found on 2026-11-26 when 0758 blocked asking for this ticket; after it ships, 0758's question is answered saying so and its build carries on.
 - `extraRound` and `nextAction` in `scripts/review-limit.mjs`: `nextAction` returns `block` for a last verdict of `escalate` before it counts the rounds `allowedRounds` allows, so `extraRound` throws.
 - Failing before this build: none
+- An escalation counts as answered when at least 2 allowed rounds (one answer's worth) are left unused: an escalation in an allowed round with only 1 left over from an earlier answer still blocks until it's answered again.
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

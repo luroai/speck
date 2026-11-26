@@ -64,7 +64,14 @@ export function nextAction(all, cfg, allowed = 0) {
   if (!last) return { action: 'review' };
   const v = last.verdict;
   if (v.verdict === 'approve') return { action: 'ship' };
-  if (v.verdict === 'escalate') return { action: 'block', reason: v.escalation_question || 'Reviewer escalated.' };
+  if (v.verdict === 'escalate') {
+    // 0763: an escalation at the review limit that your answer allowed more rounds for goes on to them. An answer
+    // allows ROUNDS_ALLOWED, so an escalation counts as answered only when that many are left: fewer is what was left
+    // over from an earlier answer, not this one.
+    const answered = !last.meta?.merge && ordinaryRounds(all) >= cfg.limits.max_review_rounds && allowed - allowedUsed(all) >= ROUNDS_ALLOWED;
+    if (!answered) return { action: 'block', reason: v.escalation_question || 'Reviewer escalated.' };
+    return { action: 'fix' };
+  }
   const n = cfg.limits.escalate_after_repeat_disputes;
   if (all.length >= n) {
     const recent = all.slice(-n).map(r => new Set(r.verdict.findings.filter(f => f.state === 'dispute_rejected').map(f => f.id)));
