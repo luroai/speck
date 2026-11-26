@@ -15,7 +15,7 @@ reviewer: ""             # blank: the reviewer your settings give when each revi
 reviewer_model: ""       # blank: your settings' reviewer_model (blank there too: the reviewer's default)
 reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low | medium | high | xhigh | max
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
-after: ["0755","0756","0757","0758","0759"]                # ticket ids that must be done first
+after: ["0755","0756","0757","0758","0759","0762"]                # ticket ids that must be done first
 created: 2026-11-25
 
 ---
@@ -24,7 +24,7 @@ created: 2026-11-25
 **Status:** 📝 draft
 
 ## Problem
-Since 1.6.1, `speck projects` and `speck serve` run every project on a machine from one service at one address, keep each project's `speck run` going and can start at boot. Anyone following the setup prompt, or updating speck in a project, still gets 1.6.1.
+Since 1.6.1, `speck projects` and `speck serve` run every project on a machine from one service at one address, keep each project's `speck run` going, can leave a project out without forgetting it, and can start at boot. Anyone following the setup prompt, or updating speck in a project, still gets 1.6.1.
 
 ## Outcome
 speck is ready to be released as 1.7.0.
