@@ -37,9 +37,13 @@ export const addressText = (port, origin) => `http://127.0.0.1:${port}/${origin 
 // saying why it can't. `projects()` gives each project on the list as { folder, name, port }, `port` being where its
 // panel answers or null, and throws a SpeckError when the list can't be read. `env` says where the panels keep their
 // records. Port 0 takes any free port, for speck's own tests.
-export async function startFront({ port, url = null, env = process.env, projects }) {
+// 0762: `shown()`, when given, gives the ports of the panels the address may show, as a Set: those of the projects on
+// the list that aren't turned off. Any other running panel, started by hand for a project that's off or not listed, is
+// left out of the choices and of a project's menu, which every answer names them for (X-Speck-Serve-Shown).
+export async function startFront({ port, url = null, env = process.env, projects, shown = null }) {
   const dir = panelsDir({ ...env, [BUILD_ENV]: undefined }); // your panels', as speck serve starts them, even from a build
-  const panels = () => runningPanels(dir);
+  const showing = () => { if (!shown) return null; try { return shown(); } catch { return new Set(); } };
+  const panels = () => { const all = runningPanels(dir), only = showing(); return only ? all.filter(p => only.has(p.port)) : all; };
   const running = to => panels().some(p => p.port === to);
   let at = port, hosts = new Set(), origins = new Set(), id = '', cookie = '';
   const ours = req => origins.has(String(req.headers.origin || '').toLowerCase());
@@ -99,6 +103,8 @@ export async function startFront({ port, url = null, env = process.env, projects
     if (!hosts.has(String(req.headers.host || '').toLowerCase())) return text(res, 403, 'Forbidden: open the panel at 127.0.0.1 or localhost.\n');
     res.setHeader('X-Speck-Serve', '1'); // on every answer, a project's passed on too, so its page knows it's at speck serve's address
     res.setHeader('X-Speck-Panel', id); // a project's page answered here, rather than by its own panel, reloads
+    const only = showing();
+    if (only) res.setHeader('X-Speck-Serve-Shown', [...only].join(',')); // 0762: the panels a project's menu may list
     const where = req.url.split('?')[0], pick = where.match(/^\/api\/projects\/(\d{1,5})$/);
     if (pick) return choose(req, res, +pick[1]);
     if (where === '/api/projects/summary') return void summaries(req, res);

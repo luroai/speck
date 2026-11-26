@@ -57,11 +57,16 @@ function drawBar(f, word) {
 // 0757: at speck serve's address, as every answer there says (X-Speck-Serve), the menu is always there, with All projects
 // first, as that's where the address opens, even while this project's panel is the only one running.
 let atServe = false;
+// 0762: the ports of the panels speck serve's address shows, as it names them (X-Speck-Serve-Shown), or null for every
+// running panel: one for a project that's turned off, or not on its list, is left out of the menu there.
+let serveShown = null;
 if (typeof globalThis.fetch === 'function') {
   const fetchFrom = globalThis.fetch.bind(globalThis);
   globalThis.fetch = async (...args) => {
     const res = await fetchFrom(...args), heads = res && res.headers && typeof res.headers.get === 'function' ? res.headers : null, from = heads ? heads.get('X-Speck-Panel') : null;
     if (heads && heads.get('X-Speck-Serve') === '1') atServe = true;
+    const shown = heads ? heads.get('X-Speck-Serve-Shown') : null;
+    if (typeof shown === 'string') serveShown = new Set(shown.split(',').filter(p => /^\d{1,5}$/.test(p)).map(Number));
     const own = $('speck-panel').content;
     if (from && own && from !== own) { location.reload(); return new Promise(() => {}); } // answered by the reload
     return res;
@@ -89,7 +94,8 @@ function projectsGone(gone) {
   drawProjects();
 }
 function drawProjects() {
-  const projects = state && state.projects, list = projectsGoneList || (projects && Array.isArray(projects.list) ? projects.list : []);
+  const projects = state && state.projects, all = projectsGoneList || (projects && Array.isArray(projects.list) ? projects.list : []);
+  const list = atServe && serveShown ? all.filter(p => p && serveShown.has(p.port)) : all; // 0762
   const self = projectsGoneList ? null : projects && projects.self, home = atServe && state !== null; // 0757
   const show = home || list.length > (projectsGoneList ? 0 : 1);
   $('project-pick').hidden = !show;

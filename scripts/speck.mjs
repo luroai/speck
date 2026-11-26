@@ -503,7 +503,7 @@ const HELP = `speck: Plan in ten minutes. Come back to it shipped.
                                       what it does, as the panel's Settings view explains them
   speck keys [set|remove <provider>]  which model providers have an API key on this machine; set saves one, read unseen from the input, remove deletes it
   speck logins [set|show|remove <name>]  the test logins saved on this machine; set saves one, its password read unseen from the input, show prints one, remove deletes it
-  speck projects [add [<folder>]|remove <name or folder>]  your speck projects on this machine, with each one's version and whether its panel and speck run are running; add and remove change the list, kept in ~/.config/speck/projects.json
+  speck projects [add [<folder>]|remove <name or folder>|off <name or folder>|on <name or folder>]  your speck projects on this machine, with each one's version and whether its panel and speck run are running; add and remove change the list, kept in ~/.config/speck/projects.json; off keeps a project on it but leaves it out of speck serve, and on puts it back
   speck start <id>                    start building a ready ticket, in its own worktree if worktrees are on
   speck cancel <id> "<reason>"         cancel a ticket, and record why
   speck status [--json]               tickets by status, blocked first (--json: everything, for programs)

@@ -46,6 +46,8 @@ A project can be turned off in the list: `speck serve` neither runs nor shows it
 - Builds on the list (0755), `speck serve` (0756), its one address and All projects (0757) and its runs (0758), so it waits for 0757 and 0758.
 - A project never joins the list by itself: only `speck projects add` puts it there (0755).
 - Failing before this build: not checked
+- Self-check: narrowed the brief's claim about the project menu, which a project on an older speck still fills with every running panel; the address reads which panels it shows afresh for each answer rather than once a second, so a panel just started can be chosen at once.
+- Pictures: none, because the only visible change is that the project menu at speck serve's address lists fewer projects; the fake page tests show the menu's options.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
