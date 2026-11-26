@@ -1,7 +1,7 @@
 ---
 id: "0757"
 title: "Open every project at speck serve's one address"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,13 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/2026-11-10-run-a-software-factory-from-one-speck-service.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0756"]                # ticket ids that must be done first
 created: 2026-11-25
+built_on: "0756"
+started: "2026-11-26T10:17:23.093Z"
 
 ---
 # 0757 · Open every project at speck serve's one address
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Even with `speck serve`, each project's panel is on its own port, and only one sits behind the private tunnel, so from a phone you can reach one project and see the rest only on the bridge. The user wants to open one address on any device and see every project.
