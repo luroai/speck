@@ -188,3 +188,35 @@ test('0759: --install with --stop or --background is refused before anything is 
     assert.match(r.stderr, /not both/);
   }
 });
+
+test('0759 AC1: when the service file can\'t be written, lingering just turned on is turned off again', () => {
+  const m = machine('linux', lingerOff);
+  const dir = path.dirname(unitFile(m.d));
+  fs.mkdirSync(dir, { recursive: true });
+  fs.chmodSync(dir, 0o500);
+  try { assert.throws(() => serveInstall(['--install'], m.d), /couldn't be written/); } finally { fs.chmodSync(dir, 0o700); }
+  assert.deepEqual(m.ran, ['loginctl show-user robin --property=Linger --value', 'loginctl enable-linger --no-ask-password robin', 'loginctl disable-linger --no-ask-password robin']);
+});
+
+test('0759 AC1: a path that can\'t go in a unit is refused before lingering is touched', () => {
+  const m = machine('linux', lingerOff);
+  m.d.cli = '/opt/spe\nck/speck.mjs';
+  assert.throws(() => serveInstall(['--install'], m.d), /line break/);
+  assert.ok(!m.ran.some(c => c.includes('enable-linger')));
+});
+
+test('0759 AC3: on a Mac, when the agent can\'t be unloaded, --uninstall says so and keeps its file', () => {
+  const m = machine('darwin');
+  serveInstall(['--install'], m.d);
+  m.d.run = (cmd, args) => { m.ran.push([cmd, ...args].join(' ')); return { status: args[0] === 'print' ? 0 : 5, stdout: '', stderr: 'Boot-out failed: 5: Input/output error', error: null }; };
+  assert.throws(() => serveUninstall(['--uninstall'], m.d), /still loaded/);
+  assert.ok(fs.existsSync(plistFile(m.d)));
+});
+
+test('0759 AC3: on a Mac, an agent that wasn\'t loaded is removed all the same', () => {
+  const m = machine('darwin');
+  serveInstall(['--install'], m.d);
+  m.d.run = (cmd, args) => ({ status: 3, stdout: '', stderr: 'No such process', error: null });
+  assert.match(serveUninstall(['--uninstall'], m.d).join('\n'), /is removed/);
+  assert.ok(!fs.existsSync(plistFile(m.d)));
+});

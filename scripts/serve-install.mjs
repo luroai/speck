@@ -156,19 +156,23 @@ function installLinux(d, args) {
   const shown = d.run('loginctl', ['show-user', d.user, '--property=Linger', '--value']);
   const lingerWasOn = shown.status === 0 && shown.stdout.trim() === 'yes';
   const markedBefore = before?.split('\n').includes(LINGER_MARK) ?? false;
+  unitText(d, args, false); // refuses a path it can't write into a unit before anything changes
   let lingerNote = null, mark = markedBefore;
   if (!lingerWasOn) {
     const r = d.run('loginctl', ['enable-linger', '--no-ask-password', d.user]);
     if (r.status === 0) mark = true;
     else lingerNote = `It starts when you log in, but not at boot until lingering is on: ${failed(r, `loginctl enable-linger ${d.user}`)}. Run \`sudo loginctl enable-linger ${d.user}\` to start it at boot.`;
   }
-  writeText(file, unitText(d, args, mark));
-  const why = sys('daemon-reload') || sys('enable', UNIT) || sys('restart', UNIT);
-  if (why) {
+  // From here, a failure puts back the service file as it was and turns off lingering this has just turned on.
+  const undo = why => {
     putBack(file, before);
     if (mark && !markedBefore) d.run('loginctl', ['disable-linger', '--no-ask-password', d.user]);
-    throw new SpeckError(`speck serve's service wasn't installed, as ${why}. ${before === null ? 'Nothing was left behind.' : 'The service file is as it was.'} Check that systemd runs a user manager for you (\`systemctl --user status\`), then run this again.`);
-  }
+    return new SpeckError(`speck serve's service wasn't installed, as ${why}. ${before === null ? 'Nothing was left behind.' : 'The service file is as it was.'} Check that systemd runs a user manager for you (\`systemctl --user status\`), then run this again.`);
+  };
+  try { fs.mkdirSync(path.dirname(file), { recursive: true }); fs.writeFileSync(file, unitText(d, args, mark)); }
+  catch (e) { throw undo(`${file} couldn't be written (${e.code || e.message})`); }
+  const why = sys('daemon-reload') || sys('enable', UNIT) || sys('restart', UNIT);
+  if (why) throw undo(why);
   return [
     `speck serve is installed as a systemd user service, ${UNIT}, running ${['speck serve', ...args].join(' ')}. It's running now, starts at boot and starts again if it stops.`,
     `Its service file: ${file}`,
@@ -218,7 +222,9 @@ function installMac(d, args) {
 function uninstallMac(d) {
   const file = plistFile(d);
   if (readText(file) === null) return [`speck serve isn't installed as a launch agent on this machine (there's no ${file}), so there's nothing to remove.`];
-  d.run('launchctl', ['bootout', `gui/${d.uid}/${LABEL}`]); // fails when it isn't loaded, which is fine
+  const target = `gui/${d.uid}/${LABEL}`, r = d.run('launchctl', ['bootout', target]);
+  // bootout fails when it isn't loaded, which is fine. When launchctl print still finds it, it's still running.
+  if (r.status !== 0 && d.run('launchctl', ['print', target]).status === 0) throw new SpeckError(`speck serve's launch agent wasn't removed, as ${failed(r, `launchctl bootout ${target}`)} and it's still loaded. Its file is still there: ${file}.`);
   try { fs.rmSync(file, { force: true }); } catch (e) { throw new SpeckError(`speck serve's launch agent is stopped, but ${file} couldn't be removed (${e.code || e.message}). Remove it yourself.`); }
   return [`speck serve's launch agent is stopped, and ${file} is removed.`];
 }
