@@ -1,7 +1,7 @@
 ---
 id: "0758"
 title: "Keep each project's speck run going under speck serve"                # one outcome, no "and"
-status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,13 +19,14 @@ after: ["0756"]                # ticket ids that must be done first
 created: 2026-11-25
 built_on: "0756"
 started: "2026-11-26T10:17:16.586Z"
-blocked_at: "2026-11-26T10:49:26.420Z"
-waited_seconds: 370
+blocked_at: ""
+waited_seconds: 3946
+approved: "2026-11-26T11:49:01.945Z"
 
 ---
 # 0758 · Keep each project's speck run going under speck serve
 
-**Status:** ⛔ blocked
+**Status:** 👍 approved
 
 ## Problem
 Each project's `speck run` is started by hand or by its panel's Auto-build switch, and stays off after the machine restarts until someone turns it on again. Under one service, work in every project should carry on by itself.
@@ -65,9 +66,18 @@ Worth keeping an eye on: projects still on an older speck can't record their swi
 This ticket waits for a separate ticket that fixes speck so a ticket whose last review round was an escalation you've answered can be reviewed again (speck stops at the escalation in scripts/review-limit.mjs before it looks at rounds you allowed). That ticket doesn't exist yet, and a build can't make one on the base branch: make it with /speck-ticket and set it ready. Once it has shipped, answer this question saying so, and the build carries on with the review round.
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Supported projects using an older copy of speck cannot reliably turn Auto-build off.; F2 Turning Auto-build off during a serve-initiated startup can leave the run on.
+Round 2 (codex): changes requested.
+Round 3 (codex): changes requested.
+Round 4 (codex, extra round): escalate.
+Round 5 (codex, a round you allowed): approve.
 
 ## Delivery log
+- Review rounds: 5, round 4 an extra round, round 5 a round you allowed
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 910,244
+- Elapsed since build started: 92 min
+- Changed lines: 310 (limit 5000)
 - Follow-ups:
   - To the inbox: speck/ideas/2026-11-26-update-speck-serve-services-installed-before-0758.md (units installed before this keep KillMode=mixed).
   - Skipped: test/usage-limit-0622.test.mjs's "0622 AC1 AC2 AC3: a build that hit the limit while speck run was off ..." failed once in the related run of about 500 files and passed on its own; already named in speck/ideas/done/2026-11-10-steady-the-0622-and-0549-ac1-run-tests-under-load.md.
