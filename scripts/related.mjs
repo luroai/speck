@@ -1,5 +1,5 @@
 // The tests a branch's change affects (0437), for `speck test --related`: every test file under test/ whose text names
-// a file the branch changed since it left the base branch, or that imports a module under test/support/ that names one
+// a file the branch changed since it left the base branch, or that imports a module under test/support/ whose code names one
 // few of those modules name (0447). Files under speck/ don't count.
 
 import fs from 'node:fs';
@@ -39,6 +39,40 @@ function walk(repo, dir) {
 
 const read = (repo, rel) => { try { return fs.readFileSync(path.join(repo, rel), 'utf8'); } catch { return ''; } };
 const escape = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+// `text` without its // and /* */ comments, so a support module that names a file only in a comment, as
+// test/support/panel.mjs names the factory floor's page, doesn't load it (0777). A quoted string keeps its // (a URL),
+// and so does a regex literal; a '- or "-quoted string ends at the line's end, so a stray quote can't hide the rest.
+export function code(text) {
+  let out = '', i = 0, quote = '';
+  while (i < text.length) {
+    const ch = text[i], two = text.slice(i, i + 2);
+    if (quote) {
+      if (ch === '\\') { out += two; i += 2; continue; }
+      if (ch === quote || (ch === '\n' && quote !== '`')) quote = '';
+      out += ch; i++;
+    } else if (two === '//') {
+      const end = text.indexOf('\n', i); i = end < 0 ? text.length : end;
+    } else if (two === '/*') {
+      const end = text.indexOf('*/', i + 2); i = end < 0 ? text.length : end + 2; out += ' ';
+    } else if (ch === '/' && /(?:^|[(,=:[!&|?{};]|\breturn)\s*$/.test(out.slice(-20))) {
+      // A regex literal: kept whole, to its closing / outside a [class], on its own line.
+      let j = i + 1, inClass = false;
+      for (; j < text.length && text[j] !== '\n'; j++) {
+        if (text[j] === '\\') j++;
+        else if (text[j] === '[') inClass = true;
+        else if (text[j] === ']') inClass = false;
+        else if (text[j] === '/' && !inClass) break;
+      }
+      out += text.slice(i, j + 1); i = j + 1;
+    } else {
+      if (ch === '\\') { out += two; i += 2; continue; }
+      if (ch === "'" || ch === '"' || ch === '`') quote = ch;
+      out += ch; i++;
+    }
+  }
+  return out;
+}
 
 // A test that `text` names `file`, not as part of a longer name, so panel.mjs isn't named by build-panel.mjs (0437):
 // its path from the repo root, or its file name on its own or after its own folder's name (`../` for one at the root),
@@ -81,8 +115,8 @@ export function relatedTests(repo, base) {
   const own = new Map();
   const ownOf = mod => {
     if (!own.has(mod)) {
-      const text = read(repo, mod);
-      own.set(mod, { files: changed.filter(c => c.named.test(text)).map(c => c.file), deps: supportImports(text, mod) });
+      const text = read(repo, mod), named = code(text);
+      own.set(mod, { files: changed.filter(c => c.named.test(named)).map(c => c.file), deps: supportImports(text, mod) });
     }
     return own.get(mod);
   };
