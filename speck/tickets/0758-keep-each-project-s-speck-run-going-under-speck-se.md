@@ -1,7 +1,7 @@
 ---
 id: "0758"
 title: "Keep each project's speck run going under speck serve"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,13 +19,13 @@ after: ["0756"]                # ticket ids that must be done first
 created: 2026-11-25
 built_on: "0756"
 started: "2026-11-26T10:17:16.586Z"
-blocked_at: ""
+blocked_at: "2026-11-26T10:48:54.705Z"
 waited_seconds: 362
 
 ---
 # 0758 · Keep each project's speck run going under speck serve
 
-**Status:** 🔨 building
+**Status:** ⛔ blocked
 
 ## Problem
 Each project's `speck run` is started by hand or by its panel's Auto-build switch, and stays off after the machine restarts until someone turns it on again. Under one service, work in every project should carry on by itself.
@@ -57,13 +57,12 @@ Each project's `speck run` is started by hand or by its panel's Auto-build switc
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
 
 ## Blocked question
-No approval after 4 review rounds. The only open point was the product question you've now answered (option a, older projects' 10-second exception), which is in the code, tested and in the brief, but no review round has checked it yet because the round limit is used up. Allow 2 more review rounds so the reviewer can check it, or stop the ticket here?
+speck won't run another review round on this ticket, even with the 2 rounds you allowed: its last round was the reviewer's escalation (the question you answered with option a), and speck stops at an escalation before it looks at rounds you've allowed, so nothing can resume it. The work for option a is done and tested but unreviewed. Should a separate ticket first fix speck so an answered escalation can be reviewed again, then this one resumes, or do you want to review this one yourself and ship it with /speck-ship?
 
-Recommended: allow 2 more review rounds
-Other options: stop the ticket here and reshape it
-Changes what you'd notice: no
+Recommended: fix speck first in its own ticket, then resume this one
+Other options: review it yourself and ship it with /speck-ship
+Changes what you'd notice: yes
 Clear winner: yes
-Review limit: yes
 
 ## Review log
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
