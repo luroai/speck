@@ -220,3 +220,15 @@ test('0759 AC3: on a Mac, an agent that wasn\'t loaded is removed all the same',
   assert.match(serveUninstall(['--uninstall'], m.d).join('\n'), /is removed/);
   assert.ok(!fs.existsSync(plistFile(m.d)));
 });
+
+test('0759 AC1: the arguments the service passes to speck serve are ones speck serve takes, at the port and address given', async () => {
+  const { serveAddress } = await import('../scripts/serve-front.mjs');
+  const m = machine('linux', lingerOn);
+  serveInstall(['--install', '--port=4800', '--url=https://speck.example.ts.net/'], m.d);
+  const exec = execLine(fs.readFileSync(unitFile(m.d), 'utf8'));
+  const args = [...exec.matchAll(/"([^"]*)"/g)].map(x => x[1]).slice(3);
+  assert.deepEqual(args, ['--port', '4800', '--url', 'https://speck.example.ts.net']);
+  const got = serveAddress(args);
+  assert.equal(got.port, 4800);
+  assert.equal(got.url.origin, 'https://speck.example.ts.net');
+});

@@ -6,6 +6,9 @@
 // speck/.cache/panel.log, as `speck panel --background`'s does. Only one runs per machine: its record in the home
 // folder, ~/.config/speck/serve.json, is its lock and names the panels it started, so `speck serve --stop`, or the next
 // speck serve after one was killed, finds them. --background runs it on its own, its output in ~/.config/speck/serve.log.
+// 0757: it answers at one address too, 127.0.0.1:4777 unless --port gives another, and --url's https address, opening on
+// All projects, from which each project's panel is shown there (serve-front.mjs). A speck serve that can't answer
+// there starts nothing.
 
 import fs from 'node:fs';
 import net from 'node:net';
@@ -19,13 +22,14 @@ import { panelAnswers } from './panel-background.mjs';
 import { pidAlive } from './run-switch.mjs';
 import { timedMessage } from './run-times.mjs';
 import { BUILD_ENV } from './build-env.mjs';
+import { startFront, serveAddress, addressText } from './serve-front.mjs';
 
 const TICK_MS = 2000, START_MS = 15000, STOP_MS = 5000, POLL_MS = 100, SERVE_STOP_MS = 30000, BACKGROUND_MS = 60000;
 // How long a panel has to answer once started, in ms. SPECK_SERVE_START_MS sets it directly, for speck's own tests.
 const startMs = () => (Number(process.env.SPECK_SERVE_START_MS) > 0 ? Number(process.env.SPECK_SERVE_START_MS) : START_MS);
 const RETRY_MS = [2000, 5000, 10000, 30000, 60000]; // before trying again after 1, 2, 3, 4, then 5 or more failed starts in a row
 const AWAY = 'SPECK_SERVE_AWAY'; // set for the speck serve --background starts
-const USAGE = 'speck serve                start a panel for every project on your list, and look after them until Ctrl+C\n  speck serve --background   the same, on its own, after the shell that started it has ended\n  speck serve --stop         stop it, and every panel it started\n  speck serve --install      start it by itself at boot or login, and again if it stops\n  speck serve --uninstall    stop that, and remove what --install wrote';
+const USAGE = 'speck serve [--port <n>] [--url https://<hostname>]   start a panel for every project on your list, and look after them\n                             until Ctrl+C, at one address that opens on All projects (http://127.0.0.1:4777 unless --port gives another)\n  speck serve --background   the same, on its own, after the shell that started it has ended\n  speck serve --stop         stop it, and every panel it started\n  speck serve --install      start it by itself at boot or login, and again if it stops (with --port and --url, if given)\n  speck serve --uninstall    stop that, and remove what --install wrote';
 const CLI = path.join(path.dirname(fileURLToPath(import.meta.url)), 'speck.mjs');
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -110,7 +114,9 @@ function takeRecordOnce(file, mine) {
 }
 
 const when = iso => { const d = new Date(iso); if (Number.isNaN(+d)) return 'a while ago'; const two = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${two(d.getMonth() + 1)}-${two(d.getDate())} ${two(d.getHours())}:${two(d.getMinutes())}`; };
-const alreadyRunning = (held, env) => `speck serve is already running on this machine (process ${held.pid}), since ${when(held.started)}${held.log ? `, with its output in ${shown(env, held.log)}` : ''}. Stop it with speck serve --stop, or leave it running.`;
+// 0757: and where it answers, as its record says.
+const recordedAddress = held => (Number.isInteger(held.port) && held.port > 0 && held.port < 65536 ? `, at ${addressText(held.port, typeof held.url === 'string' ? held.url : null)}` : '');
+const alreadyRunning = (held, env) => `speck serve is already running on this machine (process ${held.pid}), since ${when(held.started)}${recordedAddress(held)}${held.log ? `, with its output in ${shown(env, held.log)}` : ''}. Stop it with speck serve --stop, or leave it running.`;
 
 // A port on 127.0.0.1 that was free just now: `port` itself, or any when it's 0. null when it can't be had.
 const listenOn = port => new Promise(resolve => {
@@ -157,8 +163,8 @@ function cannotStart(folder) {
   return null;
 }
 
-// `speck serve` in the foreground, until Ctrl+C, SIGTERM or speck serve --stop.
-async function serve(env, away) {
+// `speck serve` in the foreground, until Ctrl+C, SIGTERM or speck serve --stop. `served` is its --port and --url.
+async function serve(env, away, served) {
   const files = serveFiles(env);
   if (!files) throw new SpeckError('There\'s no home folder for speck serve to keep its record in, so it can\'t run.');
   const panelEnv = { ...env };
@@ -170,7 +176,7 @@ async function serve(env, away) {
   const owned = new Map(); // folder → { folder, name, port, pid, child, state: starting | running | stopping }
   const retry = new Map(); // folder → { fails, at, port, said }: when to start its panel again, and on which port
   const noted = new Map(); // folder → what was last said about a project it has no panel of its own for
-  let stopping = false, ticking = false, again = false, listError = null, timer = null, saved = null, saveError = null;
+  let stopping = false, ticking = false, again = false, listError = null, timer = null, saved = null, saveError = null, front = null;
   // Its record, with the panels it has started, when that has changed. Never over another speck serve's, after this
   // one's was deleted by hand, and not again once it has been forgotten as this one stops.
   const save = () => {
@@ -303,12 +309,25 @@ async function serve(env, away) {
     if (stopping) return;
     stopping = true;
     clearInterval(timer);
+    front?.close(); // 0757: the address goes first, with every page's connection
     const mine = [...owned.values()];
     await Promise.all(mine.map(p => stopOne(p)));
     try { forgetRecord(files.record, process.pid); } catch { /* the next speck serve or --stop finds nothing of it running */ }
     say(`stopped${mine.length ? `, with the ${panels(mine.length)} it started: ${listOf(mine.map(p => p.name))}` : ''}.`);
     process.exit(0);
   }
+  // 0757: each project on the list, for All projects at the address, with the port of its panel running, started by
+  // speck serve or by hand, or none.
+  const shownProjects = () => listedProjects(env).map(folder => ({ folder, name: nameOf(folder), port: panelPorts(folder, env)[0] ?? null }));
+  // 0757: its one address, before any panel starts: when it can't answer there, the record is put back as it was.
+  try { front = await startFront({ port: served.port, url: served.url, env, projects: shownProjects }); } catch (e) {
+    try { if (was) writeRecord(files.record, was); else forgetRecord(files.record, process.pid); } catch { /* the next speck serve finds a record of a process that has gone */ }
+    throw e;
+  }
+  me.port = front.port;
+  me.url = served.url ? served.url.origin : null;
+  save();
+  say(`All projects: ${addressText(me.port, me.url)}`);
   for (const sig of ['SIGINT', 'SIGTERM', 'SIGHUP']) process.on(sig, () => void shutdown());
 
   // The panels an earlier speck serve started and left running when it was killed: looked after again.
@@ -331,7 +350,8 @@ async function serve(env, away) {
 
 // `speck serve --background`: speck serve on its own, in its own process group and session, with its output added to
 // ~/.config/speck/serve.log. It returns once speck serve has started the first panels, with what it said about them.
-async function serveBackground(env) {
+// `args` are the rest of its arguments, its --port and --url (0757).
+async function serveBackground(env, args) {
   const files = serveFiles(env);
   if (!files) throw new SpeckError('There\'s no home folder for speck serve to keep its record and log in, so it can\'t run.');
   const held = readRecord(files.record);
@@ -341,7 +361,7 @@ async function serveBackground(env) {
   try { from = fs.statSync(files.log).size; } catch { /* no log yet */ }
   try {
     fd = fs.openSync(files.log, 'a', 0o600);
-    child = spawn(process.execPath, [CLI, 'serve'], { cwd: files.dir, detached: true, stdio: ['ignore', fd, fd], env: { ...env, [AWAY]: '1' } });
+    child = spawn(process.execPath, [CLI, 'serve', ...args], { cwd: files.dir, detached: true, stdio: ['ignore', fd, fd], env: { ...env, [AWAY]: '1' } });
   } catch (e) {
     throw new SpeckError(`speck serve can't write its log, ${shown(env, files.log)} (${e.code || e.message}), so it didn't start. Make sure you can write to that folder, then run it again.`);
   } finally { if (fd !== undefined) fs.closeSync(fd); }
@@ -411,13 +431,19 @@ export function cmdServe(args = []) {
     return import('./serve-install.mjs').then(m => { for (const line of (flag === '--install' ? m.serveInstall : m.serveUninstall)(args)) console.log(line); })
       .catch(e => { console.error(e instanceof SpeckError ? e.message : `speck serve: ${e?.message || e}`); process.exit(1); });
   }
-  const odd = args.find(a => a !== '--background' && a !== '--stop');
-  if (odd !== undefined) throw new SpeckError(`speck serve doesn't take ${odd}. Use one of:\n  ${USAGE}`);
+  // --background, --stop, and --port and --url (0757) with a value after each, or after =.
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--background' || args[i] === '--stop' || /^--(port|url)=/.test(args[i])) continue;
+    if (args[i] === '--port' || args[i] === '--url') { i++; continue; }
+    throw new SpeckError(`speck serve doesn't take ${args[i]}. Use one of:\n  ${USAGE}`);
+  }
   if (args.includes('--background') && args.includes('--stop')) throw new SpeckError('Give --background or --stop, not both.');
+  if (args.includes('--stop') && args.some(a => /^--(port|url)(=|$)/.test(a))) throw new SpeckError('speck serve --stop stops the speck serve running on this machine, wherever it answers, so it doesn\'t take --port or --url.');
+  const served = args.includes('--stop') ? null : serveAddress(args); // checked before anything starts
   const fail = e => { console.error(e instanceof SpeckError ? e.message : `speck serve: ${e?.message || e}`); process.exit(e instanceof SpeckError && e.code > 0 ? e.code : 1); };
   if (args.includes('--stop')) return serveStop(env).catch(fail);
-  if (args.includes('--background')) return serveBackground(env).catch(fail);
+  if (args.includes('--background')) return serveBackground(env, args.filter(a => a !== '--background')).catch(fail);
   const away = env[AWAY] === '1';
   delete process.env[AWAY]; // not passed on to anything it runs
-  return serve(env, away).catch(fail);
+  return serve(env, away, served).catch(fail);
 }
