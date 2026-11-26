@@ -45,6 +45,7 @@ speck only knows a project while its panel is running, as each panel registers i
 - Step 1 of the factory (see the source idea): one speck service per machine runs every project behind one address, so the user can sign in from any device and see every project, instead of starting a panel and a `speck run` in each project.
 - Keep the list beside the other home-folder files (`homeSettingsDir()` in `scripts/home-settings.mjs`, `~/.config/speck/`), not in any repo: it holds personal folder paths.
 - A project's name is its folder's name, as the project menu shows it today (`scripts/panel-projects.mjs`).
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
