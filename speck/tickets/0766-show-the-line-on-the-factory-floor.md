@@ -1,7 +1,7 @@
 ---
 id: "0766"
 title: "Show the line on the factory floor"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: ["0764","0765"]                # ticket ids that must be done first
 created: 2026-11-26
 built_on: "0765"
 started: "2026-11-26T20:14:29.144Z"
+approved: "2026-11-26T20:32:11.449Z"
 
 ---
 # 0766 · Show the line on the factory floor
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The user wants to see, across every project at once, who is working on what and on which model. The factory floor shows projects and boards, but not the work at each station.
@@ -56,9 +57,14 @@ To see it, open speck serve's address at /floor. In a narrow window the line scr
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 204,506
+- Elapsed since build started: 18 min
+- Changed lines: 392 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none to the inbox. Tidy-up: when a slot's agent, model and effort wrap onto two lines in a narrow column, the next line starts with its "·" separator.
 
