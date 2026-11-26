@@ -11,6 +11,9 @@
 // 0766: above the stations, the line: a row for each project through Queue, Builder, Reviewer, QA and Ship, from the line
 // its summary gives (0764's, scripts/panel-line.mjs), each lit station naming its ticket, agent, model and effort. The
 // members' faces on its headings are the panel's own (speck-face.js, which loads before this).
+// 0767: beside the line, Virgil's dial: the engineering manager drawn large, in the busiest mood among the projects as
+// All projects works it out, inside rings, over a count of everything that needs you and a line for each, which opens
+// that ticket in its project's panel at this address.
 (() => {
   const FLOOR_MS = 2000, GIVE_UP_MS = 15000, KEPT = 'speck-floor-station', SVG = 'http://www.w3.org/2000/svg';
   const LANES = [['capture', 'Capture', 'Nothing captured'], ['plan', 'Plan', 'Nothing to plan'], ['build', 'Build', 'Nothing building or queued'], ['shipped', 'Shipped', 'Nothing shipped yet']];
@@ -88,6 +91,7 @@
     note.hidden = !said;
     note.textContent = said ? `Couldn't read your projects: ${said}` : '';
     drawLine();
+    drawDial();
     drawStations();
     drawBoard();
   }
@@ -183,6 +187,76 @@
       item.title = `${words(t.id)} · ${words(t.title)}${mark ? `\n${mark}` : ''}`;
       return item;
     })));
+  }
+
+  // ---------- 0767: Virgil's dial ----------
+
+  const MOOD_RANK = ['asleep', 'watching', 'focused', 'asking']; // busiest last, as All projects ranks them (panel-header.js)
+  const NEED_WHY = new Map([['question', 'Question'], ['manager', 'Manager\'s question'], ['stopped', 'Build stopped'], ['full_suite', 'Full suite fails'], ['bare_main', 'Main checkout'], ['ship', 'At Ship'], ['high_risk', 'High risk at Ship']]);
+  const ASKED_TICKET = 'speck-open-ticket'; // the ticket a project's page opens once it loads, as All projects keeps it (panel-header.js)
+  const FACE_PX = 128;
+  let dialFace = null, dialDrawn = null, dialSaid = null;
+
+  // The dial's figures from the stations, as All projects has them from the summaries: only projects that answered count.
+  function dialModel() {
+    const up = (stations || []).filter(s => s.running);
+    const moods = up.map(s => (MOOD_RANK.includes(s.mood) ? s.mood : 'asleep'));
+    return { mood: moods.sort((a, b) => MOOD_RANK.indexOf(b) - MOOD_RANK.indexOf(a))[0] || 'asleep',
+      count: up.reduce((n, s) => n + count(s.needs_you), 0),
+      needs: up.flatMap(s => list(s.needs).filter(obj).map(n => ({ project: s.name, port: s.port, id: words(n.id), why: NEED_WHY.get(n.why) || 'Needs you', title: words(n.title), detail: words(n.detail) }))) };
+  }
+  function drawDial() {
+    const box = $('dial'), m = dialModel(), drawn = JSON.stringify([m, !!stations, dialSaid]);
+    if (drawn === dialDrawn) return;
+    dialDrawn = drawn;
+    if (globalThis.SpeckFace) {
+      if (!dialFace) dialFace = SpeckFace.draw({ role: 'manager', mood: m.mood, size: FACE_PX, look: 'dark' });
+      else SpeckFace.setMood(dialFace, m.mood);
+    }
+    const had = document.activeElement ? document.activeElement.needKey : undefined;
+    const lines = m.needs.map(needLine);
+    box.replaceChildren(...[
+      el('div', `dial dial-${m.mood}`, null, rings(), dialFace ? el('div', 'dial-face', null, dialFace) : null),
+      el('div', `dial-count${m.count ? ' some' : ''}`, null, el('span', 'dial-n', stations ? String(m.count) : '–'), el('span', 'dial-label', 'Need you')),
+      dialSaid ? el('p', 'dial-said', dialSaid) : null,
+      stations && !m.needs.length && !m.count ? el('p', 'dial-none', 'Nothing needs you.') : null,
+      lines.length ? el('ol', 'dial-needs', null, ...lines.map(b => el('li', 'dial-need', null, b))) : null].filter(Boolean));
+    const back = had === undefined ? null : lines.find(b => b.needKey === had);
+    if (back && back.focus) back.focus(); // a redraw keeps the focus on the line it was on
+  }
+  // The dial's rings: an outer ring with a tick every 30°, and two inner rings, drawn behind Virgil.
+  function rings() {
+    const svg = shape('svg', { class: 'dial-rings', viewBox: '-100 -100 200 200', 'aria-hidden': 'true', focusable: 'false' });
+    for (const [r, cls] of [[96, 'ring-outer'], [84, 'ring-mid'], [72, 'ring-inner']]) svg.appendChild(shape('circle', { class: cls, cx: 0, cy: 0, r }));
+    for (let i = 0; i < 12; i++) {
+      const a = (i * Math.PI) / 6, x = Math.sin(a), y = -Math.cos(a);
+      svg.appendChild(shape('line', { class: 'ring-tick', x1: tenth(x * 88), y1: tenth(y * 88), x2: tenth(x * 96), y2: tenth(y * 96) }));
+    }
+    return svg;
+  }
+  // A thing that needs you: its project, its ticket's id and why, as a button opening it in its project's panel here.
+  function needLine(n) {
+    const b = el('button', 'need-line', null, el('span', 'need-project', n.project), n.id ? el('span', 'need-id', n.id) : null, el('span', 'need-why', n.why));
+    b.type = 'button';
+    b.title = [n.title, n.detail].filter(Boolean).join('\n');
+    b.needKey = `${n.port} ${n.id} ${n.why}`;
+    b.addEventListener('click', () => openNeed(n));
+    return b;
+  }
+  // Shows the need's project at this address, as All projects does, and has its page open the ticket once it loads.
+  async function openNeed(n) {
+    dialSaid = null;
+    if (!Number.isInteger(n.port)) { dialSaid = `${n.project}'s panel isn't running, so it can't be shown.`; return drawDial(); }
+    keepAsked(n.id ? JSON.stringify({ port: n.port, id: n.id }) : null);
+    let res = null, body = null;
+    try { res = await fetch(`api/projects/${n.port}`, { method: 'POST' }); body = await res.json(); } catch { /* said below */ }
+    if (res && res.ok) return void location.assign('project/');
+    keepAsked(null);
+    dialSaid = `Couldn't open ${n.project}: ${(body && typeof body.error === 'string' && body.error) || 'can\'t reach speck serve.'}`;
+    drawDial();
+  }
+  function keepAsked(v) {
+    try { if (v === null) sessionStorage.removeItem(ASKED_TICKET); else sessionStorage.setItem(ASKED_TICKET, v); } catch { /* no storage: the project opens without the ticket */ }
   }
 
   // A station's look: orange while it needs you or something in it is moving, dim while its panel isn't answering.
