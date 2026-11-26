@@ -45,6 +45,7 @@ After a restart, nothing of speck comes back until someone starts it by hand, so
 - Step 1 of the factory (see the source idea): one speck service per machine runs every project behind one address, so the user can sign in from any device and see every project, instead of starting a panel and a `speck run` in each project.
 - risk: high because it writes and enables a system service on the user's machine.
 - Checked 2026-11-26: `systemctl --user` (systemd 259 on the user's Linux box, its user manager running) and `loginctl enable-linger [USER]` (loginctl(1): starts the user's manager at boot and keeps it after logout) as the ticket says. `launchctl bootstrap gui/<uid> <plist>` and `launchctl bootout gui/<uid>/<label>` are launchctl(1)'s way to load and unload a login agent on current macOS; not run here, as this machine is Linux.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
