@@ -43,6 +43,8 @@ speck reads `node --test` output as TAP to say which test files failed and what 
 - From 0741's note, checked with Node 24.18.1 (bundled with Cursor's server). This repo's `commands.test_files` is `node --test {files}`.
 - Decision: read the spec reporter's output too, rather than adding `--test-reporter=tap` to every project's settings.
 - Failing before this build: none
+- Self-check: decides TAP or spec for each run rather than the whole output, so a spec run followed by a TAP second try reads both, and strips colour codes from spec output; tests added for both.
+- Checked the converter with Node 24.22.1's own output as well as Node 22's spec reporter: the ticket's tests pass on both.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
