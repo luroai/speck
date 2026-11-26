@@ -1,6 +1,6 @@
 # Keep test summaries working on Node 24
 
-Captured: 2026-11-24 23:15 · Status: inbox
+Captured: 2026-11-24 23:15 · Status: ticketed (0773)
 From ticket: 0741
 Raised by: agent
 

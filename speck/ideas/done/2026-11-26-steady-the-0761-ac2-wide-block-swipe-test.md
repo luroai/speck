@@ -1,6 +1,6 @@
 # Steady the 0761 AC2 wide-block swipe test
 
-Captured: 2026-11-26 20:59 · Status: inbox
+Captured: 2026-11-26 20:59 · Status: ticketed (0776)
 From ticket: 0769
 Raised by: agent
 

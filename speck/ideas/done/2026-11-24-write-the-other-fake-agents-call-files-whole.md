@@ -1,6 +1,6 @@
 # Write the other fake agents' call files whole
 
-Captured: 2026-11-24 23:15 · Status: inbox
+Captured: 2026-11-24 23:15 · Status: ticketed (0774)
 From ticket: 0742
 Raised by: agent
 

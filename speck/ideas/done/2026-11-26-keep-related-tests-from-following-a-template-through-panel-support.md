@@ -1,6 +1,6 @@
 # Keep related tests from following a template through the panel's test support
 
-Captured: 2026-11-26 20:48 · Status: inbox
+Captured: 2026-11-26 20:48 · Status: ticketed (0777)
 From ticket: 0767
 Raised by: agent
 

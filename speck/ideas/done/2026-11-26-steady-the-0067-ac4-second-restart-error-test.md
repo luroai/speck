@@ -1,6 +1,6 @@
 # Steady the 0067 AC4 second restart error test
 
-Captured: 2026-11-26 09:50 · Status: inbox
+Captured: 2026-11-26 09:50 · Status: ticketed (0775)
 From ticket: 0761
 Raised by: agent
 

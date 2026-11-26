@@ -1,6 +1,6 @@
 # Steady the 0723 AC2 Chromium time limit test
 
-Captured: 2026-11-25 00:36 · Status: inbox
+Captured: 2026-11-25 00:36 · Status: ticketed (0776)
 From ticket: 0751
 Raised by: agent
 

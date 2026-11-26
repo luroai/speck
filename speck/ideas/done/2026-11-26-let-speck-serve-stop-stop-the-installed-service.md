@@ -1,6 +1,6 @@
 # Let speck serve --stop stop the installed service
 
-Captured: 2026-11-26 11:16 · Status: inbox
+Captured: 2026-11-26 11:16 · Status: ticketed (0772)
 From ticket: 0759
 Raised by: agent
 

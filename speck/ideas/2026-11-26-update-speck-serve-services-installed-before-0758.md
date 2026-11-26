@@ -1,6 +1,6 @@
 # Update speck serve services installed before 0758
 
-Captured: 2026-11-26 11:48 · Status: inbox
+Captured: 2026-11-26 11:48 · Status: dropped
 From ticket: 0758
 Raised by: agent
 

@@ -1,6 +1,6 @@
 # Steady the 0160 AC5 jump-to-ticket test
 
-Captured: 2026-11-25 00:36 · Status: inbox
+Captured: 2026-11-25 00:36 · Status: ticketed (0776)
 From ticket: 0751
 Raised by: agent
 

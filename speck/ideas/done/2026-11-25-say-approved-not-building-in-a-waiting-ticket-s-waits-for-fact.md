@@ -1,6 +1,6 @@
 # Say approved, not building, in a waiting ticket's Waits for fact
 
-Captured: 2026-11-25 07:54 · Status: inbox
+Captured: 2026-11-25 07:54 · Status: ticketed (0778)
 From ticket: 0737
 Raised by: agent
 

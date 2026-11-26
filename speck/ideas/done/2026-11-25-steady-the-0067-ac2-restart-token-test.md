@@ -1,6 +1,6 @@
 # Steady the 0067 AC2 restart token test
 
-Captured: 2026-11-25 00:36 · Status: inbox
+Captured: 2026-11-25 00:36 · Status: ticketed (0775)
 From ticket: 0751
 Raised by: agent
 
