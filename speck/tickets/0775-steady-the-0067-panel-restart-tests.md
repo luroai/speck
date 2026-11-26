@@ -40,6 +40,7 @@ The two 0067 restart tests pass on a busy machine and still catch a real fault.
 
 ## Notes
 - From 0751's and 0761's builds. 0689 and 0723 replaced fixed waits with bounds measured in the test.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
