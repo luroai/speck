@@ -45,6 +45,7 @@ A project can be turned off in the list: `speck serve` neither runs nor shows it
 - Asked for by the user on 2026-11-26, before building 1.7.0: "the ability to not show or to not include a project in speck serve".
 - Builds on the list (0755), `speck serve` (0756), its one address and All projects (0757) and its runs (0758), so it waits for 0757 and 0758.
 - A project never joins the list by itself: only `speck projects add` puts it there (0755).
+- Failing before this build: not checked
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
