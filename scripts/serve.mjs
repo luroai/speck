@@ -10,6 +10,9 @@
 // All projects, from which each project's panel is shown there (serve-front.mjs). A speck serve that can't answer
 // there starts nothing.
 // 0758: it also keeps each listed project's speck run going (serve-runs.mjs), and never stops one.
+// 0762: a project turned off with `speck projects off` is treated as one taken off the list, apart from what's said:
+// the panel speck serve started for it is stopped, its panel and its speck run aren't started, and the address leaves
+// it out. Turned on again, it's looked at afresh, as one just added.
 
 import fs from 'node:fs';
 import net from 'node:net';
@@ -18,7 +21,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { SpeckError } from './core.mjs';
 import { homeSettingsDir } from './home-settings.mjs';
-import { listedProjects, panelPorts } from './projects.mjs';
+import { listedProjects, projectEntries, panelPorts } from './projects.mjs';
 import { panelAnswers } from './panel-background.mjs';
 import { pidAlive, runState } from './run-switch.mjs';
 import { timedMessage } from './run-times.mjs';
@@ -178,6 +181,7 @@ async function serve(env, away, served) {
   const owned = new Map(); // folder → { folder, name, port, pid, child, state: starting | running | stopping }
   const retry = new Map(); // folder → { fails, at, port, said }: when to start its panel again, and on which port
   const noted = new Map(); // folder → what was last said about a project it has no panel of its own for
+  const offSaid = new Set(); // 0762: the projects turned off it has said it leaves out, until they're turned on again
   const keeper = runKeeper({ file: files.runs, env: panelEnv, say }); // 0758: each project's speck run
   let stopping = false, ticking = false, again = false, listError = null, timer = null, saved = null, saveError = null, front = null;
   // Its record, with the panels it has started, when that has changed. Never over another speck serve's, after this
@@ -273,16 +277,19 @@ async function serve(env, away, served) {
     return p.stopped;
   }
 
-  // One look at the list: stops the panels of projects taken off it and starts one for each project with none.
+  // One look at the list: stops the panels of projects taken off it, or turned off, and starts one for each project on
+  // it with none.
   function pass() {
-    let folders;
-    try { folders = listedProjects(env); listError = null; } catch (e) {
+    let entries;
+    try { entries = projectEntries(env); listError = null; } catch (e) {
       if (e.message !== listError) say(`${listError = e.message} The panels it started keep running, and it reads the list again every ${TICK_MS / 1000} seconds.`);
       return [];
     }
-    const listed = new Set(folders), starts = [];
+    const folders = entries.filter(p => !p.off).map(p => p.folder), listed = new Set(folders), starts = [];
+    const off = new Set(entries.filter(p => p.off).map(p => p.folder));
     for (const p of owned.values()) {
-      if (!listed.has(p.folder)) void stopOne(p, `${p.name} was taken off your list, so the panel speck serve started for it was stopped.`);
+      if (off.has(p.folder)) { offSaid.add(p.folder); void stopOne(p, `${p.name} was turned off, so the panel speck serve started for it was stopped. It's left out until \`speck projects on ${p.name}\`.`); }
+      else if (!listed.has(p.folder)) void stopOne(p, `${p.name} was taken off your list, so the panel speck serve started for it was stopped.`);
       // One it took over from an earlier speck serve isn't its child, so it's missed here rather than by its exit: once
       // its pid has gone, or is another program's, it's forgotten, never signalled, and the project gets a panel again.
       else if (!p.child && p.state === 'running' && !alive(p)) { p.state = 'gone'; owned.delete(p.folder); retry.set(p.folder, { fails: 0, at: 0, port: p.port, said: null }); say(`${p.name}'s panel stopped. Starting it again.`); }
@@ -298,8 +305,10 @@ async function serve(env, away, served) {
       starts.push(start(folder).catch(e => say(`${nameOf(folder)}'s panel couldn't be started: ${e?.message || e}`)));
     }
     for (const m of [noted, retry]) for (const f of m.keys()) if (!listed.has(f)) m.delete(f);
+    for (const f of off) if (!offSaid.has(f)) { offSaid.add(f); say(`${nameOf(f)} is turned off, so speck serve leaves it out until \`speck projects on ${nameOf(f)}\`.`); }
+    for (const f of offSaid) if (!off.has(f)) offSaid.delete(f);
     save();
-    keeper.check(folders.filter(f => !cannotStart(f)));
+    keeper.check(folders.filter(f => !cannotStart(f)), [...off]);
     return starts;
   }
   function queueTick() {
@@ -325,9 +334,13 @@ async function serve(env, away, served) {
   }
   // 0757: each project on the list, for All projects at the address, with the port of its panel running, started by
   // speck serve or by hand, or none.
-  const shownProjects = () => listedProjects(env).map(folder => ({ folder, name: nameOf(folder), port: panelPorts(folder, env)[0] ?? null }));
+  // 0762: only those that aren't turned off.
+  const shownProjects = () => projectEntries(env).filter(p => !p.off).map(({ folder }) => ({ folder, name: nameOf(folder), port: panelPorts(folder, env)[0] ?? null }));
+  // 0762: the ports of every panel running for those, read afresh for each answer at the address, which names them, so a
+  // panel just started can be chosen at once. A list it can't read shows none.
+  const shownPanels = () => { try { return new Set(projectEntries(env).filter(p => !p.off).flatMap(p => panelPorts(p.folder, env))); } catch { return new Set(); } };
   // 0757: its one address, before any panel starts: when it can't answer there, the record is put back as it was.
-  try { front = await startFront({ port: served.port, url: served.url, env, projects: shownProjects }); } catch (e) {
+  try { front = await startFront({ port: served.port, url: served.url, env, projects: shownProjects, shown: shownPanels }); } catch (e) {
     try { if (was) writeRecord(files.record, was); else forgetRecord(files.record, process.pid); } catch { /* the next speck serve finds a record of a process that has gone */ }
     throw e;
   }
@@ -345,7 +358,7 @@ async function serve(env, away, served) {
     say(`${nameOf(p.folder)}: ${address(p.port)} (started by the last speck serve, looked after again)`);
   }
   let count = 0;
-  try { count = listedProjects(env).length; } catch { /* said by the first pass */ }
+  try { count = projectEntries(env).filter(p => !p.off).length; } catch { /* said by the first pass */ }
   say(count
     ? `looking after a panel for each of the ${count} project${count === 1 ? '' : 's'} on your list, reading it again every ${TICK_MS / 1000} seconds. ${away ? 'It runs in the background: stop it with speck serve --stop.' : 'Stop it with Ctrl+C or speck serve --stop.'}`
     : `there are no projects on your list yet. Add one with \`speck projects add [<folder>]\` and its panel starts within ${TICK_MS / 1000} seconds.`);

@@ -110,8 +110,10 @@ export function summaryOf(to, via) {
 // Passes the request on to the panel on `to`, on this machine, as one made to it directly, and its answer back. `via`
 // is the port passing it on; `ours` is whether the request's Origin is an address passing it on, which the panel on
 // `to` then sees as its own; `gone` answers instead when that panel can't be reached; `path` is what to ask it for, the
-// request's own path unless an address shows the panel under a path of its own (0757).
-export function passOn(req, res, to, { via, ours, gone, path = req.url }) {
+// request's own path unless an address shows the panel under a path of its own (0757). 0762: `rewrite(answer)`, when
+// given, may give a function that changes the answer's body, which is then read whole and sent changed; `pipe(answer,
+// res)`, when given, sends the answer's body on in place of answer.pipe(res).
+export function passOn(req, res, to, { via, ours, gone, path = req.url, rewrite = null, pipe = null }) {
   const headers = {};
   for (const [k, v] of Object.entries(req.headers)) if (!HOP.has(k)) headers[k] = v;
   headers.host = `127.0.0.1:${to}`;
@@ -120,9 +122,23 @@ export function passOn(req, res, to, { via, ours, gone, path = req.url }) {
   const up = http.request({ host: '127.0.0.1', port: to, method: req.method, path, headers }, answer => {
     const back = {};
     for (const [k, v] of Object.entries(answer.headers)) if (!HOP.has(k)) back[k] = v;
-    res.writeHead(answer.statusCode, back);
-    answer.pipe(res);
     answer.on('error', () => res.destroy());
+    const change = rewrite ? rewrite(answer) : null;
+    if (change) {
+      const parts = [];
+      answer.on('data', d => parts.push(d));
+      answer.on('end', () => {
+        const got = Buffer.concat(parts);
+        let out = got;
+        try { out = Buffer.from(change(got.toString('utf8')), 'utf8'); } catch { /* sent as it came */ }
+        delete back['content-length'];
+        res.writeHead(answer.statusCode, { ...back, 'content-length': out.length });
+        res.end(out);
+      });
+      return;
+    }
+    res.writeHead(answer.statusCode, back);
+    if (pipe) pipe(answer, res); else answer.pipe(res);
   });
   up.on('error', () => { if (!res.headersSent) gone(); else res.destroy(); });
   res.on('close', () => { if (!res.writableFinished) up.destroy(); });
