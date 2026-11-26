@@ -15,6 +15,7 @@ import { BUILD_ENV } from './build-env.mjs';
 const LIST_MS = 1000, WATCH_MS = 2000, GONE_RETRY_MS = 3000, SUMMARY_MS = 2000, SUMMARY_BYTES = 1 << 21; // 0595's: how long a panel has to answer, and how much of an answer is read
 // Hop-by-hop headers, which belong to one connection and aren't passed on.
 const HOP = new Set(['connection', 'keep-alive', 'transfer-encoding', 'upgrade', 'proxy-connection', 'te', 'trailer']);
+const json = (res, status, body, headers = {}) => { res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', ...headers }); res.end(JSON.stringify(body)); };
 
 // SPECK_PANELS_DIR is for the tests, so their panels don't join the menus of yours. '' when there's no home folder.
 // 0619: a panel a build speck run launched started (its environment holds the build's session) records itself in a
@@ -42,7 +43,8 @@ export function buildPanelsDir(session, env = process.env) {
 }
 
 // The running panels, as [{ port, name }] by name and then port. A record whose process has gone (a panel killed, or
-// stopped by Ctrl+C before it could tidy up) is left out, and deleted.
+// stopped by Ctrl+C before it could tidy up) is left out, and deleted. 0757: so is speck serve's, marked serve, which it
+// keeps for the menu of a page from an older speck, as a page from this one knows speck serve's address by itself.
 export function runningPanels(dir = panelsDir()) {
   let names = [];
   if (!dir) return [];
@@ -53,20 +55,21 @@ export function runningPanels(dir = panelsDir()) {
     try { r = JSON.parse(fs.readFileSync(path.join(dir, n), 'utf8')); } catch { continue; } // half-written, or gone meanwhile
     if (!r || !Number.isInteger(r.pid) || r.pid <= 0 || r.port !== Number(n.slice(0, -5)) || r.port < 1 || r.port > 65535 || typeof r.name !== 'string') continue;
     if (!pidAlive(r.pid)) { try { fs.unlinkSync(path.join(dir, n)); } catch { /* gone already */ } continue; }
+    if (r.serve === true) continue;
     out.push({ port: r.port, name: r.name });
   }
   return out.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : a.port - b.port));
 }
 
 // This panel's record, written once it's serving (by each server process, so a restart on new code keeps it), and
-// deleted as it exits, unless a newer process on the port has written it since.
-export function registerPanel({ port, name, repo }, dir = panelsDir()) {
+// deleted as it exits, unless a newer process on the port has written it since. `serve`: speck serve's address's (0757).
+export function registerPanel({ port, name, repo, serve = false }, dir = panelsDir()) {
   if (!dir) return () => {}; // no home folder: the panel still serves, but isn't in the menus
   const file = path.join(dir, `${port}.json`);
   try {
     fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
     const tmp = `${file}.${process.pid}.tmp`;
-    fs.writeFileSync(tmp, `${JSON.stringify({ pid: process.pid, port, name, repo })}\n`, { mode: 0o600 });
+    fs.writeFileSync(tmp, `${JSON.stringify({ pid: process.pid, port, name, repo, ...(serve ? { serve: true } : {}) })}\n`, { mode: 0o600 });
     fs.renameSync(tmp, file);
   } catch { /* no home folder to write to: the panel still serves, but isn't in the menus */ }
   return () => {
@@ -81,6 +84,64 @@ function chosen(req, port) {
   return m && +m[1] !== port ? +m[1] : null;
 }
 
+// 0757: what a panel's project menu (0516) and speck serve's address (serve-front.mjs) both do with another panel.
+
+// 0595: the summary the panel on `to` gives of itself (projectSummary's), or null when it doesn't give one within
+// SUMMARY_MS. `via` is the port of what asks, which the panel on `to` answers as another speck.
+export function summaryOf(to, via) {
+  return new Promise(resolve => {
+    const up = http.get({ host: '127.0.0.1', port: to, path: '/api/projects/own', headers: { host: `127.0.0.1:${to}`, 'x-speck-via': String(via) }, agent: false }, answer => {
+      let body = '';
+      answer.setEncoding('utf8');
+      answer.on('data', d => { body += d; if (body.length > SUMMARY_BYTES) done(null); });
+      answer.on('end', () => {
+        let v = null;
+        try { v = JSON.parse(body); } catch { /* not a panel's answer */ }
+        done(answer.statusCode === 200 && v && typeof v === 'object' && !Array.isArray(v) && typeof v.status === 'string' ? v : null);
+      });
+      answer.on('error', () => done(null));
+    });
+    const timer = setTimeout(() => done(null), SUMMARY_MS);
+    function done(v) { clearTimeout(timer); up.destroy(); resolve(v); }
+    up.on('error', () => done(null));
+  });
+}
+
+// Passes the request on to the panel on `to`, on this machine, as one made to it directly, and its answer back. `via`
+// is the port passing it on; `ours` is whether the request's Origin is an address passing it on, which the panel on
+// `to` then sees as its own; `gone` answers instead when that panel can't be reached; `path` is what to ask it for, the
+// request's own path unless an address shows the panel under a path of its own (0757).
+export function passOn(req, res, to, { via, ours, gone, path = req.url }) {
+  const headers = {};
+  for (const [k, v] of Object.entries(req.headers)) if (!HOP.has(k)) headers[k] = v;
+  headers.host = `127.0.0.1:${to}`;
+  headers['x-speck-via'] = String(via); // the panel on `to` answers it itself, never passing it on again
+  if (ours) headers.origin = `http://127.0.0.1:${to}`;
+  const up = http.request({ host: '127.0.0.1', port: to, method: req.method, path, headers }, answer => {
+    const back = {};
+    for (const [k, v] of Object.entries(answer.headers)) if (!HOP.has(k)) back[k] = v;
+    res.writeHead(answer.statusCode, back);
+    answer.pipe(res);
+    answer.on('error', () => res.destroy());
+  });
+  up.on('error', () => { if (!res.headersSent) gone(); else res.destroy(); });
+  res.on('close', () => { if (!res.writableFinished) up.destroy(); });
+  req.pipe(up);
+}
+
+// The chosen panel, on `to`, has stopped. The page's stream is told so, with `list`, the panels still running, and
+// tries again every few seconds, so it's back once that panel is; a reload shows the address's own page again. `serve`:
+// it's speck serve's address, which starts the panel again by itself (0757).
+export function goneAnswer(req, res, to, list, { serve = false } = {}) {
+  res.removeHeader('X-Speck-Panel'); // the address's own answer: the page stays, saying its panel has stopped
+  const where = req.url.split('?')[0];
+  if (where === '/api/events') {
+    res.writeHead(200, { 'Content-Type': 'text/event-stream; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
+    return res.end(`retry: ${GONE_RETRY_MS}\nevent: gone\ndata: ${JSON.stringify({ port: to, list })}\n\n`);
+  }
+  return json(res, 502, { error: serve ? 'This project\'s panel has stopped. speck serve starts it again by itself, or pick another project.' : 'This project\'s panel has stopped. Pick another project, or start its panel again with speck panel.', gone: true });
+}
+
 // The panel at `port`'s side of it: its record, the menu's part of /api/state, and route(), which answers the
 // requests that are the menu's or another panel's. `origins` are the addresses this panel serves; `changed` tells
 // the page's stream when the running panels change.
@@ -92,7 +153,6 @@ export function panelProjects({ port, name, repo, origins, changed, id, usage = 
   let last = JSON.stringify(list());
   const watcher = setInterval(() => { cached = null; const now = JSON.stringify(list()); if (now !== last) { last = now; changed(); } }, WATCH_MS);
   watcher.unref();
-  const json = (res, status, body, headers = {}) => { res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', ...headers }); res.end(JSON.stringify(body)); };
   const ours = req => origins.has(String(req.headers.origin || '').toLowerCase());
   const clear = `${cookieName(port)}=; Path=/; Max-Age=0; SameSite=Strict`;
 
@@ -107,26 +167,6 @@ export function panelProjects({ port, name, repo, origins, changed, id, usage = 
     return json(res, 200, { ok: true }, { 'Set-Cookie': `${cookieName(port)}=${to}; Path=/; Max-Age=31536000; SameSite=Strict` });
   }
 
-  // 0595: the summary the panel on `to` gives of itself (projectSummary's), or null when it doesn't give one within SUMMARY_MS.
-  function summaryOf(to) {
-    return new Promise(resolve => {
-      const up = http.get({ host: '127.0.0.1', port: to, path: '/api/projects/own', headers: { host: `127.0.0.1:${to}`, 'x-speck-via': String(port) }, agent: false }, answer => {
-        let body = '';
-        answer.setEncoding('utf8');
-        answer.on('data', d => { body += d; if (body.length > SUMMARY_BYTES) done(null); });
-        answer.on('end', () => {
-          let v = null;
-          try { v = JSON.parse(body); } catch { /* not a panel's answer */ }
-          done(answer.statusCode === 200 && v && typeof v === 'object' && !Array.isArray(v) && typeof v.status === 'string' ? v : null);
-        });
-        answer.on('error', () => done(null));
-      });
-      const timer = setTimeout(() => done(null), SUMMARY_MS);
-      function done(v) { clearTimeout(timer); up.destroy(); resolve(v); }
-      up.on('error', () => done(null));
-    });
-  }
-
   // POST /api/projects/summary: 0595's summary of every panel running on this machine, each from its own panel at the same
   // time. POST, so the browser says which page is asking: only one at this address, as choosing a project needs.
   async function summaries(req, res) {
@@ -134,43 +174,12 @@ export function panelProjects({ port, name, repo, origins, changed, id, usage = 
     if (req.method !== 'POST') return json(res, 405, { error: 'Method not allowed.' }, { Allow: 'POST' });
     if (!ours(req)) return json(res, 403, { error: 'Forbidden: only a panel page at this address can do that. Reload it.' });
     const projects = await Promise.all(list().map(async p => {
-      const s = await summaryOf(p.port);
+      const s = await summaryOf(p.port, port);
       return s ? { ...s, ...p, running: true } : { ...p, running: false };
     }));
     let warn = [];
     try { warn = usage(); } catch { /* no warnings when the readings can't be read */ } // 0720
     return json(res, 200, { self: port, projects, usage: Array.isArray(warn) ? warn : [] });
-  }
-
-  // Passes the request on to the panel on `to`, on this machine, as one made to it directly, and its answer back.
-  function pass(req, res, to) {
-    const headers = {};
-    for (const [k, v] of Object.entries(req.headers)) if (!HOP.has(k)) headers[k] = v;
-    headers.host = `127.0.0.1:${to}`;
-    headers['x-speck-via'] = String(port); // the panel on `to` answers it itself, never passing it on again
-    if (ours(req)) headers.origin = `http://127.0.0.1:${to}`;
-    const up = http.request({ host: '127.0.0.1', port: to, method: req.method, path: req.url, headers }, answer => {
-      const back = {};
-      for (const [k, v] of Object.entries(answer.headers)) if (!HOP.has(k)) back[k] = v;
-      res.writeHead(answer.statusCode, back);
-      answer.pipe(res);
-      answer.on('error', () => res.destroy());
-    });
-    up.on('error', () => { if (!res.headersSent) gone(req, res, to); else res.destroy(); });
-    res.on('close', () => { if (!res.writableFinished) up.destroy(); });
-    req.pipe(up);
-  }
-
-  // The chosen panel, on `to`, has stopped. The page's stream is told so, with the panels still running, and tries again every
-  // few seconds, so it's back once that panel is; a reload shows this panel's own project again.
-  function gone(req, res, to) {
-    res.removeHeader('X-Speck-Panel'); // the address's own answer: the page stays, saying its panel has stopped
-    const where = req.url.split('?')[0];
-    if (where === '/api/events') {
-      res.writeHead(200, { 'Content-Type': 'text/event-stream; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
-      return res.end(`retry: ${GONE_RETRY_MS}\nevent: gone\ndata: ${JSON.stringify({ port: to, list: list() })}\n\n`);
-    }
-    return json(res, 502, { error: 'This project\'s panel has stopped. Pick another project, or start its panel again with speck panel.', gone: true });
   }
 
   return {
@@ -188,9 +197,9 @@ export function panelProjects({ port, name, repo, origins, changed, id, usage = 
       const to = chosen(req, port);
       if (to === null) return false;
       cached = null;
-      if (running(to)) { pass(req, res, to); return true; }
+      if (running(to)) { passOn(req, res, to, { via: port, ours: ours(req), gone: () => goneAnswer(req, res, to, list()) }); return true; }
       if (where === '/' && req.method === 'GET') { res.setHeader('Set-Cookie', clear); return false; }
-      gone(req, res, to);
+      goneAnswer(req, res, to, list());
       return true;
     },
     stop() { clearInterval(watcher); unregister(); },

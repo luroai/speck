@@ -26,13 +26,13 @@ import { panelAway } from './panel-background.mjs'; // 0509: --background and --
 import { panelProjects } from './panel-projects.mjs'; // 0516: the project menu, and showing another panel's project here
 import { projectSummary, speckMood } from './panel-summary.mjs'; // 0595: this panel's part of the bridge. 0579: speck's mood
 import { panelStarNote } from './panel-star.mjs'; import { panelSetLevel } from './panel-level.mjs'; import { panelSetBuilder } from './panel-builder.mjs'; // 0538: the star on a note in Capture. 0662: a ticket's level. 0669: its builder
-import { panelUrl } from './panel-url.mjs'; import { subscriptionsAnswer, usageWarnings } from './subscriptions.mjs'; import { readUsage } from './agent-usage.mjs'; // 0538: moved out, to keep this under 600 lines. 0646: Your subscriptions in Settings
+import { panelUrl } from './panel-url.mjs'; import { panelFile } from './panel-files.mjs'; import { subscriptionsAnswer, usageWarnings } from './subscriptions.mjs'; import { readUsage } from './agent-usage.mjs'; // 0538: moved out, to keep this under 600 lines. 0646: Your subscriptions in Settings
 
 // ---------- panel (a view in the browser, with its writes: Set ready and Back to Plan, a draft's priority, a ticket's level, Stop build, Go with the recommendation, an answer to the Foreman's question, Ship, Ask for changes, Try it / Stop (0725), the speck run switch, a setting and a note's star) ----------
 const PANEL_PORT = 4777;
 const htmlEscape = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
-function panelPort(args) {
+export function panelPort(args) { // 0757: and speck serve's --port
   const i = args.findIndex(a => a === '--port' || a.startsWith('--port='));
   if (i === -1) return PANEL_PORT;
   const v = args[i].startsWith('--port=') ? args[i].slice(7) : args[i + 1];
@@ -190,7 +190,6 @@ catch (e) { const line = (e && e.name === 'SpeckError' ? '' : (e && e.name || 'E
   return { child, code };
 }
 
-const FONT_TYPES = Object.fromEntries(['Inter-400', 'Inter-500', 'Inter-600', 'JetBrainsMono-400', 'JetBrainsMono-500'].map(f => [`/fonts/${f}.woff2`, 'font/woff2']));
 const PANEL_WATCH_MS = 250, PANEL_SETTLE_MS = 500, PANEL_START_MS = 10000, PANEL_STOP_MS = 3000;
 
 // The code `speck panel` runs from: every .mjs file in the CLI's own folder (scripts/, or .speck/scripts/ in a repo set
@@ -244,7 +243,7 @@ export async function panelServer() {
   // its model, since 0432 its Settings, since 0433 the rest of its script, since 0473 its pop-ups, since 0474 its header and since 0580 speck's face. /api/state gives the stamp of the code now, so a page sent before any of them changed can say it's out of date.
   const readOr = f => { try { return fs.readFileSync(f, 'utf8'); } catch { return ''; } }, stampOf = html => crypto.createHash('sha256').update(running).update('\0').update(html).update('\0').update(stylesFiles.map(readOr).join('\0')).update('\0').update(readOr(modelFile)).update('\0').update(readOr(settingsFile)).update('\0').update(readOr(scriptFile)).update('\0').update(readOr(popupsFile)).update('\0').update(readOr(headerFile)).update('\0').update(faceFiles.map(readOr).join('\0')).digest('hex').slice(0, 16);
   const page = () => { const html = fs.readFileSync(pageFile, 'utf8'); return html.replace('{{page}}', () => stampOf(html))
-    .replace('{{repo}}', () => repoName).replace('{{base}}', () => base).replace('{{token}}', () => token).replace('{{panel}}', () => panelId); };
+    .replace('{{repo}}', () => repoName).replace('{{base}}', () => base).replace('{{token}}', () => token).replace('{{panel}}', () => panelId).replace('{{serve}}', () => ''); }; // 0757: {{serve}} is speck serve's own page's
   const pageNow = () => { try { return { page: stampOf(fs.readFileSync(pageFile, 'utf8')) }; } catch { return {}; } };
   // With --url, its one address too: the tunnel in front of the panel sends its hostname as the Host, with no port.
   const origins = new Set([`http://127.0.0.1:${port}`, `http://localhost:${port}`, ...(url ? [url.origin] : [])]);
@@ -255,10 +254,6 @@ export async function panelServer() {
       ...(status === 405 ? { Allow: 'GET' } : {}), ...(stopping ? { Connection: 'close' } : {}), ...headers });
     res.end(body);
   };
-  // 0149: what lets a phone add the panel to its home screen as an app, from templates/icons/: its manifest and icons.
-  const iconsDir = path.join(TEMPLATES, 'icons');
-  const icons = { '/manifest.webmanifest': 'application/manifest+json', '/icon.svg': 'image/svg+xml',
-    '/icon-16.png': 'image/png', '/icon-32.png': 'image/png', '/icon-192.png': 'image/png', '/icon-512.png': 'image/png', '/apple-touch-icon.png': 'image/png' };
   // 0177: /api/state. Requests that arrive while the board is being read share that reading, unless a write has finished
   // since it started: then they wait for the next one, so every answer after a write shows it. A request whose
   // connection has closed by the time its reading would start doesn't cause one.
@@ -455,30 +450,7 @@ export async function panelServer() {
       try { return send(res, 200, 'text/html', page()); }
       catch (e) { return send(res, 500, 'text/plain', `Couldn't read the panel page, ${pageFile}: ${e.message}\nPut the file back, then reload.\n`); }
     }
-    // 0430, 0431, 0432, 0433, 0473, 0474: the page's styles, model, Settings, the rest of its script, its pop-ups and its header, read afresh as the page is. 0472: its styles are a file for each area. 0578: and speck's character.
-    if (styleNames.includes(where.slice(1)) || where === '/panel-model.js' || where === '/panel-settings.js' || where === '/panel.js' || where === '/panel-popups.js' || where === '/panel-header.js' || where === '/speck-face.js' || where === '/speck-mood.js') {
-      try { return send(res, 200, where.endsWith('.css') ? 'text/css' : 'text/javascript', fs.readFileSync(path.join(TEMPLATES, where.slice(1)))); }
-      catch (e) { return send(res, 500, 'text/plain', `Couldn't read ${path.join(TEMPLATES, where.slice(1))}: ${e.message}\nPut the file back, then reload.\n`); }
-    }
-    // 0304, 0577: the panel's typefaces, served from the repo so they show with no internet.
-    if (Object.hasOwn(FONT_TYPES, where)) {
-      const file = path.join(TEMPLATES, 'fonts', where.slice('/fonts/'.length));
-      let body;
-      try { body = fs.readFileSync(file); }
-      catch (e) { return send(res, 500, 'text/plain', `Couldn't read ${file}: ${e.message}\nPut the file back, then reload.\n`); }
-      res.writeHead(200, { 'Content-Type': FONT_TYPES[where], 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', ...(stopping ? { Connection: 'close' } : {}) });
-      return res.end(body);
-    }
-    if (Object.hasOwn(icons, where)) {
-      let body;
-      try { body = fs.readFileSync(path.join(iconsDir, where.slice(1))); }
-      catch (e) { return send(res, 500, 'text/plain', `Couldn't read ${path.join(iconsDir, where.slice(1))}: ${e.message}\nPut the file back, then reload.\n`); }
-      if (icons[where] === 'image/png') {
-        res.writeHead(200, { 'Content-Type': 'image/png', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', ...(stopping ? { Connection: 'close' } : {}) });
-        return res.end(body);
-      }
-      return send(res, 200, icons[where], body);
-    }
+    if (panelFile(where, res, stopping ? { Connection: 'close' } : {})) return; // its styles, scripts, typefaces and icons (0757: shared with speck serve's address)
     if (where === '/api/events') return feed.open(res, latest !== null, stopping);
     if (where === '/api/state') {
       const told = String(req.headers['x-speck-board'] ?? '');

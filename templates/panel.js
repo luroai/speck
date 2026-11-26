@@ -9,6 +9,9 @@ const LOG_LINES = 200; // how many of a log's last lines are shown, as the serve
 const PAGE = document.currentScript.dataset.page; // 0285: the stamp of the code this page was sent with, which /api/state gives as it is now
 const TOKEN = document.currentScript.dataset.token; // put in by the server each time it starts, and sent with Set ready, Back to Plan, each priority change, stop, Go with the recommendation, ship, the speck run switch, each setting saved and each API key saved (0393)
 const $ = id => document.getElementById(id);
+// 0757: speck serve's own page, at its address while no project is chosen there: All projects and nothing else, with
+// no project, board or stream of its own.
+const SERVE = ($('speck-serve') || {}).content === '1';
 // 0283: what a blocked question's build says about its options, as speck status --json gives it. Nothing for an unknown.
 function questionFacts(t) {
   const facts = [
@@ -1777,6 +1780,7 @@ function connect() {
 // 0432, 0433: the page starts once the whole page has loaded, after the Settings script it loads from /panel-settings.js
 // has run, so nothing it hears first finds Settings missing. 0473: and the pop-ups' script, from /panel-popups.js.
 document.addEventListener('DOMContentLoaded', () => {
+  if (SERVE) return openBridge(); // 0757: it opens on All projects, and stays there
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') connect(); });
   connect();
 });

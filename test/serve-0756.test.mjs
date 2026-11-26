@@ -9,7 +9,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
 import { speck } from './support/cli.mjs';
-import { ROOT, CLI, machine, standInProject, addProject, removeProject, startServe, serveOnce, until, portOf, getJson, pidAlive, readJson, panelRecords, panelByHand, endServe, groupOf } from './support/serve.mjs';
+import { ROOT, CLI, machine, standInProject, addProject, removeProject, startServe, serveOnce, until, portOf, getJson, pidAlive, readJson, panelRecords, panelByHand, endServe, groupOf, freePortNow } from './support/serve.mjs';
 
 const nameOf = dir => path.basename(dir);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -143,7 +143,7 @@ test('0756 AC3: speck serve --background keeps running after the shell that star
   const m = machine(), a = standInProject('alpha');
   addProject(m, a);
   // From a shell that has ended by the time it returns, as the terminal's would.
-  const r = spawnSync('sh', ['-c', `"${process.execPath}" "${CLI}" serve --background`], { cwd: os.tmpdir(), env: m.env, encoding: 'utf8', timeout: 60000 });
+  const r = spawnSync('sh', ['-c', `"${process.execPath}" "${CLI}" serve --background --port ${freePortNow()}`], { cwd: os.tmpdir(), env: m.env, encoding: 'utf8', timeout: 60000 }); // 0757: a port of its own
   try {
     assert.equal(r.status, 0, r.stdout + r.stderr);
     const port = portOf(r.stdout, 'alpha');

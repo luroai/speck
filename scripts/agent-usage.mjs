@@ -116,6 +116,14 @@ export function readUsage(repo) {
   return Object.fromEntries(USAGE_AGENTS.map(a => [a, latest(repo, a)]).filter(([, v]) => v));
 }
 
+// 0757: the newest reading of each agent across the projects in `repos`, as readUsage gives one project's, for speck
+// serve's All projects: every project's builds run on the same subscriptions, so the newest says most about them.
+export function newestUsage(repos) {
+  const out = {};
+  for (const repo of repos) for (const [agent, reading] of Object.entries(readUsage(repo))) if (!out[agent] || newer(reading) > newer(out[agent])) out[agent] = reading;
+  return out;
+}
+
 // Keeps `reading` as `agent`'s, unless the one kept is newer. Returns true when it was kept.
 export function saveUsage(repo, agent, reading) {
   if (!USAGE_AGENTS.includes(agent) || !valid(reading)) return false;
