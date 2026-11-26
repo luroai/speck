@@ -10,6 +10,7 @@ import http from 'node:http';
 import crypto from 'node:crypto';
 import { TEMPLATES } from './core.mjs';
 import { summaryOf } from './panel-projects.mjs';
+import { floorUsage } from './subscriptions.mjs';
 
 const DAYS = 14; // the station's line: a day each, today last
 // How long a panel has to give its board, and how much of it is read; how long an answer waits for a board being read,
@@ -104,7 +105,8 @@ export function floorBoards({ wait = BOARD_WAIT_MS } = {}) {
 // or null while its board can't be read. Then the chosen station, the one whose key is `station`, or else the first,
 // with its board, unless the page has it already, as `have`, its name, says; board_name is null while it gives none.
 // `live` holds the ports panels are running on, `via` is the address's own port and `boards` is floorBoards'.
-export async function floorAnswer({ listed, live, via, station = null, have = null, boards, now = Date.now() }) {
+// 0768: and `usage`, each subscription's tightest window (floorUsage's), from `readings`, newestUsage's for the projects.
+export async function floorAnswer({ listed, live, via, station = null, have = null, boards, readings = {}, now = Date.now() }) {
   const read = await Promise.all(listed.map(async p => {
     const port = Number.isInteger(p.port) && live.has(p.port) ? p.port : null;
     if (port === null) return { p, port, summary: null, board: null };
@@ -115,7 +117,9 @@ export async function floorAnswer({ listed, live, via, station = null, have = nu
   const stations = read.map(({ p, port, summary, board }, i) => ({ ...(summary || {}), key: stationKey(p.folder), n: i + 1, name: p.name, port, running: !!summary,
     shipped_days: board ? shippedDays(board.board.tickets, now) : null }));
   const at = Math.max(0, stations.findIndex(s => s.key === station));
-  if (!stations.length) return { stations, chosen: null, board_name: null };
+  if (!stations.length) return { stations, chosen: null, board_name: null }; // no projects, so no readings either
+  let usage = [];
+  try { usage = floorUsage(readings, now); } catch { /* none when the readings can't be read */ }
   const b = read[at].board;
-  return { stations, chosen: stations[at].key, board_name: b ? b.name : null, ...(b && b.name !== have ? { board: b.board } : {}) };
+  return { stations, chosen: stations[at].key, board_name: b ? b.name : null, ...(b && b.name !== have ? { board: b.board } : {}), usage };
 }

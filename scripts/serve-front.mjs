@@ -152,7 +152,9 @@ export async function startFront({ port, url = null, env = process.env, projects
     let listed;
     try { listed = projects(); } catch (e) { return json(res, 500, { error: e instanceof SpeckError ? e.message : `speck serve couldn't read your projects: ${e?.message || e}` }); }
     const q = new URLSearchParams(req.url.split('?')[1] || '');
-    try { return json(res, 200, await floorAnswer({ listed, live: new Set(panels().map(p => p.port)), via: at, station: q.get('station'), have: q.get('have'), boards })); }
+    let readings = {};
+    try { readings = newestUsage(listed.map(p => p.folder).filter(f => fs.existsSync(path.join(f, 'speck')))); } catch { /* none when the readings can't be read */ } // 0768
+    try { return json(res, 200, await floorAnswer({ listed, live: new Set(panels().map(p => p.port)), via: at, station: q.get('station'), have: q.get('have'), boards, readings })); }
     catch (e) { return json(res, 500, { error: `speck serve couldn't read the factory floor: ${e?.message || e}` }); }
   }
 
