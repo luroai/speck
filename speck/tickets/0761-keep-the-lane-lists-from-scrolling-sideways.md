@@ -43,7 +43,7 @@ No lane's list ever scrolls sideways, so a sideways swipe on any list always cha
 ## Notes
 - Raised by the user on 2026-11-25 with a screenshot of a project's Plan list in Safari on an iPhone: rows scrolled left, a horizontal scrollbar, and swipes not changing lane. In Chromium with touch at 390 px the same list doesn't overflow and a swipe changes lane, and a second screenshot showed the cause: an open Plan row's Builder fact ("Claude Code · Opus · medium", 0662's picker) runs past its cell and the row, as it doesn't wrap.
 - `.lane-list` in `templates/panel-cards.css` has `overflow-y: auto`, so its `overflow-x` computes to `auto`; `scrollsSideways` in `templates/panel-header.js` then keeps the touch for the list.
-- Unverified: Safari's behaviour, as no WebKit browser is available on this machine; check in Chromium with touch, and by forcing an over-wide element in a test.
+- Checked 2026-11-26: Safari's behaviour can't be checked here: Playwright's WebKit is downloaded but won't start, as the system libraries it needs (GTK 4, GStreamer and others) are missing, so no WebKit browser is available on this machine; check in Chromium with touch, and by forcing an over-wide element in a test.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
