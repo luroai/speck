@@ -1,7 +1,7 @@
 ---
 id: "0762"
 title: "Leave a project out of speck serve without removing it"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: ["0757","0758"]                # ticket ids that must be done first
 created: 2026-11-26
 built_on: "0758"
 started: "2026-11-26T11:49:18.267Z"
+approved: "2026-11-26T12:08:33.557Z"
 
 ---
 # 0762 · Leave a project out of speck serve without removing it
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Under `speck serve`, the only way to keep a project out is `speck projects remove`, which forgets it, so bringing it back means adding it again. The user wants to keep some projects, such as a paused side project, off the factory floor and out of the service without losing them from the list.
@@ -60,15 +61,21 @@ Worth keeping an eye on: automatic building that was already running in a projec
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 At the service address, an older project's page still shows off and unlisted projects in its project menu.; F2 Turning an older project off discards its remembered run state.
+Round 2 (codex): changes requested.
+Round 3 (codex): approve.
 
 ## Delivery log
+- Review rounds: 3
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 969,963
+- Elapsed since build started: 19 min
+- Changed lines: 217 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 ### Follow-ups
 - Inbox: speck/ideas/2026-11-26-stop-a-project-s-speck-run-when-it-s-turned-off.md (a run speck serve started keeps running after its project is turned off).
 - Known limit: a project turned off is left out of an open project page's menu once the address next looks at what it shows (every 2 seconds) and the page reads its board again; this relies on a panel answering board number 0 at once, as every panel since 0177 does.
 - Tidy-up: the address reads the list and the panels' records for each answer and every 2 seconds; fine for a handful of projects, worth a cache if lists grow large.
-
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
