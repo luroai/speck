@@ -1,7 +1,7 @@
 ---
 id: "0755"
 title: "Keep a list of your projects on this machine"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: []                # ticket ids that must be done first
 created: 2026-11-25
 started: "2026-11-26T09:32:23.220Z"
 approved: "2026-11-26T09:38:11.231Z"
+finished: "2026-11-26T09:41:11.653Z"
 
 ---
 # 0755 · Keep a list of your projects on this machine
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 speck only knows a project while its panel is running, as each panel registers itself in the home folder (0516). A service that runs every project needs a list of them that lasts, whether their panels are running or not.
