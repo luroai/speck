@@ -1,7 +1,7 @@
 ---
 id: "0761"
 title: "Keep the lane lists from scrolling sideways"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -22,7 +22,7 @@ started: "2026-11-26T09:32:41.906Z"
 ---
 # 0761 · Keep the lane lists from scrolling sideways
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 On an iPhone in Safari, the Plan list can scroll sideways: its rows slide left under the finger with a horizontal scrollbar, and the swipe no longer changes lane. The lists scroll up and down (`overflow-y: auto`), which lets them scroll sideways too once anything in them is wider, and the panel hands a swipe to the lanes only when it doesn't start in something that scrolls sideways (`scrollsSideways`).
@@ -48,7 +48,11 @@ No lane's list ever scrolls sideways, so a sideways swipe on any list always cha
 - Self-check: no changes. The script guard is needed as well as the style: with overflow-x hidden alone, a script can still scroll a list sideways (AC1's test fails without it).
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+On a phone, the Plan, Build, Shipped and Capture lists now only scroll up and down. Before, an open Plan ticket's Builder fact (such as "Claude Code · Opus · medium") could run past the edge of the card, which let the whole list slide sideways under your finger and stopped a swipe from changing lane. Now that fact wraps onto a second line inside its box, anything else too wide for a list is cut off at its edge, and a sideways swipe on a list always changes lane. Code blocks inside an open ticket still scroll sideways on their own.
+
+To see it, open the panel on a phone, open a draft in Plan whose builder is set, and swipe sideways on it: the lane changes rather than the list sliding.
+
+Worth keeping an eye on: this was checked in Chrome with touch, not in Safari itself, as Safari's engine can't run on this machine. If anything wider than a list is added later, it will now be cut off at the edge rather than reachable by scrolling.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -58,3 +62,83 @@ No lane's list ever scrolls sideways, so a sideways swipe on any list always cha
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - Inbox: speck/ideas/2026-11-26-steady-the-0067-ac4-second-restart-error-test.md, as "0067 AC4: new code that fails to start…" failed once in the related-tests run and passed on rerun unchanged.
+  - Safari itself is unchecked: no WebKit browser can start on this machine (Playwright's WebKit lacks its system libraries).
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "a6fba226bca98588748ff0d64c1228756824ff33",
+    "session": "fresh",
+    "thread_id": "01a21742-a5bc-7c00-8402-b5227b3aeb1b",
+    "builder_response": "- Tests run: test/panel-0761.test.mjs test/panel-0067.test.mjs (the first run was `speck test --related test/panel-0761.test.mjs`, which ran 4408 tests with one failure, `0067 AC4: new code that fails to start…`, a 5 s wait for the panel's restart error under the load of that 7-minute run; it passes in the run above, unchanged, and this change touches only the panel's page styles and header script).\n- Round 1. What changed:\n  - `templates/panel-cards.css`: `.lane-list { overflow-x: hidden; }`, so a list scrolls only up and down and what's wider is cut off at its edges, and `scrollsSideways` no longer keeps a touch or wheel that starts on the list (it matches only `auto|scroll`). A Builder fact's `.value.pick` (the one holding `.set-builder`) now wraps (`white-space: normal; overflow-wrap: anywhere`) rather than running past its cell, which was the cause the user's screenshot showed.\n  - `templates/panel-header.js`: a scroll listener on each `.lane-list` that sets `scrollLeft` back to 0, as `overflow-x: hidden` still lets a script scroll it (AC1 \"by script\"; the AC1 test fails without it).\n- The tests are in a real headless Chromium with touch emulation (Input.dispatchTouchEvent) at 375 and 390 px, as the criteria are about layout and native scrolling, which the fake page can't show. They share one page and one panel to keep the file at about 5 s. No WebKit browser can start on this machine (see the ticket's Notes), so Safari itself isn't checked.\n- AC5: no test; the whole suite runs at ship.\n- Pictures: the open Plan row with the wrapped Builder fact at 390 px, light and dark.\n",
+    "seconds": 22,
+    "usage": {
+      "input_tokens": 93566,
+      "cached_input_tokens": 57600,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 714,
+      "reasoning_output_tokens": 64
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 35966,
+      "cached": 57600,
+      "write": 0,
+      "output": 714
+    },
+    "cost_usd": 0.084832,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-26T09:49:55.126Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "panel-cards.css clips horizontal overflow on .lane-list; panel-header.js resets horizontal scroll offsets. Passing 0761 AC1 exercises all four lists with forced overflow using script, wheel and touch."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Passing 0761 AC2 uses real touch events to change lanes from Plan with and without forced overflow. scrollsSideways excludes the list's hidden overflow."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing 0761 AC3 verifies that a wide code block scrolls by script and touch while Plan remains selected. The list listener affects only the list's own offset; scrollsSideways still recognises nested scrollers."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "panel-cards.css allows Builder values to wrap within their cells. Both passing 0761 AC4 tests measure closed and open Plan rows and the long Builder value at 375 and 390 px."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Recorded test output confirms 160 passes, zero failures and three skips. The previously failing 0067 test passed unchanged on rerun. The committed change is confined to the ticket, panel styles, header script and new tests; whole-suite validation remains the ship gate."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The lists now clip wide content, sideways swipes change lane, and long Builder values wrap. Intentional scrolling inside code blocks still works. Browser tests pass at both phone widths. Safari itself remains unverified because WebKit cannot start on this machine."
+  }
+}
+```
+
+</details>
