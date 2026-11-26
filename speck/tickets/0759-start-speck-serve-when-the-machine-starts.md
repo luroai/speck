@@ -1,7 +1,7 @@
 ---
 id: "0759"
 title: "Start speck serve when the machine starts"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -20,11 +20,12 @@ created: 2026-11-25
 started: "2026-11-26T10:20:32.303Z"
 blocked_at: ""
 waited_seconds: 917
+approved: "2026-11-26T11:16:04.284Z"
 
 ---
 # 0759 · Start speck serve when the machine starts
 
-**Status:** 🔨 building
+**Status:** 👍 approved
 
 ## Problem
 After a restart, nothing of speck comes back until someone starts it by hand, so the panel is unreachable from a phone and no work moves.
@@ -66,9 +67,16 @@ Changes what you'd notice: yes
 Clear winner: yes
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Services installed with --port or --url immediately exit because the current serve command rejects both arguments.; F2 Mac uninstall treats every launchctl bootout failure as meaning the agent is absent.; F3 Linux install changes lingering before generating and writing the unit, outside the rollback protection.
+Round 2 (codex): changes requested.
+Round 3 (codex): approve.
 
 ## Delivery log
+- Review rounds: 3
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 490,029
+- Elapsed since build started: 56 min
+- Changed lines: 249 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Inbox: speck/ideas/2026-11-26-let-speck-serve-stop-stop-the-installed-service.md (`--stop` only stops an installed speck serve until the service starts it again).
