@@ -42,6 +42,7 @@ Once `speck serve --install` has made it a service, `speck serve --stop` stops `
 ## Notes
 - From 0759's own note: the service restarts `speck serve` whenever it stops (systemd `Restart=always`, launchd `KeepAlive`).
 - Unverified: `systemctl --user stop` and `launchctl bootout` stop it without disabling it at boot; check while building.
+- speck (2026-11-27 01:36 UTC) I'll resume 0772 at 02:30 UTC: speck run launched 0772 just as 0771's ship was handed back to its build for a clash in the brief, so speck start refused to begin it; 0771 has since finished its rework and should ship within the hour, so the build should try again then rather than now. Its instruction: Run speck start 0772 again. If 0771 has shipped, or is approved and its work merges cleanly, build 0772 as normal, and check from Apple's own documentation whether launchctl bootout leaves the service set to start at the next login. If speck start still refuses because 0771 isn't done, end without changing anything.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
