@@ -13,6 +13,8 @@
 // 0762: a project turned off with `speck projects off` is treated as one taken off the list, apart from what's said:
 // the panel speck serve started for it is stopped, its panel and its speck run aren't started, and the address leaves
 // it out. Turned on again, it's looked at afresh, as one just added.
+// 0771: it switches to new code by itself (serve-switch.mjs): once its code has changed and settled, a worker process on
+// the new code takes over, and the process you started, which keeps the record, hosts it from then on.
 
 import fs from 'node:fs';
 import net from 'node:net';
@@ -23,13 +25,17 @@ import { SpeckError } from './core.mjs';
 import { homeSettingsDir } from './home-settings.mjs';
 import { listedProjects, projectEntries, panelPorts } from './projects.mjs';
 import { panelAnswers } from './panel-background.mjs';
-import { pidAlive, runState } from './run-switch.mjs';
+import { pidAlive, runState, codeHash } from './run-switch.mjs';
 import { timedMessage } from './run-times.mjs';
 import { BUILD_ENV } from './build-env.mjs';
 import { startFront, serveAddress, addressText } from './serve-front.mjs';
 import { runKeeper, runsIn, stillOnSays } from './serve-runs.mjs'; // 0758
+import { startSuccessor, hostWorkers, codeWatch, toHost, STOP_SIGNALS, pairsOf, stringsOf, retryOf, carriedRecord } from './serve-switch.mjs'; // 0771
 
 const TICK_MS = 2000, START_MS = 15000, STOP_MS = 5000, POLL_MS = 100, SERVE_STOP_MS = 30000, BACKGROUND_MS = 60000;
+// 0771: how often a worker looks at its code, and how long one handing over to new code waits for the answers it's
+// giving before it closes what's left: long enough for a Ship passed on to a project's panel.
+const CODE_MS = 500, HAND_OFF_MS = 60 * 60 * 1000;
 // How long a panel has to answer once started, in ms. SPECK_SERVE_START_MS sets it directly, for speck's own tests.
 const startMs = () => (Number(process.env.SPECK_SERVE_START_MS) > 0 ? Number(process.env.SPECK_SERVE_START_MS) : START_MS);
 const RETRY_MS = [2000, 5000, 10000, 30000, 60000]; // before trying again after 1, 2, 3, 4, then 5 or more failed starts in a row
@@ -68,8 +74,12 @@ function writeRecord(file, record) {
 const forgetRecord = (file, pid) => { if (readRecord(file)?.pid === pid) fs.rmSync(file, { force: true }); };
 
 // A process's command line, from ps, so a pid since reused by another program is never taken for ours: '' when it has
-// gone or can't be read, as nothing is signalled that isn't known to be speck's.
-function argsOf(pid) {
+// gone or can't be read, as nothing is signalled that isn't known to be speck's. 0771: from /proc where there is one,
+// as ps reads every process each time, and speck serve looks at each panel it took over, which after a switch to new
+// code is every panel, each time it reads the list.
+const PROC = fs.existsSync('/proc/self/cmdline');
+export function argsOf(pid) {
+  if (PROC) { try { return fs.readFileSync(`/proc/${pid}/cmdline`, 'utf8').replace(/\0+$/, '').replace(/[\0-\x1f\x7f]/g, ' '); } catch { return ''; } } // as ps shows it
   const r = spawnSync('ps', ['-ww', '-o', 'args=', '-p', String(pid)], { encoding: 'utf8' });
   return !r.error && r.status === 0 ? r.stdout.trim() : '';
 }
@@ -106,7 +116,7 @@ function takeRecordOnce(file, mine) {
       if (held && isServe(held.pid)) return { holder: held };
       if (!link(recover)) {
         const other = readRecord(recover);
-        if (other && other.pid !== process.pid && pidAlive(other.pid)) throw new SpeckError(`Another speck serve is starting on this machine (process ${other.pid}). Leave that one running.`);
+        if (other && other.pid !== mine.pid && pidAlive(other.pid)) throw new SpeckError(`Another speck serve is starting on this machine (process ${other.pid}). Leave that one running.`);
         throw new SpeckError(`A speck serve was stopped while taking over a record it had left. If no speck serve is running, delete ${recover}, then run this again.`);
       }
       try {
@@ -168,28 +178,38 @@ function cannotStart(folder) {
   return null;
 }
 
-// `speck serve` in the foreground, until Ctrl+C, SIGTERM or speck serve --stop. `served` is its --port and --url.
-async function serve(env, away, served) {
+// `speck serve` in the foreground, until Ctrl+C, SIGTERM or speck serve --stop. `served` is its --port and --url, from
+// `args`. 0771: `host` is the pid of the process you started, which its record holds, and `running` the hash of the
+// code it runs. `worker`: it runs in a worker that process started on new code (serveWorker), `carried` being what the
+// one before it looked after and `handle` the socket that one answered on, which this one answers on from then on.
+async function serve(env, { away, served, args, host, running, worker = false, carried = null, handle = null }) {
   const files = serveFiles(env);
   if (!files) throw new SpeckError('There\'s no home folder for speck serve to keep its record in, so it can\'t run.');
   const panelEnv = { ...env };
   delete panelEnv[BUILD_ENV]; // each panel is yours, listed where speck projects looks, even when a build starts speck serve
-  const me = { pid: process.pid, started: new Date().toISOString(), log: away ? files.log : null, ready: false, panels: [] };
-  const { holder, was } = takeRecord(files.record, me, shown(env, files.record));
-  if (holder) throw new SpeckError(alreadyRunning(holder, env));
+  const me = carried ? carriedRecord(carried.record, host) : { pid: host, started: new Date().toISOString(), log: away ? files.log : null, ready: false, panels: [] };
+  let was = null;
+  if (!carried) {
+    const took = takeRecord(files.record, me, shown(env, files.record));
+    if (took.holder) throw new SpeckError(alreadyRunning(took.holder, env));
+    was = took.was;
+  }
 
   const owned = new Map(); // folder → { folder, name, port, pid, child, state: starting | running | stopping }
-  const retry = new Map(); // folder → { fails, at, port, said }: when to start its panel again, and on which port
-  const noted = new Map(); // folder → what was last said about a project it has no panel of its own for
-  const offSaid = new Set(); // 0762: the projects turned off it has said it leaves out, until they're turned on again
-  const keeper = runKeeper({ file: files.runs, env: panelEnv, say }); // 0758: each project's speck run
+  const retry = new Map(pairsOf(carried?.retry).map(([f, r]) => [f, retryOf(r)])); // folder → { fails, at, port, said }: when to start its panel again, and on which port
+  const noted = new Map(pairsOf(carried?.noted).filter(([, t]) => typeof t === 'string')); // folder → what was last said about a project it has no panel of its own for
+  const offSaid = new Set(stringsOf(carried?.offSaid)); // 0762: the projects turned off it has said it leaves out, until they're turned on again
+  const keeper = runKeeper({ file: files.runs, env: panelEnv, say, carried: carried?.keeper }); // 0758: each project's speck run
   let stopping = false, ticking = false, again = false, listError = null, timer = null, saved = null, saveError = null, front = null;
+  let handing = false, codeTimer = null, successor = null; // 0771: handing over to a worker on new code, from asking for one until it stays or exits, and that worker while it starts, when this process started it
   // Its record, with the panels it has started, when that has changed. Never over another speck serve's, after this
-  // one's was deleted by hand, and not again once it has been forgotten as this one stops.
+  // one's was deleted by hand, and not again once it has been forgotten as this one stops. 0771: nor while it's handing
+  // over, as the worker on the new code writes it from then on.
   const save = () => {
+    if (handing) return;
     const record = { ...me, panels: [...owned.values()].filter(p => p.pid).map(({ folder, port, pid }) => ({ folder, port, pid })) };
     const now = readRecord(files.record);
-    if ((now && now.pid !== process.pid) || (stopping && !now) || (now && JSON.stringify(record) === saved)) return;
+    if ((now && now.pid !== me.pid) || (stopping && !now) || (now && JSON.stringify(record) === saved)) return;
     try { writeRecord(files.record, record); saved = JSON.stringify(record); saveError = null; } catch (e) {
       if (saveError !== e.code) say(`can't write its record, ${shown(env, files.record)} (${saveError = e.code || e.message}), so speck serve --stop may not find the panels it starts. It tries again as they change.`);
     }
@@ -312,21 +332,23 @@ async function serve(env, away, served) {
     return starts;
   }
   function queueTick() {
-    if (stopping) return;
+    if (stopping || handing) return; // 0771: nothing starts or stops while it hands over
     if (ticking) { again = true; return; }
     ticking = true;
-    try { do { again = false; pass(); } while (again && !stopping); } finally { ticking = false; }
+    try { do { again = false; pass(); } while (again && !stopping && !handing); } finally { ticking = false; }
   }
 
   async function shutdown() {
     if (stopping) return;
     stopping = true;
     clearInterval(timer);
+    clearInterval(codeTimer); // 0771
+    successor?.kill('SIGKILL'); // 0771: new code still starting, which mustn't take over the panels this stops
     keeper.stopping(); // 0758
     front?.close(); // 0757: the address goes first, with every page's connection
     const mine = [...owned.values()];
     await Promise.all(mine.map(p => stopOne(p)));
-    try { forgetRecord(files.record, process.pid); } catch { /* the next speck serve or --stop finds nothing of it running */ }
+    try { forgetRecord(files.record, me.pid); } catch { /* the next speck serve or --stop finds nothing of it running */ }
     say(`stopped${mine.length ? `, with the ${panels(mine.length)} it started: ${listOf(mine.map(p => p.name))}` : ''}.`);
     const on = runsLeftOn(env);
     if (on) say(on);
@@ -339,16 +361,79 @@ async function serve(env, away, served) {
   // 0762: the ports of every panel running for those, read afresh for each answer at the address, which names them, so a
   // panel just started can be chosen at once. A list it can't read shows none.
   const shownPanels = () => { try { return new Set(projectEntries(env).filter(p => !p.off).flatMap(p => panelPorts(p.folder, env))); } catch { return new Set(); } };
+
+  // 0771: its code, watched. Once a change has settled and nothing is starting or stopping, a worker on the new code is
+  // started, with the socket this answers on and what it looks after (carry), and this starts and stops nothing more
+  // until that one is ready, when it steps down, or has failed, when it stays, saying why.
+  const code = codeWatch(running);
+  let switchingTo = null;
+  const carry = () => ({ args, away, record: { started: me.started, log: me.log, ready: me.ready },
+    panels: [...owned.values()].filter(p => p.pid).map(({ folder, port, pid }) => ({ folder, port, pid })),
+    retry: [...retry], noted: [...noted], offSaid: [...offSaid], keeper: keeper.carry() });
+  function checkCode() {
+    if (stopping || handing) return;
+    const next = code.next(), socket = front?.handle();
+    if (!next || !socket || keeper.busy() || [...owned.values()].some(p => p.state !== 'running')) return;
+    handing = true;
+    switchingTo = next;
+    const m = { running: next, state: carry() };
+    if (worker) return toHost({ type: 'switch', ...m }, socket, e => { if (e) stayed(`the process you started couldn't be asked for it (${e.message})`); }); // the host starts it
+    // The process you started starts it itself, then hosts it in its place.
+    successor = startSuccessor(m, socket, { own: true,
+      ready: w => { successor = null; if (stopping) return void w.kill('SIGKILL'); hostWorkers(w); void stepDown(); },
+      failed: why => { successor = null; stayed(why); } });
+  }
+  function stayed(why) {
+    if (!handing || stopping) return;
+    handing = false;
+    code.failed(switchingTo);
+    front.register(); // its record among the panels', which the new one may have written its own over
+    say(`couldn't switch to the new code: ${String(why).replace(/\.$/, '')}. It's still running the code it had, and tries again at the next change.`);
+    queueTick();
+  }
+  // The new one answers on the socket and looks after the panels: this stops taking connections and gives the answers
+  // it's giving, saying nothing of a panel that exits. A worker then exits; the process you started stays, as the host.
+  async function stepDown() {
+    clearInterval(timer);
+    clearInterval(codeTimer);
+    for (const p of owned.values()) p.state = 'gone'; // the new code's from now on
+    owned.clear();
+    if (worker) for (const sig of STOP_SIGNALS) { process.removeAllListeners(sig); process.on(sig, () => process.exit(0)); }
+    await front.handOff(HAND_OFF_MS);
+    if (worker) process.exit(0);
+  }
+  function watchCode() {
+    if (worker) process.on('message', m => { if (m?.type === 'stay') stayed(m.why || 'it didn\'t start'); else if (m === 'exit' && handing && !stopping) void stepDown(); });
+    codeTimer = setInterval(checkCode, CODE_MS);
+  }
+  // A worker taking over, ready: the one before it stops looking after anything once the host has this, and this carries
+  // on from there once told to go. Told to stop before then, it stops once it has gone on, as the panels are its then.
+  async function takeOver() {
+    let going = false, stopAfter = false;
+    for (const sig of STOP_SIGNALS) process.on(sig, () => { if (going) void shutdown(); else stopAfter = true; });
+    await new Promise(resolve => { const go = m => { if (m === 'go') { process.off('message', go); resolve(); } }; process.on('message', go); toHost('ready'); });
+    going = true;
+    if (stopAfter) return void shutdown();
+    save();
+    say('its code changed, so it switched to the new code.');
+    timer = setInterval(queueTick, TICK_MS);
+    watchCode();
+    queueTick();
+  }
+
   // 0757: its one address, before any panel starts: when it can't answer there, the record is put back as it was.
-  try { front = await startFront({ port: served.port, url: served.url, env, projects: shownProjects, shown: shownPanels }); } catch (e) {
-    try { if (was) writeRecord(files.record, was); else forgetRecord(files.record, process.pid); } catch { /* the next speck serve finds a record of a process that has gone */ }
+  // 0771: one taking over answers on the socket handed over, looking after the panels the worker before it did.
+  if (carried) for (const p of (Array.isArray(carried.panels) ? carried.panels : []).filter(validPanel)) owned.set(p.folder, { ...p, name: nameOf(p.folder), child: null, state: 'running' });
+  try { front = await startFront({ port: served.port, url: served.url, env, projects: shownProjects, shown: shownPanels, handle }); } catch (e) {
+    if (!carried) try { if (was) writeRecord(files.record, was); else forgetRecord(files.record, me.pid); } catch { /* the next speck serve finds a record of a process that has gone */ }
     throw e;
   }
   me.port = front.port;
   me.url = served.url ? served.url.origin : null;
+  if (carried) return takeOver();
   save();
   say(`All projects: ${addressText(me.port, me.url)}`);
-  for (const sig of ['SIGINT', 'SIGTERM', 'SIGHUP']) process.on(sig, () => void shutdown());
+  for (const sig of STOP_SIGNALS) process.on(sig, () => void shutdown());
 
   // The panels an earlier speck serve started and left running when it was killed: looked after again.
   for (const p of was?.panels ?? []) {
@@ -366,6 +451,32 @@ async function serve(env, away, served) {
   await Promise.all(pass());
   me.ready = true;
   save();
+  watchCode(); // 0771
+}
+
+// 0771: speck serve in a worker on new code, which the process you started starts (startSuccessor, serve-switch.mjs). It's
+// told to take over from the one before it, on older code, with the socket that one answers on and what it looks
+// after. One that can't is ended, saying why to the host, which has the old one say it.
+export async function serveWorker() {
+  const env = process.env, host = Number(env.SPECK_SERVE_HOST);
+  for (const k of ['SPECK_SERVE_CODE_URL', 'SPECK_SERVE_HOST']) delete env[k]; // not passed on to anything it runs
+  if (!Number.isInteger(host) || host <= 0 || !process.send) throw new SpeckError('Start speck serve with: speck serve');
+  // The host has gone, killed outright: so does this, leaving its panels running and its record, from which the next
+  // speck serve takes them over, as after a speck serve that was killed.
+  process.on('disconnect', () => process.exit(0));
+  const [m, handle] = await new Promise(resolve => {
+    const told = (msg, h) => { if (msg?.type === 'take') { process.off('message', told); resolve([msg, h]); } };
+    process.on('message', told);
+    toHost('hello');
+  });
+  const carried = m.state && typeof m.state === 'object' ? m.state : {}, args = stringsOf(carried.args);
+  try {
+    if (!handle) throw new SpeckError('the socket to answer on wasn\'t handed over');
+    await serve(env, { away: carried.away === true, served: serveAddress(args), args, host, running: typeof m.running === 'string' ? m.running : codeHash(), worker: true, carried, handle });
+  } catch (e) {
+    const why = e instanceof SpeckError ? e.message.split('\n')[0] : `${e?.name || 'Error'}: ${String(e?.message ?? e).split('\n')[0]}`;
+    toHost({ type: 'failed', why }, null, () => process.exit(1));
+  }
 }
 
 // `speck serve --background`: speck serve on its own, in its own process group and session, with its output added to
@@ -474,5 +585,5 @@ export function cmdServe(args = []) {
   if (args.includes('--background')) return serveBackground(env, args.filter(a => a !== '--background')).catch(fail);
   const away = env[AWAY] === '1';
   delete process.env[AWAY]; // not passed on to anything it runs
-  return serve(env, away, served).catch(fail);
+  return serve(env, { away, served, args, host: process.pid, running: codeHash() }).catch(fail);
 }
