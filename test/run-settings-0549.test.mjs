@@ -151,7 +151,9 @@ const RESUMABLE = `
 const fs = require('fs'), path = require('path');
 const [out, ...args] = process.argv.slice(2);
 let n = 0; while (fs.existsSync(path.join(out, n + '.json'))) n++;
-fs.writeFileSync(path.join(out, n + '.json'), JSON.stringify({ at: Date.now(), args, pid: process.pid }));
+const call = path.join(out, n + '.json');
+fs.writeFileSync(call + '.part', JSON.stringify({ at: Date.now(), args, pid: process.pid }));
+fs.renameSync(call + '.part', call); // whole or not there: the test reads while this runs (0774)
 `;
 
 test('0549 AC2: a stopped build speck run resumes is resumed with the settings as they are then', async () => {

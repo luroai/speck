@@ -255,7 +255,9 @@ test('0726 F2: a killed build is not marked resumed while every machine slot is 
   const fake = keptFile('0726-resume-fake.cjs', `const fs = require('fs'), path = require('path');
 const [out, ...args] = process.argv.slice(2);
 let n = 0; while (fs.existsSync(path.join(out, n + '.json'))) n++;
-fs.writeFileSync(path.join(out, n + '.json'), JSON.stringify({ at: Date.now(), args, cwd: process.cwd(), pid: process.pid, build: process.env.SPECK_BUILD_SESSION }));
+const call = path.join(out, n + '.json');
+fs.writeFileSync(call + '.part', JSON.stringify({ at: Date.now(), args, cwd: process.cwd(), pid: process.pid, build: process.env.SPECK_BUILD_SESSION }));
+fs.renameSync(call + '.part', call); // whole or not there: the test reads while this runs (0774)
 console.log('fake build ' + n);
 const gate = process.env.FAKE_GATE;
 const end = () => setTimeout(() => process.exit(+(process.env.FAKE_EXIT || 0)), +(process.env.FAKE_MS || 0));

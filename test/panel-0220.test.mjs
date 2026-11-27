@@ -47,7 +47,7 @@ test('0220 AC1: any other refusal, such as a build_command with a quote that isn
 });
 
 test('0220 AC3: turning speck run on when it can start works as before, its lines go to run.log, and its builds don\'t get the refusal file', async () => {
-  const seen = keptFile('env-build-0220.cjs', `require('fs').writeFileSync(process.argv[2], JSON.stringify(Object.keys(process.env))); setTimeout(() => {}, 60000);\n`);
+  const seen = keptFile('env-build-0220.cjs', `const fs = require('fs'), file = process.argv[2]; fs.writeFileSync(file + '.part', JSON.stringify(Object.keys(process.env))); fs.renameSync(file + '.part', file); setTimeout(() => {}, 60000);\n`);
   const r = runRepo({ command: null });
   const envFile = path.join(r.out, 'env.json');
   fs.writeFileSync(r.cfgFile, `${fs.readFileSync(r.cfgFile, 'utf8')}\nbuild_command: ${JSON.stringify(`"${process.execPath}" "${seen}" "${envFile}" {id} {session}`)}\n`);

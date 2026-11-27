@@ -33,7 +33,9 @@ const FAKE = `
 const fs = require('fs'), path = require('path');
 const out = process.env.FAKE_OUT, args = process.argv.slice(2);
 let n = 0; while (fs.existsSync(path.join(out, n + '.json'))) n++;
-fs.writeFileSync(path.join(out, n + '.json'), JSON.stringify({ at: Date.now(), n, args, cwd: process.cwd(), pid: process.pid, build: process.env.SPECK_BUILD_SESSION }));
+const call = path.join(out, n + '.json');
+fs.writeFileSync(call + '.part', JSON.stringify({ at: Date.now(), n, args, cwd: process.cwd(), pid: process.pid, build: process.env.SPECK_BUILD_SESSION }));
+fs.renameSync(call + '.part', call); // whole or not there: the test reads while this runs (0774)
 if (args[0] === 'create-chat') {
   if (process.env.FAKE_CHAT_FAIL) { process.stderr.write(process.env.FAKE_CHAT_FAIL); process.exit(1); }
   process.stdout.write(process.env.FAKE_CHAT + '\\n');
