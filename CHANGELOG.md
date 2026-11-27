@@ -1,5 +1,37 @@
 # Changelog
 
+## 1.8.1 · 27 November 2026
+
+What's new since 1.8.0. A patch release that makes `speck serve` easier to live with and fixes a few rough edges. `speck serve` now switches to new code by itself when speck is updated, so a new release reaches its address without a restart, and `speck serve --stop` really stops an installed service. Test summaries work again on Node 24, `speck test --related` picks far fewer tests when a page changes, and a ticket waiting on approved work says so. Costs speck works out itself are still estimates at API list prices.
+
+### Getting started
+
+- Install this release with `npx github:luroai/speck#v1.8.1 init`.
+- A `speck serve` started before this release doesn't switch to new code by itself yet: restart it once after updating (see the release notes).
+
+### speck serve
+
+- When the code `speck serve` runs from changes, for example when you update speck in the project it runs from or ship a change to speck itself, it switches to the new code by itself within a few seconds of the change settling. Its address keeps answering throughout, so open pages and your phone stay connected and live updates reconnect, and the project panels it started keep running, looked after by the new code rather than started again. If the new code can't start, it carries on with the old, says why in its log and tries again at the next change. After its first switch, `speck serve` shows as two processes: the one you started, which stays so that `speck serve --stop` and the service still find it, and the one running the new code.
+- With the service `speck serve --install` makes, `speck serve --stop` now stops the service itself, with `systemctl --user stop` on Linux or `launchctl bootout` on a Mac, so `speck serve` stays stopped rather than being started again a few seconds later. It still stops every panel it started and leaves each project's `speck run` on, and it says how to start the service again. The service stays installed and starts again at the next boot (or next login on a Mac), and `speck serve --uninstall` still removes it. If the service manager can't be reached, `--stop` refuses and says why rather than stopping `speck serve` only for a moment. Without the service, `--stop` works as before.
+
+### Tests and builds
+
+- On Node 24, where `node --test` prints its results in a new layout by default, speck reads that layout as well as the old one. So a failing `speck test --related` run again ends with the failing files and the command to run only them, the reviewer gets a short summary of the run rather than the whole output, and the full suite's failing tests are named again.
+- `speck test --related` no longer follows a test support module's comments: a support module brings in the tests that import it only for files its code names. In speck's own repo, a change to the factory floor's page now picks 8 test files rather than nearly 500, so a build's related run fits well inside its agent's command limit.
+
+### The panel
+
+- When a ticket waits on one that's approved and waiting to ship, its Waits for fact, on its card and in its full view, says approved rather than building, so you know to chase the shipping rather than the build. Building, reviewing and blocked tickets still read as building.
+
+### Tests
+
+- Several of speck's own tests are steady on a busy machine: two checks on the panel restarting after its code changes, three browser tests around jumping to a ticket, a test browser closing and swiping between lanes, and tests that read records the stand-in agents write.
+
+### Prices
+
+- The shipped price table has been refreshed with this release's rates, taken on 27 November 2026.
+
+
 ## 1.8.0 · 26 November 2026
 
 What's new since 1.7.0. A minor release that gives `speck serve` a factory floor: a page for a laptop or desktop window, at `speck serve`'s address under `/floor`, that shows every project at once. It has a station for each project, the line showing which ticket each builder, reviewer and QA is on and on which agent, model and effort, Virgil's dial with everything that needs you, your subscriptions' use, and a chosen project's whole board side by side. Pressing a ticket on it opens that ticket in its project's panel. The panel itself is unchanged, apart from a link to the floor on All projects. Costs speck works out itself are still estimates at API list prices.
