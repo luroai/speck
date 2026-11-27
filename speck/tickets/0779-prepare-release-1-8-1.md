@@ -1,7 +1,7 @@
 ---
 id: "0779"
 title: "Prepare release 1.8.1"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: ["0771","0772","0773","0774","0775","0776","0777","0778"]                
 created: 2026-11-26
 built_on: "0772"
 started: "2026-11-27T01:50:57.520Z"
+approved: "2026-11-27T01:56:31.345Z"
 
 ---
 # 0779 · Prepare release 1.8.1
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Since 1.8.0, `speck serve` switches to new code by itself and its `--stop` stops an installed service, test summaries work on Node 24, related test runs stay small, several unsteady tests are steady and the Waits for fact says approved. Anyone updating speck still gets 1.8.0.
@@ -62,9 +63,14 @@ To see it, open the GitHub releases page once it has shipped and check that 1.8.
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 275,600
+- Elapsed since build started: 6 min
+- Changed lines: 71 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (not saved to the inbox, wording only): the release notes' bullet on `speck serve --stop` says the service starts again at the next boot without adding "(or next login on a Mac)", as the changelog does (round 1, F1, minor). Left as approved, since changing the notes after approval needs another round.
 
