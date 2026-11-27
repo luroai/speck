@@ -233,3 +233,31 @@ function uninstallMac(d) {
   try { fs.rmSync(file, { force: true }); } catch (e) { throw new SpeckError(`speck serve's launch agent is stopped, but ${file} couldn't be removed (${e.code || e.message}). Remove it yourself.`); }
   return [`speck serve's launch agent is stopped, and ${file} is removed.`];
 }
+
+// 0772: `speck serve --stop`, with the service installed, stops the service itself first, so it doesn't start speck serve
+// again: systemctl --user stop, or launchctl bootout. Neither turns it off at boot or login, so it stays installed and
+// starts again then. Only the speck serve the service runs, the one using your home folder's ~/.config/speck, is the
+// service's: a --stop for one using another (SPECK_HOME_SETTINGS_DIR, as the tests' do) leaves the service alone.
+// Gives the line to print, or null when there's no service to stop. Throws, having stopped nothing, when it can't.
+export function stopInstalledService(d = machineDeps()) {
+  const own = d.env.SPECK_HOME_SETTINGS_DIR;
+  if (own && path.resolve(own) !== path.join(d.home, '.config', 'speck')) return null;
+  if (d.platform === 'linux') {
+    const file = unitFile(d);
+    if (readText(file) === null) return null;
+    const r = d.run('systemctl', ['--user', 'stop', UNIT]);
+    if (r.status !== 0) throw new SpeckError(`speck serve wasn't stopped, as it's installed as a service and ${failed(r, `systemctl --user stop ${UNIT}`)}. Nothing was stopped. Check that systemd runs a user manager for you (\`systemctl --user status\`), then run this again.`);
+    return `Its service, ${UNIT}, is stopped too, so speck serve stays stopped. It's still installed and starts at the next boot. Start it again now with systemctl --user start ${UNIT.replace(/\.service$/, '')}.`;
+  }
+  if (d.platform === 'darwin') {
+    const file = plistFile(d);
+    if (readText(file) === null) return null;
+    const target = `gui/${d.uid}/${LABEL}`, r = d.run('launchctl', ['bootout', target]);
+    if (r.status !== 0 && !notLoaded(r)) {
+      const p = d.run('launchctl', ['print', target]);
+      if (!(p.status === 113 || /could not find service/i.test(p.stderr))) throw new SpeckError(`speck serve wasn't stopped, as it's installed as a launch agent and ${failed(r, `launchctl bootout ${target}`)}. Nothing was stopped. Run this again.`);
+    }
+    return `Its launch agent, ${LABEL}, is stopped too, so speck serve stays stopped. It's still installed and starts when you next log in. Start it again now with launchctl bootstrap gui/${d.uid} ${file}.`;
+  }
+  return null;
+}

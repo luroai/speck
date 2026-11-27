@@ -40,7 +40,7 @@ const CODE_MS = 500, HAND_OFF_MS = 60 * 60 * 1000;
 const startMs = () => (Number(process.env.SPECK_SERVE_START_MS) > 0 ? Number(process.env.SPECK_SERVE_START_MS) : START_MS);
 const RETRY_MS = [2000, 5000, 10000, 30000, 60000]; // before trying again after 1, 2, 3, 4, then 5 or more failed starts in a row
 const AWAY = 'SPECK_SERVE_AWAY'; // set for the speck serve --background starts
-const USAGE = 'speck serve [--port <n>] [--url https://<hostname>]   start a panel for every project on your list, and look after them and their speck runs\n                             until Ctrl+C, at one address that opens on All projects (http://127.0.0.1:4777 unless --port gives another)\n  speck serve --background   the same, on its own, after the shell that started it has ended\n  speck serve --stop         stop it, and every panel it started, leaving each speck run on\n  speck serve --install      start it by itself at boot or login, and again if it stops (with --port and --url, if given)\n  speck serve --uninstall    stop that, and remove what --install wrote';
+const USAGE = 'speck serve [--port <n>] [--url https://<hostname>]   start a panel for every project on your list, and look after them and their speck runs\n                             until Ctrl+C, at one address that opens on All projects (http://127.0.0.1:4777 unless --port gives another)\n  speck serve --background   the same, on its own, after the shell that started it has ended\n  speck serve --stop         stop it, and every panel it started, leaving each speck run on, and the service --install made until you start it again\n  speck serve --install      start it by itself at boot or login, and again if it stops (with --port and --url, if given)\n  speck serve --uninstall    stop that, and remove what --install wrote';
 const CLI = path.join(path.dirname(fileURLToPath(import.meta.url)), 'speck.mjs');
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -527,9 +527,14 @@ function runsLeftOn(env) {
 
 // `speck serve --stop`: stops the speck serve running on this machine, which stops every panel it started, and then
 // any of those it didn't get to, as when it was killed. Nothing else is stopped.
+// 0772: with the service --install made, it stops that first (serve-install.mjs), so the service doesn't start speck
+// serve again, and then says so.
 async function serveStop(env) {
   const files = serveFiles(env), held = files && readRecord(files.record);
-  if (!held) return console.log('speck serve isn\'t running on this machine.');
+  const running = !!held && isServe(held.pid); // before the service stops it
+  const service = (await import('./serve-install.mjs')).stopInstalledService();
+  const also = () => service && console.log(service);
+  if (!held) { console.log('speck serve isn\'t running on this machine.'); return also(); }
   const names = ps => listOf(ps.map(p => nameOf(p.folder)));
   // The panels its record names, as --stop first read it and as it was left: it may have started one since.
   const started = () => {
@@ -543,22 +548,24 @@ async function serveStop(env) {
     if (stuck.length) throw new SpeckError(`These panels speck serve started didn't stop: ${stuck.map(p => `${nameOf(p.folder)} (process ${p.pid})`).join(', ')}. Stop those processes yourself.`);
     return left;
   };
-  if (isServe(held.pid)) {
+  if (running) {
     // Gone once its pid is no longer speck serve's, so one since reused by another program is never signalled.
     const goneWithin = async ms => { for (const until = Date.now() + ms; Date.now() < until; await sleep(POLL_MS)) if (!isServe(held.pid)) return true; return false; };
-    try { process.kill(held.pid, 'SIGTERM'); } catch { /* gone already */ }
+    if (isServe(held.pid)) { try { process.kill(held.pid, 'SIGTERM'); } catch { /* gone already */ } }
     if (!(await goneWithin(SERVE_STOP_MS)) && isServe(held.pid)) { try { process.kill(held.pid, 'SIGKILL'); } catch { /* gone already */ } }
     if (!(await goneWithin(STOP_MS))) throw new SpeckError(`speck serve (process ${held.pid}) didn't stop. Stop that process yourself.`);
     const all = started();
     await stopLeft(all);
     forgetRecord(files.record, held.pid);
     console.log(`speck serve: stopped (process ${held.pid})${all.length ? ` and the ${panels(all.length)} it started: ${names(all)}` : ''}.`);
+    also();
     const on = runsLeftOn(env);
     return on && console.log(on);
   }
   const left = await stopLeft(started());
   forgetRecord(files.record, held.pid);
   console.log(left.length ? `speck serve isn't running on this machine, but ${panels(left.length)} it started ${left.length === 1 ? 'was' : 'were'}: stopped ${names(left)}.` : 'speck serve isn\'t running on this machine.');
+  also();
 }
 
 export function cmdServe(args = []) {
