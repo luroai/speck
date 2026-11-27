@@ -39,6 +39,7 @@ The Waits for fact says a ticket is approved when it is.
 - Which tickets count as waited on.
 
 ## Notes
+- Failing before this build: none
 - From 0737's pictures: 0001 waited on approved 0002 and its full view said "0002 building". The states come from `DEP_WORDS` and `depsOf` in the panel.
 
 ## In plain words
