@@ -33,7 +33,7 @@ const when = at => (typeof at === 'string' && Number.isFinite(Date.parse(at)) ? 
 const names = output => failingTests(output);
 
 // The latest full run's result on the base branch: the one recorded for the code its newest commit holds, or else the
-// last one found or run (latest.json). { commit, status, tests, at }, commit being the one it ran on (tests: the failing tests' names, when its output is TAP; 0655: at, when it ran, or null), or null for none.
+// last one found or run (latest.json). { commit, status, tests, at }, commit being the one it ran on (tests: the failing tests' names, when its output is TAP or Node's spec reporter; 0655: at, when it ran, or null), or null for none.
 export function latestFull(repo, cfg) {
   const cmd = fullCommand(cfg), base = String(cfg.base_branch || '').trim();
   const head = cmd && base ? headOf(repo, base) : '';
