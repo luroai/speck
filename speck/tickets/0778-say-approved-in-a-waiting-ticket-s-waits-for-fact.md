@@ -40,6 +40,8 @@ The Waits for fact says a ticket is approved when it is.
 
 ## Notes
 - Failing before this build: none
+- Self-check: no changes
+- 0698 AC3's test expected "0801 building" for an approved ticket, the behaviour AC1 changes, so it now expects "approved".
 - From 0737's pictures: 0001 waited on approved 0002 and its full view said "0002 building". The states come from `DEP_WORDS` and `depsOf` in the panel.
 
 ## In plain words
