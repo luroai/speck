@@ -192,6 +192,8 @@ catch (e) { const line = (e && e.name === 'SpeckError' ? '' : (e && e.name || 'E
 }
 
 const PANEL_WATCH_MS = 250, PANEL_SETTLE_MS = 500, PANEL_START_MS = 10000, PANEL_STOP_MS = 3000;
+// 0775: how long a new server has to be ready, SPECK_PANEL_START_MS when set, so a test on a busy machine can allow longer.
+const panelStartMs = () => Number(process.env.SPECK_PANEL_START_MS) > 0 ? Number(process.env.SPECK_PANEL_START_MS) : PANEL_START_MS;
 
 // The code `speck panel` runs from: every .mjs file in the CLI's own folder (scripts/, or .speck/scripts/ in a repo set
 // up with `speck init`). `codeStamp` is cheap, to notice a change; `codeHash` is the content, to tell a real change.
@@ -543,7 +545,8 @@ export async function panelServer() {
       changed();
       console.error(`speck panel couldn't restart with the new code: ${line}\nIt's still running the code it had, and tries again on the next change.`);
     };
-    const timer = setTimeout(() => fail(`it wasn't ready within ${PANEL_START_MS / 1000} seconds`), PANEL_START_MS);
+    const startMs = panelStartMs();
+    const timer = setTimeout(() => fail(`it wasn't ready within ${startMs / 1000} seconds`), startMs);
     child.on('error', e => fail(e.message));
     child.on('exit', c => fail(`it stopped with exit code ${c} before it was ready`));
     child.on('message', m => {

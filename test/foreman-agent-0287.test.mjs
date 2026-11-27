@@ -341,8 +341,8 @@ if (process.env.FAKE_STATUS) { spawnSync(process.execPath, [${JSON.stringify(CLI
 `);
   // A fake Foreman agent: claude on the PATH, writing its arguments down.
   const bin = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-0287-bin-')), out = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-0287-out-'));
-  fs.writeFileSync(path.join(bin, 'claude'), `#!/bin/sh\nprintf '%s\\n' "$@" > "${out}/$$.txt"\n`, { mode: 0o755 });
-  const briefs = () => fs.readdirSync(out).map(f => fs.readFileSync(path.join(out, f), 'utf8'));
+  fs.writeFileSync(path.join(bin, 'claude'), `#!/bin/sh\nprintf '%s\\n' "$@" > "${out}/$$.part" && mv "${out}/$$.part" "${out}/$$.txt"\n`, { mode: 0o755 });
+  const briefs = () => fs.readdirSync(out).filter(f => f.endsWith('.txt')).map(f => fs.readFileSync(path.join(out, f), 'utf8'));
   for (const [status, expect] of [['', true], ['blocked', false]]) {
     const r = runRepo({ worktrees: 'true', command: `"${process.execPath}" "${builder}" {id} {session}` });
     fs.appendFileSync(r.cfgFile, 'watch: fix\n');

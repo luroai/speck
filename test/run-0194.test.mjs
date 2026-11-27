@@ -226,7 +226,9 @@ const FAKE = `
 const fs = require('fs'), path = require('path');
 const [out, ...args] = process.argv.slice(2);
 let n = 0; while (fs.existsSync(path.join(out, n + '.json'))) n++;
-fs.writeFileSync(path.join(out, n + '.json'), JSON.stringify({ at: Date.now(), args, cwd: process.cwd(), pid: process.pid }));
+const call = path.join(out, n + '.json');
+fs.writeFileSync(call + '.part', JSON.stringify({ at: Date.now(), args, cwd: process.cwd(), pid: process.pid }));
+fs.renameSync(call + '.part', call); // whole or not there: the test reads while this runs (0774)
 console.log('fake build ' + n);
 setTimeout(() => process.exit(0), +(process.env.FAKE_MS || 0));
 `;

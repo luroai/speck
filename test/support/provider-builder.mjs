@@ -10,7 +10,9 @@ export function fakeClaude() {
   fs.writeFileSync(path.join(bin, 'claude'), `#!${process.execPath}
 const fs = require('fs'), path = require('path'), out = ${JSON.stringify(out)};
 let n = 0; while (fs.existsSync(path.join(out, n + '.json'))) n++;
-fs.writeFileSync(path.join(out, n + '.json'), JSON.stringify({ n, args: process.argv.slice(2), env: process.env, cwd: process.cwd(), pid: process.pid }));
+const call = path.join(out, n + '.json');
+fs.writeFileSync(call + '.part', JSON.stringify({ n, args: process.argv.slice(2), env: process.env, cwd: process.cwd(), pid: process.pid }));
+fs.renameSync(call + '.part', call); // whole or not there: the test reads while this runs (0774)
 setTimeout(() => process.exit(+(process.env.FAKE_EXIT || 0)), +(process.env.FAKE_MS || 0));
 `, { mode: 0o755 });
   const calls = () => fs.readdirSync(out).filter(f => f.endsWith('.json')).map(f => JSON.parse(fs.readFileSync(path.join(out, f), 'utf8'))).sort((a, b) => a.n - b.n);

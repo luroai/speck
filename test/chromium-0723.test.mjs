@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { findChrome } from './support/panel.mjs';
-import { runOutOfTime, goneWithin10s, mentioning } from './support/chromium-file.mjs';
+import { runOutOfTime, goneWithin10s, mentioning, DROP_CLEAN_UP } from './support/chromium-file.mjs';
 
 const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
 test('0723 AC1: a test file that ran out of time under --test-timeout exits only once its Chromium has gone', skip, async () => {
@@ -55,14 +55,16 @@ test('0723 AC2: the 10 s check fails when a listing that began once the 10 s wer
 
 test('0723 AC2: the 0182 AC3 check still fails when Chromium is left running after a test file runs out of time', skip, async () => {
   // The file drops browserPage's clean-up, as a broken one would, so the runner's SIGTERM ends the file but not Chromium.
-  const f = await runOutOfTime(`test('hangs', async () => {
+  // 0776: the test that hangs has no time limit of its own, so only the runner ends it: under load the file's own limit
+  // could otherwise come first, and its after() hook end Chromium properly.
+  const f = await runOutOfTime(`test('hangs', { timeout: Infinity }, async () => {
   const b = await browserPage('about:blank'); logPid(b.pid);
-  process.removeAllListeners('exit'); for (const s of ['SIGTERM', 'SIGINT', 'SIGHUP']) process.removeAllListeners(s);
+  ${DROP_CLEAN_UP}
   await new Promise(() => {});
 });
 test('never starts', () => {});`);
   assert.notEqual(f.code, 0, f.out);
-  assert.equal(f.pids.length, 1, f.out);
+  assert.equal(f.pids.filter(p => p > 0).length, 1, f.out);
   assert.ok(mentioning(f.dir).includes(f.pids[0]), 'Chromium was left running');
   await assert.rejects(goneWithin10s(f), /Chromium still running 10 s after the test file finished/);
   assert.equal(mentioning(f.dir).length, 0, 'the check ended what was left');

@@ -72,7 +72,9 @@ const p = spawn(process.execPath, ['--input-type=module', '-e', code], { env, de
 p.unref();
 const file = path.join(process.env.SPECK_BUILD_PANELS_DIR, process.env.SPECK_BUILD_SESSION, '41922.json');
 for (let i = 0; i < 200 && !fs.existsSync(file); i++) await new Promise(r => setTimeout(r, 50));
-fs.writeFileSync(path.join(process.env.SPECK_BUILD_PANELS_DIR, 'panel-0619.pid'), String(p.pid));
+const pidFile = path.join(process.env.SPECK_BUILD_PANELS_DIR, 'panel-0619.pid');
+fs.writeFileSync(pidFile + '.part', String(p.pid));
+fs.renameSync(pidFile + '.part', pidFile); // whole or not there: the test reads while this runs (0774)
 `);
   const r = runRepo({ command: `"${process.execPath}" "${build}" {id}` });
   const run = startRun(r.dir);

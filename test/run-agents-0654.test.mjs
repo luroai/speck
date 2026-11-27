@@ -66,10 +66,17 @@ if (args[0] === 'status') { console.log('Logged in as t@t'); process.exit(0); }
 if (args[0] === 'create-chat') { console.log('chat-0654'); process.exit(0); }
 const dir = require('child_process').execFileSync('git', ['rev-parse', '--path-format=absolute', '--git-common-dir'], { encoding: 'utf8' }).trim();
 const calls = path.join(dir, 'fake-out');
-fs.writeFileSync(path.join(calls, fs.readdirSync(calls).length + '.json'), JSON.stringify({ at: Date.now(), args }));
+const call = path.join(calls, fs.readdirSync(calls).length + '.json');
+fs.writeFileSync(call + '.part', JSON.stringify({ at: Date.now(), args }));
+fs.renameSync(call + '.part', call); // whole or not there: the test reads while this runs (0774)
 `;
 // Claude's own builds, which mustn't start while it's limited.
-const CLAUDE_BUILD = `require('fs').writeFileSync(require('path').join(require('child_process').execFileSync('git', ['rev-parse', '--path-format=absolute', '--git-common-dir'], { encoding: 'utf8' }).trim(), 'fake-out', 'claude-' + Date.now() + '.json'), JSON.stringify({ at: Date.now(), claude: true }));`;
+const CLAUDE_BUILD = `
+const fs = require('fs');
+const call = require('path').join(require('child_process').execFileSync('git', ['rev-parse', '--path-format=absolute', '--git-common-dir'], { encoding: 'utf8' }).trim(), 'fake-out', 'claude-' + Date.now() + '.json');
+fs.writeFileSync(call + '.part', JSON.stringify({ at: Date.now(), claude: true }));
+fs.renameSync(call + '.part', call); // whole or not there: the test reads while this runs (0774)
+`;
 
 test('0654 AC3: with a second faked agent ready on the builder\'s bench, new work starts on it while Claude is limited', async () => {
   const r = runRepo({ tickets: [['0001', { status: 'building' }], ['0002', {}]], command: `"${process.execPath}" "${keptFile('fake-claude-0654.cjs', CLAUDE_BUILD)}" @repo --session-id {session} "/speck-build {id}"` });

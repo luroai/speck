@@ -453,7 +453,9 @@ const [out, flag, session, prompt] = process.argv.slice(2);
 const dir = require('child_process').execFileSync('git', ['rev-parse', '--path-format=absolute', '--git-common-dir'], { encoding: 'utf8' }).trim();
 const calls = path.join(dir, 'fake-out');
 const n = fs.readdirSync(calls).length;
-fs.writeFileSync(path.join(calls, n + '.json'), JSON.stringify({ at: Date.now(), flag, session, prompt }));
+const call = path.join(calls, n + '.json');
+fs.writeFileSync(call + '.part', JSON.stringify({ at: Date.now(), flag, session, prompt }));
+fs.renameSync(call + '.part', call); // whole or not there: the test reads while this runs (0774)
 if (n === 0) {
   console.log(JSON.stringify({ type: 'rate_limit_event', rate_limit_info: { status: 'rejected', resetsAt: Math.ceil(Date.now() / 1000) + ${HOUR}, rateLimitType: 'five_hour' } }));
   console.log(JSON.stringify({ type: 'result', is_error: true, result: 'You have hit your session limit' }));
