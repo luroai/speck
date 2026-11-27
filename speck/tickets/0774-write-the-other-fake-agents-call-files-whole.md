@@ -1,7 +1,7 @@
 ---
 id: "0774"
 title: "Write the other fake agents' call files whole"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -22,7 +22,7 @@ started: "2026-11-26T23:57:36.883Z"
 ---
 # 0774 · Write the other fake agents' call files whole
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The fake agents in several `speck run` tests write each call file with a plain write while the test reads the folder, so on a busy machine a test can read half a file and fail for no real reason. 0742 fixed this for the 0289 fake only.
@@ -44,7 +44,9 @@ Every fake agent in speck's tests writes its call files so a reader never sees h
 - Self-check: no changes
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Nothing changes for someone using speck: only its own tests did. The stand-in agents those tests use now finish writing each record before the test can see it, so a busy machine should no longer cause a test to fail by reading half a file.
+
+To see it, there is nothing to try in the app; the tests passed with the change in. Worth keeping an eye on: some real-panel tests failed to start once on a very busy machine, and that is noted in the inbox separately.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -54,3 +56,72 @@ Every fake agent in speck's tests writes its call files so a reader never sees h
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- Saved to the inbox: the quick checks' real-panel tests failing with "panel didn't start" under load.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "d5b25251a626c70f4f3bc3f9b0b05819f3145d77",
+    "session": "fresh",
+    "thread_id": "01a21a56-c710-7120-b5f0-37641c3c515c",
+    "builder_response": "- Tests run: test/fake-writes-0774.test.mjs test/build-panels-0619.test.mjs test/foreman-agent-0287.test.mjs test/machine-builds-0726.test.mjs test/panel-0220.test.mjs test/reviewer-limit-0623.test.mjs test/run-0110.test.mjs test/run-0194.test.mjs test/run-0245.test.mjs test/run-agents-0654.test.mjs test/run-builder-0312.test.mjs test/run-cursor-0290.test.mjs test/run-settings-0549.test.mjs test/usage-limit-0622.test.mjs  (run with `speck test --related`, which also ran the files naming them and the quick checks): 0 failures.\n- AC2 survey: besides the files AC1 names, these fakes wrote files read while they run and now write then rename: run-0245 (its reader now filters to .json), run-agents-0654, reviewer-limit-0623, usage-limit-0622, support/ticker.mjs, build-panels-0619, panel-0220, foreman-agent-0287 (shell fake).\n- Left alone on purpose: line appends to logs (appendFileSync, >>), which don't rewrite a file; files only read after the fake's run has ended (review-0180 pids, review prompt/verdict captures); files only checked for existence; files never read (killed-0174's build.json); stand-ins that aren't agents (app-0634's app, run-lock-0321's speck run, the gh fake, held test commands).\n",
+    "seconds": 26,
+    "usage": {
+      "input_tokens": 213920,
+      "cached_input_tokens": 167936,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 733,
+      "reasoning_output_tokens": 44
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 45984,
+      "cached": 167936,
+      "write": 0,
+      "output": 733
+    },
+    "cost_usd": 0.1160916,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-27T00:10:50.531Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "All seven named fakes write call + '.part' then rename it to call. test/fake-writes-0774.test.mjs checks each source and exercises an interrupted provider write; all three 0774 tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The additional concurrent fake writers use write-and-rename, including support/ticker.mjs and foreman-agent-0287.test.mjs. Directory readers exclude temporary files. The AC2 regression check passed; the remaining plain writes examined are setup, post-exit captures, existence markers or outside the fake-agent scope."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0774-tests.txt: 475 tests, 472 passed, 3 skipped and 0 failures. Changed tests and related checks ran successfully; no regression identified in the change."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The fake agents now finish writing their records before making them visible to readers, preventing partial-file failures. Readers ignore temporary files, and the interrupted-write test confirms the behaviour. The relevant tests pass, with no blocking concerns found."
+  }
+}
+```
+
+</details>
