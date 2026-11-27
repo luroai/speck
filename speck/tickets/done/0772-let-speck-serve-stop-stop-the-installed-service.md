@@ -1,7 +1,7 @@
 ---
 id: "0772"
 title: "Let speck serve --stop stop the installed service"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: ["0771"]                # ticket ids that must be done first
 created: 2026-11-26
 started: "2026-11-27T01:44:03.990Z"
 approved: "2026-11-27T01:50:28.678Z"
+finished: "2026-11-27T01:55:56.704Z"
 
 ---
 # 0772 · Let speck serve --stop stop the installed service
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Once `speck serve --install` has made it a service, `speck serve --stop` stops `speck serve`, and the service starts it again a few seconds later, which looks like a bug.
