@@ -44,6 +44,7 @@ The panel and `speck run` switch to new code when speck changes, but `speck serv
 - Found 2026-11-26: the systemd service runs `scripts/speck.mjs serve` from speck's own repo, so a ship changes the code under it.
 - The panel hands its listening socket to a new process and stops the old one (`restart()` in `scripts/panel.mjs`); `speck run` does the same through `scripts/run-switch.mjs`. `speck serve` is `scripts/serve.mjs` and `scripts/serve-front.mjs`.
 - Failing before this build: none
+- speck (2026-11-27 00:30 UTC) told you: The build isn't stuck: it's working through its own tests one file at a time, and they pass (all 5 new tests and the 81 existing speck serve tests). It's slow because the machine is heavily loaded, with a load average around 80. The full suite that ran on main at about the same time had scattered browser-test failures, which look like timeouts from that load rather than a broken base. Why: The build log shows steady progress with passing tests and no hung command, and the load average stayed between 75 and 88 the whole time.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
