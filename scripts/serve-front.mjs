@@ -44,7 +44,10 @@ export const addressText = (port, origin) => `http://127.0.0.1:${port}/${origin 
 // left out of the choices and of a project's menu, as the project lists in /api/state answers passed on are cut down to
 // them (stateShown), whatever speck the project's page is from. When they change, each open project page's stream is
 // told to read its board again (nudge), so its menu changes within a few seconds.
-export async function startFront({ port, url = null, env = process.env, projects, shown = null }) {
+// 0771: `handle`, when given, is the socket speck serve on older code answers on, which it answers on too, in place of
+// `port`, until that one stops. It also gives the socket it answers on (handle()), and handOff(ms), for when speck serve
+// on new code answers on it too: see there.
+export async function startFront({ port, url = null, env = process.env, projects, shown = null, handle = null }) {
   const dir = panelsDir({ ...env, [BUILD_ENV]: undefined }); // your panels', as speck serve starts them, even from a build
   const showing = () => { if (!shown) return null; try { return shown(); } catch { return new Set(); } };
   const panels = () => { const all = runningPanels(dir), only = showing(); return only ? all.filter(p => only.has(p.port)) : all; };
@@ -93,20 +96,23 @@ export async function startFront({ port, url = null, env = process.env, projects
   // 0762: each project page's stream passed on, which can be told to read its board again. A board's number of 0 makes
   // its panel answer at once with the board it has (0177), which comes cut down to what the address shows now. It's
   // told only between the panel's own events, so none is cut in two.
-  const streams = new Map(); // a stream's answer → its nudge()
+  // 0771: and ended as it hands off, or at once once it has, so its page reconnects to speck serve on the new code.
+  const streams = new Map(); // a stream's answer → { nudge(), end() }
   function nudgeable(answer, res) {
-    let tail = '\n\n', owed = false;
+    let tail = '\n\n', owed = false, ended = false;
     const tell = () => { owed = false; res.write('data: 0\n\n'); };
-    streams.set(res, () => { if (tail === '\n\n') tell(); else owed = true; });
-    answer.on('data', d => { res.write(d); tail = (tail + String(d)).slice(-2); if (tail === '\n\n' && owed) tell(); });
-    answer.on('end', () => res.end());
+    const end = () => { ended = true; streams.delete(res); res.end(); };
+    streams.set(res, { nudge: () => { if (tail === '\n\n') tell(); else owed = true; }, end });
+    answer.on('data', d => { if (ended) return; res.write(d); tail = (tail + String(d)).slice(-2); if (tail === '\n\n' && owed) tell(); });
+    answer.on('end', () => { if (!ended) res.end(); });
     res.on('close', () => streams.delete(res));
+    if (handing) end();
   }
   // Which panels it shows, looked at every 2 seconds: when they change, every project page's stream is told.
   let lastShown = null;
   const watcher = shown ? setInterval(() => {
     const now = JSON.stringify([...(showing() || [])].sort((a, b) => a - b));
-    if (lastShown !== null && now !== lastShown) for (const nudge of streams.values()) nudge();
+    if (lastShown !== null && now !== lastShown) for (const s of streams.values()) s.nudge();
     lastShown = now;
   }, 2000) : null;
   watcher?.unref();
@@ -170,7 +176,12 @@ export async function startFront({ port, url = null, env = process.env, projects
     return text(res, 404, 'Not found.\n');
   }
 
+  const live = new Set(); // 0771: the answers it's giving, which a hand-off waits for
+  let handing = false; // 0771: from its hand-off on, each answer closes its connection
   const server = http.createServer((req, res) => {
+    live.add(res);
+    res.on('close', () => live.delete(res));
+    if (handing) res.setHeader('Connection', 'close');
     if (!hosts.has(String(req.headers.host || '').toLowerCase())) return text(res, 403, 'Forbidden: open the panel at 127.0.0.1 or localhost.\n');
     res.setHeader('X-Speck-Serve', '1'); // on every answer, a project's passed on too, so its page knows it's at speck serve's address
     res.setHeader('X-Speck-Panel', id); // a project's page answered here, rather than by its own panel, reloads
@@ -197,10 +208,10 @@ export async function startFront({ port, url = null, env = process.env, projects
     return json(res, 404, { error: 'No project is shown at this address. Reload the page to see All projects.' });
   });
   await new Promise((resolve, reject) => {
-    server.once('error', e => reject(e.code === 'EADDRINUSE'
+    server.once('error', e => reject(handle ? new SpeckError(`speck serve couldn't answer on the socket handed over: ${e.message}`) : e.code === 'EADDRINUSE'
       ? new SpeckError(`Port ${port} is already in use, so speck serve didn't start.${port === PANEL_PORT ? ` A panel started with \`speck panel\` takes it unless given another --port.` : ''} Stop whatever is using it, or give speck serve another port with --port <n>.`)
       : new SpeckError(`speck serve couldn't answer on port ${port}: ${e.message}`)));
-    server.listen(port, '127.0.0.1', resolve);
+    if (handle) server.listen(handle, resolve); else server.listen(port, '127.0.0.1', resolve);
   });
   server.on('error', e => console.error(`speck serve: ${e.message}`));
   at = server.address().port;
@@ -208,6 +219,24 @@ export async function startFront({ port, url = null, env = process.env, projects
   origins = new Set([`http://127.0.0.1:${at}`, `http://localhost:${at}`, ...(url ? [url.origin] : [])]);
   id = crypto.createHash('sha256').update(`speck serve\0${at}`).digest('hex').slice(0, 16);
   cookie = `speck-serve-${at}`;
-  const unregister = registerPanel({ port: at, name: 'speck serve', serve: true }, dir);
-  return { port: at, close: () => { clearInterval(watcher); unregister(); server.close(); server.closeAllConnections(); } };
+  // Its record among the panels', which a page from an older speck lists as speck serve. 0771: written again by
+  // register() when speck serve on new code wrote its own over it, then didn't start.
+  let unregister = () => {};
+  const register = () => { unregister = registerPanel({ port: at, name: 'speck serve', serve: true }, dir); };
+  register();
+  // 0771: speck serve on new code answers on its socket too, and has its own record among the panels'. This stops taking
+  // connections, then ends each stream it passes on, whose page reconnects to the new code, and resolves once it has
+  // given every answer it's giving, each closing its connection, or after `ms`, closing what's left.
+  function handOff(ms) {
+    handing = true;
+    clearInterval(watcher);
+    return new Promise(resolve => {
+      const idle = setInterval(() => server.closeIdleConnections(), 250);
+      const late = setTimeout(() => server.closeAllConnections(), ms);
+      server.close(() => { clearInterval(idle); clearTimeout(late); resolve(); });
+      for (const s of [...streams.values()]) s.end();
+      for (const res of live) if (!res.headersSent) res.setHeader('Connection', 'close');
+    });
+  }
+  return { port: at, handle: () => server._handle, handOff, register, close: () => { clearInterval(watcher); unregister(); server.close(); server.closeAllConnections(); } };
 }

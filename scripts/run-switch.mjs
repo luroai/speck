@@ -25,7 +25,7 @@ export function runState(runs) {
 // speck run's code: every .mjs file in the folder it was started from. The stamp is cheap, to notice a change; the
 // hash is the content, to tell a real change from a file saved again as it was.
 const runCode = () => { try { return fs.readdirSync(DIR).filter(n => n.endsWith('.mjs')).sort().map(n => path.join(DIR, n)); } catch { return []; } };
-const codeStamp = () => runCode().map(f => { try { const st = fs.statSync(f); return `${f}:${st.size}:${st.mtimeMs}:${st.ino}`; } catch { return `${f}:-`; } }).join('|');
+export const codeStamp = () => runCode().map(f => { try { const st = fs.statSync(f); return `${f}:${st.size}:${st.mtimeMs}:${st.ino}`; } catch { return `${f}:-`; } }).join('|');
 export function codeHash() {
   const h = crypto.createHash('sha256');
   for (const f of runCode()) { h.update(f); h.update('\0'); try { h.update(fs.readFileSync(f)); } catch { h.update('-'); } h.update('\0'); }

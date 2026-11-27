@@ -157,7 +157,9 @@ const clock = ms => { const d = new Date(ms), two = n => String(n).padStart(2, '
 // What speck serve does about runs. check(folders, off) is called on each of its looks at the list, with the projects
 // on it that are turned off (0762), whose runs it leaves alone but remembers; stillOn(folders) names the projects whose
 // runs are on. `start`, `state` and `now` can be stood in for by tests.
-export function runKeeper({ file, env, say, start = startRun, stop = stopRun, state = runState, now = Date.now, records = recordsSwitch, boot = bootMark }) {
+// 0771: busy() says whether it's starting a run, and carry() gives what it has worked out, as plain data, for the
+// keeper of speck serve on new code, which takes it as `carried` and carries on from there rather than afresh.
+export function runKeeper({ file, env, say, start = startRun, stop = stopRun, state = runState, now = Date.now, records = recordsSwitch, boot = bootMark, carried = null }) {
   const before = readRunsRecord(file), atStart = before.runs; // as speck serve last left it
   // The machine has started again since, and speck serve was told to stop as it shut down: a run that stopped then was
   // stopped by the machine, not turned off.
@@ -171,6 +173,16 @@ export function runKeeper({ file, env, say, start = startRun, stop = stopRun, st
   const held = new Map(); // folder → until when it's left off, once said
   let wasOff = new Set(); // 0762: the projects turned off at the last check
   const name = folder => path.basename(folder);
+  // 0771: from the keeper of speck serve on older code: the projects it had looked at, when it started each one's run
+  // again in the last hour, until when it leaves one off and which were turned off at its last check.
+  if (carried && typeof carried === 'object') {
+    const strings = v => (Array.isArray(v) ? v.filter(f => typeof f === 'string') : []);
+    const pairs = v => (Array.isArray(v) ? v.filter(e => Array.isArray(e) && e.length === 2 && typeof e[0] === 'string') : []);
+    for (const f of strings(carried.looked)) looked.add(f);
+    for (const [f, times] of pairs(carried.restarts)) restarts.set(f, (Array.isArray(times) ? times : []).filter(Number.isFinite));
+    for (const [f, until] of pairs(carried.held)) if (Number.isFinite(until)) held.set(f, until);
+    wasOff = new Set(strings(carried.wasOff));
+  }
 
   let stoppedAt = null;
   function save() {
@@ -268,7 +280,8 @@ export function runKeeper({ file, env, say, start = startRun, stop = stopRun, st
   // speck serve has been told to stop: recorded, with the time, so the next one can tell a run the machine stopped as
   // it shut down from one turned off.
   const stopping = () => { stoppedAt = now(); save(); };
-  return { check, stillOn, save, stopping };
+  const carry = () => ({ looked: [...looked], restarts: [...restarts], held: [...held], wasOff: [...wasOff] }); // 0771
+  return { check, stillOn, save, stopping, busy: () => busy.size > 0, carry };
 }
 
 // What speck serve says as it stops about the runs it leaves on.
