@@ -50,6 +50,8 @@ speck is ready to be released as 1.8.1.
 - After it ships, check that the `v1.8.1` tag and its GitHub release page appeared. If not: `gh release create v1.8.1 --target main --title "speck 1.8.1" --notes-file docs/releases/v1.8.1.md`.
 - Checked 2026-11-26: `v1.8.0` is tagged on origin.
 - Failing before this build: not checked
+- Self-check: narrowed the claim that `speck serve` switches when speck is updated to updates in the project it runs from, as it watches only the code beside it (0771).
+- Pictures: none, because nothing anyone sees in the panel or on the floor changes; the README changes only its status line and figures.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

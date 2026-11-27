@@ -1,6 +1,6 @@
 {
   "source": "https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json",
-  "taken": "2026-11-26",
+  "taken": "2026-11-27",
   "models": {
     "abliteration/abliterated-model": [0.000001,1e-7,null,0.000003],
     "abliteration/abliterated-model-large": [0.000003,3e-7,null,0.000005],
