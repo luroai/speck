@@ -65,13 +65,14 @@ export const freePort = () => new Promise(resolve => {
 // Starts `speck panel` (from `cli`, or the repo's own CLI), with `extraEnv` added to its environment, and resolves once
 // it has printed its URL, with the port it started on. Send requests to that port (`p.port`), not the one picked: when
 // the port given with --port is taken by the time the panel starts, as another test file running alongside can take the
-// port freePort() picked, it starts the panel again on another free port (0118).
-export async function startPanel(cwd, args, cli = CLI, extraEnv = {}) {
+// port freePort() picked, it starts the panel again on another free port (0118). One that hasn't printed its URL within
+// `startMs` fails (0775: a test on a busy machine can allow longer).
+export async function startPanel(cwd, args, cli = CLI, extraEnv = {}, startMs = 10000) {
   for (let tries = 1; ; tries++) {
     const i = args.findIndex(a => a === '--port' || a.startsWith('--port='));
     const port = i < 0 ? null : args[i] === '--port' ? args[i + 1] : args[i].slice('--port='.length);
     let p;
-    try { p = await startPanelOnce(cwd, args, cli, extraEnv); } catch (e) {
+    try { p = await startPanelOnce(cwd, args, cli, extraEnv, startMs); } catch (e) {
       if (port === null || tries >= 5 || !new RegExp(`Port ${port} is already in use`).test(e.err || '')) throw e;
       const next = String(await freePort());
       args = args[i] === '--port' ? [...args.slice(0, i + 1), next, ...args.slice(i + 2)] : [...args.slice(0, i), `--port=${next}`, ...args.slice(i + 1)];
@@ -81,11 +82,11 @@ export async function startPanel(cwd, args, cli = CLI, extraEnv = {}) {
     return p;
   }
 }
-function startPanelOnce(cwd, args, cli, extraEnv) {
+function startPanelOnce(cwd, args, cli, extraEnv, startMs) {
   return new Promise((resolve, reject) => {
     const child = spawn(process.execPath, [cli, 'panel', ...args], { cwd, env: { ...env, ...extraEnv } });
     let out = '', err = '';
-    const done = setTimeout(() => { child.kill(); reject(new Error(`panel didn't start: ${out}${err}`)); }, 10000);
+    const done = setTimeout(() => { child.kill(); reject(new Error(`panel didn't start within ${startMs / 1000} s: ${out}${err}`)); }, startMs);
     child.stdout.on('data', d => { out += d; const m = out.match(/http:\/\/127\.0\.0\.1:(\d+)/); if (m) { clearTimeout(done); resolve({ child, out: () => out, port: Number(m[1]) }); } });
     child.stderr.on('data', d => { err += d; });
     // Its message can still be on its way when it exits: wait for the end of its output (up to a second) before failing.

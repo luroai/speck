@@ -3,31 +3,13 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { spawnSync } from 'node:child_process';
-import { panelRepo, cliCopy, freePort, startPanel, stop, request, post, tokenOf, readyPath, fm, fakePage, T, idea, findChrome, browserPage, openLane } from './support/panel.mjs';
+import { panelRepo, cliCopy, freePort, startPanel, stop, request, post, readyPath, fm, fakePage, T, idea, findChrome, browserPage, openLane } from './support/panel.mjs';
+import { code, within, edit, tokenSurvivesRestart, failedRestartKeepsServing } from './support/panel-restart.mjs';
 import { hasStopped, portClosed, STOP_MS } from './support/stopped.mjs';
 
 // ---------- 0067: speck panel restarts by itself when its code changes ----------
 
 const wait = ms => new Promise(r => setTimeout(r, ms));
-// The panel's code, in the CLI copy: it has been in scripts/panel.mjs since 0018.
-const code = c => c.cli.replace(/speck\.mjs$/, 'panel.mjs');
-// Polls `check` until it's true, failing after `ms`. Resolves with how long it took.
-async function within(ms, check, what) {
-  const t0 = Date.now();
-  while (Date.now() - t0 < ms) {
-    try { if (await check()) return Date.now() - t0; } catch { /* not answering yet */ }
-    await wait(100);
-  }
-  throw new Error(`not within ${ms} ms: ${what}`);
-}
-
-// Changes the copied CLI's code: every response gets an X-Speck-Test header, and 404s say which version answered.
-function edit(c, version) {
-  const src = fs.readFileSync(code(c), 'utf8')
-    .replace(/'X-Content-Type-Options': 'nosniff',( 'X-Speck-Test': '[^']*',)?/, `'X-Content-Type-Options': 'nosniff', 'X-Speck-Test': '${version}',`)
-    .replace(/'Not found\.( [^\\']*)?\\n'/, `'Not found. ${version}\\n'`);
-  fs.writeFileSync(code(c), src);
-}
 // Every server process of the panel started from `c`, which aren't all children of the process you start, since each
 // server starts the next. The CLI copy's folder is in their environment, so they're found by it.
 const children = (p, c) => spawnSync('ps', ['-eo', 'pid=', '-o', 'args='], { encoding: 'utf8' }).stdout.split('\n')
@@ -73,21 +55,8 @@ test('0067 AC1: a change that leaves the code as it was causes no restart', asyn
   } finally { await stop(p); }
 });
 
-test('0067 AC2: the token survives a restart, so Set ready works with the token from before it', async () => {
-  const r = panelRepo();
-  r.write('0002-two.md', fm({ id: '"0002"', title: 'Two' }));
-  const { c, port, p } = await served(r);
-  try {
-    const token = tokenOf((await request(port)).body);
-    assert.ok(token);
-    edit(c, 'v2');
-    await within(5000, async () => (await request(port)).headers['x-speck-test'] === 'v2', 'the restart');
-    assert.equal(tokenOf((await request(port)).body), token, 'the same token in the page');
-    const res = await post(port, readyPath('0002'), { token });
-    assert.equal(res.status, 200, res.body);
-    assert.equal(res.headers['x-speck-test'], 'v2');
-  } finally { await stop(p); }
-});
+// 0775: allows a busy machine's time to start and restart (test/support/panel-restart.mjs).
+test('0067 AC2: the token survives a restart, so Set ready works with the token from before it', () => tokenSurvivesRestart());
 
 test('0067 AC2: in a real browser, an open page keeps its list across a restart and Set ready works without a reload', { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' }, async () => {
   const r = panelRepo();
@@ -128,30 +97,8 @@ test('0067 AC3: several changes close together cause one restart once they settl
   } finally { await stop(p); }
 });
 
-test('0067 AC4: new code that fails to start leaves the old server serving, shows the error and the next change tries again', async () => {
-  const { c, port, p } = await served();
-  try {
-    const good = fs.readFileSync(code(c), 'utf8');
-    fs.writeFileSync(code(c), `${good}\nfunction broken( {\n`);
-    const state = async () => JSON.parse((await request(port, { pathName: '/api/state' })).body);
-    await within(5000, async () => (await state()).restart_error, 'the restart error in /api/state');
-    const err = (await state()).restart_error;
-    assert.match(err, /^SyntaxError: /, err);
-    assert.doesNotMatch(err, /\n/, 'one line');
-    assert.equal((await request(port, { pathName: '/nope' })).body, 'Not found.\n', 'the old code still serves');
-    assert.ok(Array.isArray((await state()).tickets));
-    // A code change that throws when it loads, rather than failing to parse.
-    fs.writeFileSync(code(c), good.replace("const PANEL_PORT = 4777;", "const PANEL_PORT = 4777; throw new Error('boom 0067');"));
-    await within(5000, async () => (await state()).restart_error === 'Error: boom 0067', 'the second error');
-    assert.equal((await request(port, { pathName: '/nope' })).body, 'Not found.\n', 'the old code still serves');
-    // The next change that works is picked up, and the error goes.
-    fs.writeFileSync(code(c), good);
-    edit(c, 'v3');
-    await within(5000, async () => (await request(port, { pathName: '/nope' })).body === 'Not found. v3\n', 'the fixed code');
-    assert.equal((await state()).restart_error, undefined);
-    assert.doesNotMatch(p.out(), /at .*\.mjs:\d+/, 'no stack trace');
-  } finally { await stop(p); }
-});
+// 0775: allows a busy machine's time to start and restart (test/support/panel-restart.mjs).
+test('0067 AC4: new code that fails to start leaves the old server serving, shows the error and the next change tries again', () => failedRestartKeepsServing());
 
 test('0067 AC4: putting the running code back clears the error without a restart', async () => {
   const { c, port, p } = await served();
