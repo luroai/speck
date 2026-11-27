@@ -1,7 +1,7 @@
 ---
 id: "0779"
 title: "Prepare release 1.8.1"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -23,7 +23,7 @@ started: "2026-11-27T01:50:57.520Z"
 ---
 # 0779 · Prepare release 1.8.1
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Since 1.8.0, `speck serve` switches to new code by itself and its `--stop` stops an installed service, test summaries work on Node 24, related test runs stay small, several unsteady tests are steady and the Waits for fact says approved. Anyone updating speck still gets 1.8.0.
@@ -54,7 +54,9 @@ speck is ready to be released as 1.8.1.
 - Pictures: none, because nothing anyone sees in the panel or on the floor changes; the README changes only its status line and figures.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck is ready to go out as 1.8.1. Once this lands, the release page appears on GitHub and the setup prompt installs 1.8.1. It's a small release: speck serve now picks up a new version of speck by itself, stopping an installed speck serve really stops it, test summaries work again on Node 24, a build's related test run stays small when a page changes, and a ticket waiting on approved work says approved. The changelog and release notes describe each change, and the notes say to restart speck serve once after updating, as one started on an older release can't switch by itself yet. The README's figures and the price table are up to date as of today.
+
+To see it, open the GitHub releases page once it has shipped and check that 1.8.1 is there. Worth keeping an eye on: if the release page doesn't appear, it can be made by hand from the release notes, as the ticket's Notes say.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -64,3 +66,90 @@ speck is ready to be released as 1.8.1.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups (not saved to the inbox, wording only): the release notes' bullet on `speck serve --stop` says the service starts again at the next boot without adding "(or next login on a Mac)", as the changelog does (round 1, F1, minor). Left as approved, since changing the notes after approval needs another round.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "1e5d08597dcc0733a904fed35123796ceadc14f4",
+    "session": "fresh",
+    "thread_id": "01a21ab7-3f6e-7fc3-9ea5-52bb53f8ab6b",
+    "builder_response": "- Tests run: `speck test --related test/release-0779.test.mjs test/release-0770.test.mjs test/docs-0491.test.mjs` (182 related files, 1842 tests, all passing).\n- Built on 0772's approved work (`speck start` merged it in, as 0779 waits for it); 0772 ships before this does. Its changes in the diff are 0772's, already reviewed.\n- Covered since `v1.8.0`: 0771, 0772, 0773, 0777, 0778 as user-facing changes; 0774, 0775, 0776 (test-only) as one line under Tests; 0780 (fix ticket) was cancelled, so it's left out.\n- Figures worked out with `builtWithSpeckFigures(doneTicketsAt(<main at \"speck(0771): Switch speck serve to new code by itself\">))`: 759 shipped, 19 cancelled, 16 min median, 2 rounds median, 365 first-round.\n- `npm run prices` ran on 2026-11-27; only the `taken` date changed in the table.\n- 0770's release tests that named 1.8.0 as the current version now check the current version, as 0770 did for 0760's; `test/release-0779.test.mjs` added to 0491's allowed list.\n",
+    "seconds": 35,
+    "usage": {
+      "input_tokens": 274350,
+      "cached_input_tokens": 213376,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1250,
+      "reasoning_output_tokens": 55
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 60974,
+      "cached": 213376,
+      "write": 0,
+      "output": 1250
+    },
+    "cost_usd": 0.1557856,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-27T01:56:21.036Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "package.json names 1.8.1; both 0779 AC1 tests passed, including running speck init."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "CHANGELOG.md places 1.8.1 above 1.8.0 and covers tickets 0771–0778. Independently verified that 1.8.0 and earlier sections match v1.8.0 unchanged."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "0779 AC3 tests passed for both status lines, the latest-release setup prompt and price-table date. scripts/prices.json says 2026-11-27; the builder reports running npm run prices that day."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/releases/v1.8.1.md explains the changes, updating each project and the one-time serve restart, and links to the changelog. Claims correspond to the dependency tickets; no person's name appears. AC4 tests passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Independently recalculated the done-ticket figures: 759 shipped, 19 cancelled, 16 median minutes, 2 median rounds and 365 first-round approvals, matching README.md. The recorded run has 1839 passes, zero failures and three skips; the version/changelog test passed."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "minor",
+        "file": "docs/releases/v1.8.1.md",
+        "issue": "The installed-service bullet says it starts again at the next boot, without mentioning that on a Mac it starts at the next login.",
+        "suggested_fix": "Say 'at the next boot (or next login on a Mac)', as the changelog does.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The release preparation meets all five criteria. The figures match the ticket records, older changelog entries are unchanged, and the recorded tests pass. One minor wording correction would clarify when the Mac service starts again."
+  }
+}
+```
+
+</details>
