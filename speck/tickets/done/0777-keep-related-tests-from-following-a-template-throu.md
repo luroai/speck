@@ -1,7 +1,7 @@
 ---
 id: "0777"
 title: "Keep related tests from following a template through the panel's test support"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,11 +19,12 @@ after: []                # ticket ids that must be done first
 created: 2026-11-26
 started: "2026-11-26T23:48:45.628Z"
 approved: "2026-11-27T01:01:33.283Z"
+finished: "2026-11-27T01:18:05.747Z"
 
 ---
 # 0777 · Keep related tests from following a template through the panel's test support
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 `speck test --related` brings in every test that imports `test/support/panel.mjs` whenever any template that file can read changes. A change to the factory floor chose 533 test files, and 0766's build 625, so a build's related run outlasts the builder's 10-minute shell limit.
