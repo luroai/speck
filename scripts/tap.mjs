@@ -1,4 +1,5 @@
-// The test output a reviewer is given: a short summary when it's TAP, as `node --test` writes it, otherwise the output in full.
+// The test output a reviewer is given: a short summary when it's TAP or Node's spec reporter, as `node --test` writes
+// them, otherwise the output in full.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -45,6 +46,77 @@ function details(lines, t, all) {
   return [`not ok - ${t.path}`, ...own].join('\n');
 }
 
+// Node's spec reporter, which `node --test` prints by default from Node 24 rather than TAP (0773). A result is a mark,
+// the test's name, how long it took and any directive, indented two spaces a level; a test with subtests or a suite opens
+// with ▶ and its name. After the totals (ℹ), "✖ failing tests:" lists each failing test again, after the `test at` line
+// giving its location, with its error indented below it.
+const SPEC_RESULT = /^( *)([✔✖﹣⚠]) (.*?)(?: \([\d.]+m?s\))?(?: # (SKIP|TODO)\b.*)?\s*$/;
+const SPEC_OPEN = /^( *)▶ (.*?)\s*$/;
+const SPEC_TOTAL = /^ℹ ([a-z_]+ \d[\d.]*)\s*$/;
+const SPEC_FAILING = /^✖ failing tests:\s*$/;
+const SPEC_AT = /^test at (.+?)\s*$/;
+const isSpec = lines => lines.some(l => SPEC_TOTAL.test(l) || /^ *[✔✖] .* \([\d.]+m?s\)\s*$/.test(l));
+const quoted = s => `'${s.replaceAll("'", "''")}'`;
+
+// One run's spec output as the TAP `node --test` would have written for it: each result with its subtests, and each
+// failing test's location and error in a YAML block. Lines a test printed are left out.
+function specRun(lines) {
+  const cut = lines.findIndex(l => SPEC_FAILING.test(l));
+  const tree = cut < 0 ? lines : lines.slice(0, cut);
+  const out = [];
+  const tests = [];
+  for (const line of tree) {
+    const total = SPEC_TOTAL.exec(line);
+    if (total) { out.push(`# ${total[1]}`); continue; }
+    const open = SPEC_OPEN.exec(line);
+    if (open) { out.push(`${' '.repeat(open[1].length * 2)}# Subtest: ${open[2]}`); continue; }
+    const r = SPEC_RESULT.exec(line);
+    if (!r) continue;
+    const t = { pad: ' '.repeat(r[1].length * 2), name: r[3], failed: r[2] === '✖', directive: r[4] ? ` # ${r[4]}` : '', yaml: null };
+    tests.push(t);
+    out.push(t);
+  }
+  // Each failing test listed after the totals is matched with the next failing result of the same name in the tree.
+  let from = 0;
+  for (let i = cut < 0 ? lines.length : cut + 1; i < lines.length; i++) {
+    const at = SPEC_AT.exec(lines[i]);
+    const r = SPEC_RESULT.exec(lines[at ? i + 1 : i] ?? '');
+    if (!r || r[1] || (!at && !lines[i].startsWith('✖'))) continue;
+    if (at) i++;
+    const error = [];
+    while (i + 1 < lines.length && !SPEC_AT.test(lines[i + 1]) && !(/^[✖⚠] /.test(lines[i + 1]))) error.push(lines[++i]);
+    while (error.length && !error.at(-1).trim()) error.pop();
+    const failed = (t, k) => k >= from && !t.yaml && t.name === r[3] && (t.failed || t.directive);
+    let k = tests.findIndex(failed);
+    if (k < 0) { from = 0; k = tests.findIndex(failed); }
+    if (k < 0) continue;
+    from = k + 1;
+    tests[k].yaml = [...(at ? [`location: ${quoted(at[1])}`] : []), ...(error.length ? ['error: |-', ...error.map(l => `  ${l.replace(/^ {2}/, '')}`)] : [])];
+  }
+  return ['TAP version 13', ...out.flatMap(t => typeof t === 'string' ? [t] : [
+    `${t.pad}${t.failed ? 'not ok' : 'ok'} - ${t.name}${t.directive}`,
+    ...(t.yaml ? [`${t.pad}  ---`, ...t.yaml.map(l => `${t.pad}  ${l}`), `${t.pad}  ...`] : []),
+  ])];
+}
+
+// `text`'s lines, with each run of Node's spec reporter in it written as TAP, a run ending at the line saying failing
+// tests' files are run once more (0195) or that they passed then. TAP and other lines are kept as they are.
+function asTap(text) {
+  const lines = String(text).replace(/\r\n/g, '\n').split('\n');
+  const out = [];
+  let run = [];
+  const end = () => {
+    const plain = run.map(l => l.replace(/\x1b\[[0-9;]*m/g, ''));
+    out.push(...(!run.some(l => HEADER.test(l)) && isSpec(plain) ? specRun(plain) : run));
+    run = [];
+  };
+  for (const l of lines) {
+    if (l.startsWith(RETRY_NOTE) || l.startsWith(FLAKY)) { end(); out.push(l); } else run.push(l);
+  }
+  end();
+  return out;
+}
+
 const outcome = t => t.directive === 'SKIP' ? 'skipped' : t.directive === 'TODO' ? 'todo' : t.ok ? 'passed' : 'failed';
 
 // What `speck test` prints before running a full run's failing tests' files once more, and at the start of the line it
@@ -74,7 +146,7 @@ const leaves = failing => failing.filter(t => !failing.some(o => o !== t && o.st
 // is told apart from another of the same name by its location. failing: each failing test
 // with its details.
 function readTap(text) {
-  let lines = String(text).replace(/\r\n/g, '\n').split('\n');
+  let lines = asTap(text);
   const header = lines.findIndex(l => HEADER.test(l));
   if (header < 0) return null;
   const note = lines.findIndex((l, i) => i > header && l.startsWith(RETRY_NOTE));
@@ -132,7 +204,7 @@ export function tapCounts(text) {
 // saying the failing tests' files ran once more (0195) and that run's TAP, a test that failed in the first run and
 // passed in the second is a chance failure and left out (0377): two failing tests of one name need two passes.
 export function failingTests(text) {
-  const lines = String(text).replace(/\r\n/g, '\n').split('\n');
+  const lines = asTap(text);
   const header = lines.findIndex(l => HEADER.test(l));
   if (header < 0) return [];
   const note = lines.findIndex((l, i) => i > header && l.startsWith(RETRY_NOTE));
@@ -175,7 +247,7 @@ export function testsMeta(file) {
 // path of names and the file its `location:` names (null when it has none): [{ name, file }]. Tests with the same name
 // are each listed.
 export function failingTestFiles(text) {
-  const lines = String(text).replace(/\r\n/g, '\n').split('\n');
+  const lines = asTap(text);
   const header = lines.findIndex(l => HEADER.test(l));
   if (header < 0) return [];
   const failing = results(lines, header + 1).filter(t => !t.ok && t.directive !== 'TODO');
@@ -184,7 +256,7 @@ export function failingTestFiles(text) {
 
 // Every test in TAP output that passed, not skipped or todo, as its path of names, once for each time it passed.
 export function passingTests(text) {
-  const lines = String(text).replace(/\r\n/g, '\n').split('\n');
+  const lines = asTap(text);
   const header = lines.findIndex(l => HEADER.test(l));
   if (header < 0) return [];
   return results(lines, header + 1).filter(t => t.ok && !t.directive).map(t => t.path).filter(Boolean);
