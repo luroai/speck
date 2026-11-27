@@ -21,7 +21,9 @@ function fakeClaude(out) {
   fs.writeFileSync(file, `#!${process.execPath}
 const fs = require('fs'), path = require('path');
 let n = 0; while (fs.existsSync(path.join(${JSON.stringify(out)}, n + '.json'))) n++;
-fs.writeFileSync(path.join(${JSON.stringify(out)}, n + '.json'), JSON.stringify({ args: process.argv.slice(2), has: ${JSON.stringify(VAR)} in process.env, value: process.env[${JSON.stringify(VAR)}] }));
+const call = path.join(${JSON.stringify(out)}, n + '.json');
+fs.writeFileSync(call + '.part', JSON.stringify({ args: process.argv.slice(2), has: ${JSON.stringify(VAR)} in process.env, value: process.env[${JSON.stringify(VAR)}] }));
+fs.renameSync(call + '.part', call); // whole or not there: the test reads while this runs (0774)
 `, { mode: 0o755 });
   return file;
 }
@@ -40,7 +42,7 @@ async function launched({ status = 'ready', value, prepare = () => {} } = {}) {
   child.stdout.on('data', d => { said += d; });
   child.stderr.on('data', d => { said += d; });
   const run = { child, exited: new Promise(res => child.on('exit', res)) };
-  const calls = () => fs.readdirSync(out).map(f => JSON.parse(fs.readFileSync(path.join(out, f), 'utf8')));
+  const calls = () => fs.readdirSync(out).filter(f => f.endsWith('.json')).map(f => JSON.parse(fs.readFileSync(path.join(out, f), 'utf8')));
   try { await until(() => calls().length >= 1 || child.exitCode !== null, 10000); } finally { await stopRun(run); }
   assert.equal(calls().length, 1, said);
   return calls()[0];

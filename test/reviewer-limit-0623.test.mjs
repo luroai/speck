@@ -310,11 +310,15 @@ const fs = require('fs'), path = require('path');
 const [out, flag, session, prompt] = process.argv.slice(2);
 const git = require('child_process').execFileSync('git', ['rev-parse', '--path-format=absolute', '--git-common-dir'], { encoding: 'utf8' }).trim();
 const calls = path.join(git, 'fake-out'), n = fs.readdirSync(calls).length;
-fs.writeFileSync(path.join(calls, n + '.json'), JSON.stringify({ at: Date.now(), flag, session, prompt }));
+const call = path.join(calls, n + '.json');
+fs.writeFileSync(call + '.part', JSON.stringify({ at: Date.now(), flag, session, prompt }));
+fs.renameSync(call + '.part', call); // whole or not there: the test reads while this runs (0774)
 if (n === 0) {
   const dir = path.join(path.dirname(git), 'speck', '.cache', 'runs', 'reviewer-limits'), at = Date.now() + 1500;
   fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(path.join(dir, '0001.json'), JSON.stringify({ reviewer: 'codex', resets: new Date(at).toISOString(), carry_on: new Date(at).toISOString(), session: process.env.SPECK_BUILD_SESSION }));
+  const limit = path.join(dir, '0001.json');
+  fs.writeFileSync(limit + '.part', JSON.stringify({ reviewer: 'codex', resets: new Date(at).toISOString(), carry_on: new Date(at).toISOString(), session: process.env.SPECK_BUILD_SESSION }));
+  fs.renameSync(limit + '.part', limit); // whole or not there: the test reads while this runs (0774)
 }
 `;
 

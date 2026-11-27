@@ -26,17 +26,21 @@ const [helper, out, id, session] = process.argv.slice(2);
 // START: start the ticket in its own worktree with speck first, as /speck-build does, and work there.
 let wt = null;
 if (process.env.START) wt = require('child_process').spawnSync(process.execPath, [process.env.START, 'start', id], { encoding: 'utf8' }).stdout.trim().split('\\n').pop();
-fs.writeFileSync(path.join(out, id + '.build.json'), JSON.stringify({ pid: process.pid, session, cwd: process.cwd(), worktree: wt }));
+const rec = path.join(out, id + '.build.json');
+fs.writeFileSync(rec + '.part', JSON.stringify({ pid: process.pid, session, cwd: process.cwd(), worktree: wt }));
+fs.renameSync(rec + '.part', rec); // whole or not there: the test reads while this runs (0774)
 spawn(process.execPath, [helper, out], { detached: true, stdio: 'ignore' }).unref();
 // ORPHAN: a step that starts a writer in a session of its own and exits at once, so the writer leaves the build's tree.
 if (process.env.ORPHAN) spawn(process.execPath, ['-e', \`require('child_process').spawn(process.execPath, [\${JSON.stringify(helper)}, \${JSON.stringify(out)}, 'orphan'], { detached: true, stdio: 'ignore' }).unref()\`], { detached: true, stdio: 'ignore' }).unref();
 // STUBBORN: a step that starts a writer in a session of its own, with an environment of its own, that ignores SIGTERM.
 // Only its parent, which ends on SIGTERM, ties it to the build.
-if (process.env.STUBBORN) spawn(process.execPath, ['-e', \`require('child_process').spawn(process.execPath, ['-e', \${JSON.stringify("process.on('SIGTERM', () => {}); require('fs').writeFileSync(" + JSON.stringify(path.join(out, 'stubborn.pid')) + ", String(process.pid)); setInterval(() => {}, 1000)")}], { detached: true, stdio: 'ignore', env: {} }).unref(); setInterval(() => {}, 1000)\`], { detached: true, stdio: 'ignore' }).unref();
+if (process.env.STUBBORN) spawn(process.execPath, ['-e', \`require('child_process').spawn(process.execPath, ['-e', \${JSON.stringify("process.on('SIGTERM', () => {}); require('fs').writeFileSync(" + JSON.stringify(path.join(out, 'stubborn.part')) + ", String(process.pid)); require('fs').renameSync(" + JSON.stringify(path.join(out, 'stubborn.part')) + ", " + JSON.stringify(path.join(out, 'stubborn.pid')) + "); setInterval(() => {}, 1000)")}], { detached: true, stdio: 'ignore', env: {} }).unref(); setInterval(() => {}, 1000)\`], { detached: true, stdio: 'ignore' }).unref();
 // SELF_PAUSE: the build pauses itself with speck, and saves that speck pause's pid in <out>/self.pid.
 if (process.env.SELF_PAUSE) setTimeout(() => {
   const c = spawn(process.execPath, [process.env.SELF_PAUSE, 'pause', id], { stdio: 'ignore' });
-  fs.writeFileSync(path.join(out, 'self.pid'), String(c.pid));
+  const selfFile = path.join(out, 'self.pid');
+  fs.writeFileSync(selfFile + '.part', String(c.pid));
+  fs.renameSync(selfFile + '.part', selfFile); // whole or not there: the test reads while this runs (0774)
 }, 300);
 // EXIT_ON_CONT: the build finishes the moment it's played, with exit code 3.
 if (process.env.EXIT_ON_CONT) process.on('SIGCONT', () => process.exit(3));
@@ -46,7 +50,9 @@ setInterval(() => { console.log('tick ' + n++); if (fs.existsSync(path.join(out,
 export const HELPER = `
 const fs = require('fs'), path = require('path');
 const [out, name = 'helper'] = process.argv.slice(2);
-fs.writeFileSync(path.join(out, name + '.pid'), String(process.pid));
+const pidFile = path.join(out, name + '.pid');
+fs.writeFileSync(pidFile + '.part', String(process.pid));
+fs.renameSync(pidFile + '.part', pidFile); // whole or not there: the test reads while this runs (0774)
 setInterval(() => { if (fs.existsSync(path.join(out, 'stop')) || !fs.existsSync(out)) process.exit(0); fs.appendFileSync(path.join(out, name + '.txt'), 'h\\n'); }, 20);
 `;
 
