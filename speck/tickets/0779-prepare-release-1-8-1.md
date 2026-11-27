@@ -49,6 +49,7 @@ speck is ready to be released as 1.8.1.
 - `npm run prices` fetches LiteLLM's price list from GitHub, so this build needs the network.
 - After it ships, check that the `v1.8.1` tag and its GitHub release page appeared. If not: `gh release create v1.8.1 --target main --title "speck 1.8.1" --notes-file docs/releases/v1.8.1.md`.
 - Checked 2026-11-26: `v1.8.0` is tagged on origin.
+- Failing before this build: not checked
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
