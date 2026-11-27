@@ -1,7 +1,7 @@
 ---
 id: "0779"
 title: "Prepare release 1.8.1"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -20,11 +20,12 @@ created: 2026-11-26
 built_on: "0772"
 started: "2026-11-27T01:50:57.520Z"
 approved: "2026-11-27T01:56:31.345Z"
+finished: "2026-11-27T02:03:09.086Z"
 
 ---
 # 0779 · Prepare release 1.8.1
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Since 1.8.0, `speck serve` switches to new code by itself and its `--stop` stops an installed service, test summaries work on Node 24, related test runs stay small, several unsteady tests are steady and the Waits for fact says approved. Anyone updating speck still gets 1.8.0.
