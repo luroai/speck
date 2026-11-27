@@ -18,7 +18,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-26
 started: "2026-11-26T23:52:57.564Z"
-approved: "2026-11-27T01:17:34.272Z"
+approved: "2026-11-27T01:35:38.584Z"
 
 ---
 # 0771 · Switch speck serve to new code by itself
@@ -60,12 +60,13 @@ Worth knowing: a speck serve that's already running doesn't have this yet, so re
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 182,822
-- Elapsed since build started: 85 min
+- Reviewer tokens: 350,723
+- Elapsed since build started: 103 min
 - Changed lines: 349 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
@@ -145,6 +146,81 @@ Follow-ups:
     "findings": [],
     "escalation_question": "",
     "summary": "The service now switches to updated code automatically while keeping its address available and its project panels running. Tests cover repeated switches, interrupted requests, panel ownership and failed updates. No blocking issues found."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "f46739997c1c0fac1e94bd0a47e6ff0373c8c9b2",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a21a91-e068-7270-8eac-f00a24780993",
+    "builder_response": "Merge round: main merged into the ticket branch (commit f4673999, parents 5c98d813, the approved commit, and e7b0ce5c, main as speck ship found it), after speck ship hit a conflict.\n\n- docs/brief.md, class `logic` (1 conflict, lines 225 to 231 of the command table): no logic clash. The two sides changed adjacent rows of the table, each a single line. This ticket changed only the `speck serve` row (line 225, the sentences on switching to new code), and main changed only the `speck run` row (line 226) of those two, plus lines 63, 103 and 239, which merged cleanly. Resolved as main's brief with line 225 replaced by this ticket's `speck serve` row: the result differs from main only at line 225, and from the approved branch only at main's four lines (63, 103, 226, 239). The `speck serve` row is word for word as approved.\n- Nothing else was changed by hand. Everything else main brought in merged cleanly, including its changes to scripts/panel.mjs (0775: SPECK_PANEL_START_MS for a panel's own restart, which speck serve doesn't use) and test/support/panel.mjs (0775 and 0776: startPanel's time to start and Chromium's signal handlers; cliCopy, which this ticket's tests use, is unchanged).\n- Tests run: test/serve-switch-0771.test.mjs test/serve-switch-panels-0771.test.mjs test/serve-switch-fail-0771.test.mjs (with the repo-wide checks, which `speck test --files` adds itself), on the merge as committed: 156 tests, 153 passed, 3 skipped (0078's split checks, which always skip now), none failed, all 10 of the ticket's own tests among them. No existing test file was changed by this ticket, and none failed in its last run.\n",
+    "seconds": 22,
+    "usage": {
+      "input_tokens": 349052,
+      "cached_input_tokens": 277504,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1671,
+      "reasoning_output_tokens": 230
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 18525,
+      "cached": 148608,
+      "write": 0,
+      "output": 768
+    },
+    "cost_usd": 0.0595908,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-27T01:35:33.716Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "codeWatch and checkCode remain unchanged from the approved implementation. The passing AC1 integration test verifies updated All projects and factory floor responses within 10 seconds."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "startSuccessor and startFront.handOff retain the approved socket handover. Both AC2 tests pass, checking continuous port and --url responses, outstanding requests and event stream reconnection across repeated switches."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "carry, takeOver and stepDown retain the approved ownership transfer. Passing AC3 tests verify panel continuity without duplicates, ongoing supervision, shutdown during switching and preserved run keeper state."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "startSuccessor and stayed retain the approved failure handling. The passing AC4 test checks syntax errors, load exceptions and startup timeout, continued old-code service, logged reasons and successful retry."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified the current test output: 156 tests, 153 passed, 3 skipped, none failed. All 10 ticket tests pass. The implementation and ticket tests are unchanged from approval; whole-suite verification remains the ship gate."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The merge preserves the approved automatic switching behaviour. The documentation keeps this ticket’s service description and main’s updated run description intact. All ticket tests pass, and no new blocking issues were found."
   }
 }
 ```
