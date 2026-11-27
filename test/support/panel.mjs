@@ -433,10 +433,12 @@ const running = new Set(); // every Chromium started and not yet exited, with it
 async function launch() {
   // Named speck-keep-*, so tmp.mjs leaves it in place between tests, until the file's process exits.
   const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-keep-chrome-'));
+  // 0776: the signal handlers go in before Chromium starts. A signal that came while it was starting, before them,
+  // ended the file at once and left Chromium running, as the test runner's can on a busy machine.
+  exitOnSignals();
   const chrome = spawn(findChrome(), ['--headless', '--no-sandbox', '--disable-gpu', `--user-data-dir=${profile}`, '--remote-debugging-port=0', '--window-size=1280,900', 'about:blank'], { stdio: ['ignore', 'ignore', 'pipe'], env: { ...process.env, FONTCONFIG_FILE: proportionalFonts(profile) } });
   const me = { chrome, profile };
   running.add(me);
-  exitOnSignals();
   chrome.once('exit', () => running.delete(me));
   // Chrome mustn't keep the file's process going once its tests are done: after() below, or the exit handler, ends it.
   chrome.unref();

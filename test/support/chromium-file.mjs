@@ -66,6 +66,16 @@ async function allowingLonger(run, started) {
   }
 }
 
+// Code for a test file that drops browserPage's clean-up, as a broken one would: a signal then ends the file at once,
+// leaving its Chromium running. 0776: each signal gets its new handler before the old ones go, so one that has come
+// and not yet been handled isn't lost: with none left, Node drops it, and the file would wait for ever.
+export const DROP_CLEAN_UP = `process.removeAllListeners('exit');
+for (const s of ['SIGTERM', 'SIGINT', 'SIGHUP']) {
+  const old = process.listeners(s);
+  process.on(s, () => { logPid('stopped'); process.exit(1); });
+  for (const l of old) process.removeListener(s, l);
+}`;
+
 // Runs `body` under --test-timeout so the file runs out of time, as runFile does. Its first test should log its
 // Chromium's pid and then wait for ever; a run in which nothing was logged is tried again with longer.
 export const runOutOfTime = body => allowingLonger(ms => runFile(body, [`--test-timeout=${ms}`]), f => f.pids.length);
