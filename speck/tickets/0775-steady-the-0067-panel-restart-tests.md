@@ -1,7 +1,7 @@
 ---
 id: "0775"
 title: "Steady the 0067 panel restart tests"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -22,7 +22,7 @@ started: "2026-11-26T23:58:09.774Z"
 ---
 # 0775 · Steady the 0067 panel restart tests
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 "0067 AC2: the token survives a restart" and "0067 AC4: new code that fails to start leaves the old server serving, shows the error and the next change tries again" fail now and then on a busy machine, turning builds' and `main`'s test runs red for no real fault.
@@ -51,7 +51,9 @@ The two 0067 restart tests pass on a busy machine and still catch a real fault.
 - speck (2026-11-27 00:35 UTC) told you: The build is slow because of what the ticket asks for: it ran the two restart tests many times under made-up heavy load to show the old code fails and the new code passes. One of those runs hit the 10-minute shell limit. It has now made the fix, got 12 of 12 passes where the old code failed 8 of 8, and is on its last related-test run before review. Nothing is stuck or broken. Why: The build log shows each step moving on, the long stretches are the load tests the acceptance criteria call for, and the load average of about 75 from other builds slows every run further.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Nothing changes in how speck works for you. Two checks on the panel restarting by itself after its code changes used to fail now and then when the machine was busy, turning builds' and the main branch's test runs red for no real fault. They now give a busy machine up to a minute rather than 5 to 10 seconds, and they still fail if a restart loses your page's sign-in token or if broken new code stops the panel serving.
+
+To see it, look at the next few builds' test runs: these two checks shouldn't be among the failures. Worth watching: many other panel checks still give the panel only 10 seconds to start, and on a very busy machine they fail the same way. That's saved as an idea in the inbox.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -60,4 +62,73 @@ The two 0067 restart tests pass on a busy machine and still catch a real fault.
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - Inbox: `speck/ideas/2026-11-27-give-real-panel-tests-longer-to-start-on-a-busy-machine.md` (the shared 10 s panel start limit failed 92 tests in this build's related run under load). Related, not the same tests: 0774's worktree note `2026-11-27-steady-the-quick-checks-real-panel-tests-under-load.md`.
+  - The 0067 AC2 browser test still waits 5 s for the restart (out of scope: other panel tests); it failed once in the related run.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "d2fad423d6bb1d25532c3acd36217f682c71c404",
+    "session": "fresh",
+    "thread_id": "01a21a7c-ae44-70b1-a572-b44dec3fa737",
+    "builder_response": "- Tests run: the related run (`speck test --related test/panel-0775.test.mjs test/panel-0067.test.mjs`, 488 files, as `test/support/panel.mjs` changed) at a load average of about 77 beside other builds: 96 failed, 92 on the shared 10 s panel start limit (default unchanged) and 4 on other timing. Then the files it named, re-run: test/panel-0775.test.mjs test/panel-0067.test.mjs test/ideas-0057.test.mjs test/pack-0354.test.mjs and the panel-00xx/01xx files listed in the attached output's command: 489 tests, 486 passed, 0 failed, 3 skipped. The attached output is that re-run.\n- The load measurements for AC1 and AC2 (old code 8 of 8 failing, new code 12 of 12 passing under the same load) are in the ticket's Notes; they can't run in the suite. 0775's tests check the same claims quickly: the two tests pass with a new server slower than the old 5 s, and fail on code broken on purpose (a fresh token after restart; the old server stopping once new code fails).\n- The one product change is `SPECK_PANEL_START_MS`, read like `SPECK_PANEL_PING_MS`, so a test can give a new server longer than 10 s to be ready. With it unset the panel behaves as before.\n",
+    "seconds": 23,
+    "usage": {
+      "input_tokens": 152782,
+      "cached_input_tokens": 104704,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 654,
+      "reasoning_output_tokens": 10
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 48078,
+      "cached": 104704,
+      "write": 0,
+      "output": 654
+    },
+    "cost_usd": 0.1131664,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-27T00:52:11.344Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "test/support/panel-restart.mjs tokenSurvivesRestart retains the token equality and Set ready checks with longer startup/restart bounds. Both 0775 slow-load and changed-token tests passed. /tmp/speck-0775/new10.log records 12/12 successful runs under heavy load; load2.sh uses two busy loops per core."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "test/support/panel-restart.mjs failedRestartKeepsServing retains checks for both startup errors, continued service and recovery. The 0775 slow-load and stopped-server fault tests passed. The same load run records 12/12 passes for the two restart tests."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "/tmp/speck-0775-tests.txt confirms 486 passed, 0 failed and 3 skipped, including both changed 0067 tests and all six 0775 tests. The shared startup helper preserves its default timeout; other panel tests retain their existing behaviour."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The two restart tests now allow more time on busy machines while preserving their original checks. Repeated load runs passed, and deliberate faults still make the tests fail. The final regression run had no failures. No blocking concerns found."
+  }
+}
+```
+
+</details>
