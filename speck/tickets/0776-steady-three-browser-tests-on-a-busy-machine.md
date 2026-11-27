@@ -41,6 +41,7 @@ The three tests pass on a busy machine and still catch a real fault.
 
 ## Notes
 - From the builds of 0751 and 0769.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
