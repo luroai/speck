@@ -1,7 +1,7 @@
 ---
 id: "0772"
 title: "Let speck serve --stop stop the installed service"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -22,7 +22,7 @@ started: "2026-11-27T01:44:03.990Z"
 ---
 # 0772 · Let speck serve --stop stop the installed service
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Once `speck serve --install` has made it a service, `speck serve --stop` stops `speck serve`, and the service starts it again a few seconds later, which looks like a bug.
@@ -49,7 +49,7 @@ Once `speck serve --install` has made it a service, `speck serve --stop` stops `
 - Self-check: no changes
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Once speck serve is installed to start by itself, stopping it with `speck serve --stop` now really stops it: before, the machine started it again a few seconds later. It also stops the panels it started, as before, and leaves each project's automatic builds running. It says how to start it again, and it still starts by itself at the next boot (or next login on a Mac). To see it, run `speck serve --stop` with the service installed and check a minute later that the All projects address no longer answers. Worth knowing: if the machine's service manager can't be reached, `--stop` now refuses and says why rather than stopping speck serve only for a moment.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -59,3 +59,84 @@ Once `speck serve --install` has made it a service, `speck serve --stop` stops `
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups (Delivery log only, none to the inbox):
+- The service is stopped only for a `speck serve --stop` using the service's own settings folder (~/.config/speck); one with SPECK_HOME_SETTINGS_DIR elsewhere, as the tests' are, leaves it alone, so the tests never stop a real installed service.
+- With a service file present but no systemd user manager reachable, `--stop` refuses and stops nothing; `--uninstall` is the way out then.
+- The ticket's tests were written just after the code rather than before it; each 0772 test fails on the code before this change (no systemctl or launchctl call was made).
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "e56eb5ac545fba7cdf11ac6c4026dd95c0570e17",
+    "session": "fresh",
+    "thread_id": "01a21ab1-dd4d-7032-8618-41bd6bd481f8",
+    "builder_response": "- Tests run: `speck test --related test/serve-stop-0772.test.mjs` (the ticket's own file, plus every existing test file naming a changed file: 1711 pass, 0 fail).\n- Design: `stopInstalledService` (scripts/serve-install.mjs) stops the installed service first (`systemctl --user stop`, or `launchctl bootout`, tolerating \"not loaded\" as --uninstall does), then serveStop carries on as before, stopping any panels the service's shutdown left and printing the usual line plus how to start the service again. Whether speck serve was running is read before the service stops it, so the message stays \"stopped (process N) and the panels…\" rather than \"isn't running\".\n- The service is only touched when the speck serve this --stop is for uses the service's settings folder (~/.config/speck): a --stop with SPECK_HOME_SETTINGS_DIR elsewhere, as every serve test's is, leaves it alone. This keeps the existing serve tests from stopping a real installed service on the machine running them (this machine has one).\n- AC1/AC2 end-to-end test runs a real speck serve with a stand-in `systemctl` on PATH that SIGTERMs it and waits, as systemd's stop does; HOME and XDG_CONFIG_HOME are a temporary folder.\n- AC4: existing 0756 --stop tests run unchanged, and a unit test checks nothing is run without a service file.\n- Facts checked: systemctl stop doesn't change enablement; launchctl bootout doesn't mark the agent disabled, so it loads again at next login.\n",
+    "seconds": 24,
+    "usage": {
+      "input_tokens": 192230,
+      "cached_input_tokens": 135936,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 823,
+      "reasoning_output_tokens": 82
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 56294,
+      "cached": 135936,
+      "write": 0,
+      "output": 823
+    },
+    "cost_usd": 0.1344116,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-27T01:50:17.929Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/serve-install.mjs stopInstalledService uses systemctl --user stop or launchctl bootout and returns restart instructions. Passing 0772 AC1 tests cover both platforms, failures and a real serve process stopped through a stand-in systemctl."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/serve.mjs serveStop retains panel cleanup after stopping the service. Passing 0772 integration test verifies panel termination; existing 0756 stop tests and 0758 real-process test verify that other panels and speck run remain running. Service definitions retain KillMode=process and detached runs."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "stopInstalledService neither removes service files nor disables services. Passing 0772 AC3 test checks file preservation, absence of disable commands and subsequent uninstall removal. Existing installation definitions preserve boot/login startup."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "stopInstalledService returns null when no service file exists. Passing 0772 AC4 and unchanged 0756 stop tests cover this path and existing cleanup behaviour."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "docs/brief.md serve row describes stopping the installed service, retained installation and restart instructions. Passing 0772 AC5 checks the command facts. Verified recorded test output: 1711 passed, zero failed, three skipped."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Stopping speck now stops its installed service first, preventing automatic restarts, then cleans up its panels while leaving project runs running. It explains how to start again and preserves startup at boot or login. The tests pass; no blocking issues found."
+  }
+}
+```
+
+</details>
