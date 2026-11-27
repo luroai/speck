@@ -1,7 +1,7 @@
 ---
 id: "0774"
 title: "Write the other fake agents' call files whole"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: "speck/ideas/done/2026-11-24-write-the-other-fake-agents-call-files-whol
 after: []                # ticket ids that must be done first
 created: 2026-11-26
 started: "2026-11-26T23:57:36.883Z"
+approved: "2026-11-27T00:11:07.448Z"
 
 ---
 # 0774 · Write the other fake agents' call files whole
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The fake agents in several `speck run` tests write each call file with a plain write while the test reads the folder, so on a busy machine a test can read half a file and fail for no real reason. 0742 fixed this for the 0289 fake only.
@@ -52,9 +53,14 @@ To see it, there is nothing to try in the app; the tests passed with the change 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 214,653
+- Elapsed since build started: 14 min
+- Changed lines: 0 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Saved to the inbox: the quick checks' real-panel tests failing with "panel didn't start" under load.
