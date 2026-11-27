@@ -1,7 +1,7 @@
 ---
 id: "0771"
 title: "Switch speck serve to new code by itself"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-26
 started: "2026-11-26T23:52:57.564Z"
+approved: "2026-11-27T01:17:34.272Z"
 
 ---
 # 0771 · Switch speck serve to new code by itself
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The panel and `speck run` switch to new code when speck changes, but `speck serve` keeps running the code it started with. On 2026-11-26 the factory floor shipped and stayed a 404 until `speck serve` was restarted by hand, and every update to speck would need the same.
@@ -58,9 +59,14 @@ Worth knowing: a speck serve that's already running doesn't have this yet, so re
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 182,822
+- Elapsed since build started: 85 min
+- Changed lines: 349 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Saved to the inbox: speck/ideas/2026-11-27-steady-the-0239-turn-waiting-test.md. 0239 AC1 holds a test turn for 1.5 seconds, too short on a busy machine; it failed once in this build's related run and passed again.
