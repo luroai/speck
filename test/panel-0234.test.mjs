@@ -70,8 +70,9 @@ test('then ${fails ? 'fails' : 'passes'}', async () => { ${LOG_PANEL} ${fails ? 
 }
 
 test('0234 AC1: the real-browser test files whose page stubs answer every request start the shared panel, not one per test', () => {
-  for (const name of ['panel-0155.test.mjs', 'panel-0160.test.mjs']) {
-    const src = fs.readFileSync(path.join(ROOT, 'test', name), 'utf8');
+  // 0776: 0160's page, which 0776's tests share, is in a support file of its own.
+  for (const [name, ...support] of [['panel-0155.test.mjs'], ['panel-0160.test.mjs', 'support/header-0160.mjs']]) {
+    const src = [name, ...support].map(f => fs.readFileSync(path.join(ROOT, 'test', f), 'utf8')).join('\n');
     assert.match(src, /await sharedPanel\(\)/, `${name} uses the shared panel`);
     assert.doesNotMatch(src, /\bstartPanel\(|\bpanelRepo\(|\bstop\(panel\)/, `${name} starts no panel or repo of its own`);
   }

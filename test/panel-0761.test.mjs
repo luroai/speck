@@ -2,6 +2,7 @@ import './support/tmp.mjs'; // first: sends every temporary folder into one per-
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { panelRepo, fm, good, freePort, startPanel, stop, findChrome, browserPage, openLane } from './support/panel.mjs';
+import { swipe, leftFrom, widen, widenKept, middleOf, swipeChangesLane } from './support/swipe-0761.mjs';
 
 // ---------- 0761: the lane lists never scroll sideways ----------
 // In a real Chromium, with touch, as the criteria are about how the lists lay out and scroll: the fake page has no layout.
@@ -44,21 +45,6 @@ async function phone(width = 390) {
 const lane = b => b.js(`document.querySelector('[role=tab][aria-selected=true]').id.replace('tab-', '')`);
 const openRows = b => b.js(`[...document.querySelectorAll('#shaping .item.ticket:not(.open) .head')].forEach(h => h.click()), true`);
 const waitFrames = b => b.js(`new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(true))))`);
-// A finger on the page, down at the first point and through the rest, then up.
-async function swipe(b, points) {
-  const at = ([x, y]) => [{ x, y, id: 1 }];
-  await b.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: at(points[0]) });
-  for (const p of points.slice(1)) await b.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: at(p) });
-  await b.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-}
-const leftFrom = ([x, y]) => Array.from({ length: 9 }, (_, i) => [x - i * 20, y]); // 160 px to the left, quickly
-// Puts a block 2000 px wide at the top of a list, so something in it is wider than the list.
-const widen = id => `(() => { const n = document.createElement('div'); n.className = 'wide-0761'; n.style.cssText = 'width: 2000px; height: 40px';
-  n.textContent = 'wide'; document.getElementById(${JSON.stringify(id)}).prepend(n); return true; })()`;
-// The middle of what shows of the element a selector finds, across the page, and near its top.
-const middleOf = (b, sel) => b.js(`(() => { const r = document.querySelector(${JSON.stringify(sel)}).getBoundingClientRect(), right = Math.min(r.right, innerWidth);
-  return [Math.round((Math.max(r.left, 0) + right) / 2), Math.round(r.top + Math.min(r.height, 40) / 2)]; })()`);
-
 // ---------- AC1 ----------
 
 test('0761 AC1: no lane\'s list can be scrolled sideways, by script, trackpad or touch, even with something wider in it, which is cut off at its edges', skip, async () => {
@@ -94,16 +80,13 @@ test('0761 AC1: no lane\'s list can be scrolled sideways, by script, trackpad or
 test('0761 AC2: with something in Plan\'s list wider than it, a sideways swipe on the list changes lane, as it does with nothing wider', skip, async () => {
   const b = await phone(390);
   try {
-    await swipe(b, leftFrom(await middleOf(b, '#shaping .item.ticket')));
-    await b.until(`document.getElementById('tab-build').getAttribute('aria-selected') === 'true'`, 'a swipe on a plain list to change lane to Build');
+    await swipeChangesLane(b, '#shaping .item.ticket', 'a swipe on a plain list to change lane to Build');
     await b.js(openLane('plan'));
-    await b.js(widen('shaping'));
+    await b.js(widenKept('shaping'));
     assert.equal(await lane(b), 'plan');
-    await swipe(b, leftFrom(await middleOf(b, '#shaping .wide-0761')));
-    await b.until(`document.getElementById('tab-build').getAttribute('aria-selected') === 'true'`, 'a swipe that starts on the wide block to change lane to Build');
+    await swipeChangesLane(b, '#shaping .wide-0761', 'a swipe that starts on the wide block to change lane to Build');
     await b.js(openLane('plan'));
-    await swipe(b, leftFrom(await middleOf(b, '#shaping .item.ticket')));
-    await b.until(`document.getElementById('tab-build').getAttribute('aria-selected') === 'true'`, 'a swipe that starts on a row of the wide list to change lane to Build');
+    await swipeChangesLane(b, '#shaping .item.ticket', 'a swipe that starts on a row of the wide list to change lane to Build');
   } finally { /* the page is shared */ }
 });
 
