@@ -41,6 +41,7 @@ The two 0067 restart tests pass on a busy machine and still catch a real fault.
 ## Notes
 - From 0751's and 0761's builds. 0689 and 0723 replaced fixed waits with bounds measured in the test.
 - Failing before this build: none
+- speck (2026-11-27 00:35 UTC) told you: The build is slow because of what the ticket asks for: it ran the two restart tests many times under made-up heavy load to show the old code fails and the new code passes. One of those runs hit the 10-minute shell limit. It has now made the fix, got 12 of 12 passes where the old code failed 8 of 8, and is on its last related-test run before review. Nothing is stuck or broken. Why: The build log shows each step moving on, the long stretches are the load tests the acceptance criteria call for, and the load average of about 75 from other builds slows every run further.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
