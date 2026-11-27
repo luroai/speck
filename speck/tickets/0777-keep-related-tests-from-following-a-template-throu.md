@@ -18,7 +18,7 @@ source: "speck/ideas/done/2026-11-26-keep-related-tests-from-following-a-templat
 after: []                # ticket ids that must be done first
 created: 2026-11-26
 started: "2026-11-26T23:48:45.628Z"
-approved: "2026-11-26T23:57:33.441Z"
+approved: "2026-11-27T01:01:33.283Z"
 
 ---
 # 0777 · Keep related tests from following a template through the panel's test support
@@ -54,12 +54,13 @@ A build that changes the factory floor's page now runs only the handful of tests
 ## Review log
 Round 1 (codex): changes requested: F1 ownOf strips comments when matching every changed file, including non-template code.
 Round 2 (codex): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 330,833
-- Elapsed since build started: 9 min
+- Reviewer tokens: 525,155
+- Elapsed since build started: 73 min
 - Changed lines: 43 (limit 5000)
 - Follow-ups:
   - To the inbox: `speck/ideas/2026-11-26-bring-in-panel-tests-for-speck-face-and-mood-changes.md`. A change to `templates/speck-mood.js` or `templates/speck-face.js` doesn't bring in the panel tests, and 0696's in-repo test passes only because untracked changes carry over between its branches in the measured repo.
@@ -218,6 +219,85 @@ Round 2 (codex): approve.
     ],
     "escalation_question": "",
     "summary": "Factory-floor template changes now select the relevant tests without pulling in unrelated panel tests. Panel coverage and non-template matching are preserved. The scope issue is fixed, all reviewed criteria pass, and no blocking concerns remain."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "e231b23b0f921335e4319655d84d653897d07006",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a21a48-71f2-7423-83ed-e67a831dc499",
+    "builder_response": "- Merge of main into the ticket branch. One conflicting file:\n  - docs/brief.md (class: logic): both sides changed the same row of the `speck test` table (line 239). Main added \"or from the `test at` line above it in Node's spec reporter\" to two sentences about reading a failing test's file from TAP output; this ticket changed the sentence on what a module under `test/support/` names. Resolved by taking main's row and reapplying this ticket's sentence to it unchanged, so both changes are kept.\n- No code changed in the merge.\n- Tests run: test/related-0777.test.mjs test/related-0437.test.mjs test/related-0447.test.mjs test/related-0482.test.mjs test/related-0676.test.mjs test/related-0696.test.mjs (189 pass, 0 fail).\n",
+    "seconds": 22,
+    "usage": {
+      "input_tokens": 523254,
+      "cached_input_tokens": 425728,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1901,
+      "reasoning_output_tokens": 37
+    },
+    "model": "gpt-6.1-sol",
+    "tokens": {
+      "input": 24098,
+      "cached": 169600,
+      "write": 0,
+      "output": 624
+    },
+    "cost_usd": 0.071396,
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-11-27T01:01:30.289Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "Implementation and test/related-0777.test.mjs are unchanged from the approved commit. Both AC1 tests passed again, covering floor selection and exclusion of unrelated panel tests."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Both AC2 tests passed again, checking panel HTML, script and styles still select panel support importers. Relevant code is unchanged by the merge."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "AC3 passed again, verifying support-module changes select every direct importer in the fixture and repository."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Post-merge regression run recorded 189 passed, 0 failed and 3 skipped. No implementation or test changes were made during conflict resolution."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/related.mjs:119",
+        "issue": "Resolved: comment stripping remains limited to changed files under templates/, preserving non-template matching. The merge retains this fix and its passing regression test.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The merge preserves both documentation changes exactly and leaves the approved implementation unchanged. All relevant tests pass again. The separate, existing gap in face and mood test selection is recorded for follow-up; there are no blocking concerns with this merge."
   }
 }
 ```
