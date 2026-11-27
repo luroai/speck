@@ -1,7 +1,7 @@
 ---
 id: "0776"
 title: "Steady three browser tests on a busy machine"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: "speck/ideas/done/2026-11-25-steady-the-0160-ac5-jump-to-ticket-test.md"
 after: []                # ticket ids that must be done first
 created: 2026-11-26
 started: "2026-11-27T00:11:41.110Z"
+approved: "2026-11-27T01:12:13.289Z"
 
 ---
 # 0776 · Steady three browser tests on a busy machine
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Three real-browser tests fail now and then on a busy machine: "0160 AC5: in the home-screen app, jumping to a ticket shows it below the header", "0723 AC2: the 0182 AC3 check still fails when Chromium is left running" and "0761 AC2: with something in Plan's list wider than it, a sideways swipe on the list changes lane".
@@ -60,9 +61,14 @@ Three of speck's own browser tests sometimes failed when the machine was busy, f
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 158,942
+- Elapsed since build started: 61 min
+- Changed lines: 0 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up (inbox): `speck/ideas/2026-11-27-steady-the-0476-ac4-swipe-test-under-heavy-load.md`: 0476 AC4 failed once in this build's related run, with all three of 0738's retries for a dropped touch end used up, and passed when run again.
 - Known limit: 0761 AC1 still uses the plain wide block, which the 5-second redraw can take out; it's another browser test, out of this ticket's scope, and hasn't been seen failing.
