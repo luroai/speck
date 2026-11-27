@@ -1,7 +1,7 @@
 ---
 id: "0776"
 title: "Steady three browser tests on a busy machine"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-11-25-steady-the-0160-ac5-jump-to-ticket-test.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-11-26
+started: "2026-11-27T00:11:41.110Z"
 
 ---
 # 0776 · Steady three browser tests on a busy machine
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Three real-browser tests fail now and then on a busy machine: "0160 AC5: in the home-screen app, jumping to a ticket shows it below the header", "0723 AC2: the 0182 AC3 check still fails when Chromium is left running" and "0761 AC2: with something in Plan's list wider than it, a sideways swipe on the list changes lane".
