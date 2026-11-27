@@ -42,6 +42,7 @@ The three tests pass on a busy machine and still catch a real fault.
 ## Notes
 - From the builds of 0751 and 0769.
 - Failing before this build: none
+- speck (2026-11-27 00:48 UTC) told you: The build is slow because of the work this ticket asks for, not because anything is stuck: to prove three browser tests are now steady on a busy machine, it has run each of them 10 to 30 times under deliberately heavy load (load averages of 66 to 134), and every run passed. It has moved on to the related tests before review. Why: Its log shows the repeated load runs finishing with every run passing, the busy load comes partly from the build's own load generators, and no test has hung or failed.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
