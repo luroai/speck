@@ -1,7 +1,7 @@
 ---
 id: "0775"
 title: "Steady the 0067 panel restart tests"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,11 +18,12 @@ source: "speck/ideas/done/2026-11-25-steady-the-0067-ac2-restart-token-test.md" 
 after: []                # ticket ids that must be done first
 created: 2026-11-26
 started: "2026-11-26T23:58:09.774Z"
+approved: "2026-11-27T00:53:07.440Z"
 
 ---
 # 0775 · Steady the 0067 panel restart tests
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 "0067 AC2: the token survives a restart" and "0067 AC4: new code that fails to start leaves the old server serving, shows the error and the next change tries again" fail now and then on a busy machine, turning builds' and `main`'s test runs red for no real fault.
@@ -59,9 +60,14 @@ To see it, look at the next few builds' test runs: these two checks shouldn't be
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 153,436
+- Elapsed since build started: 55 min
+- Changed lines: 5 (limit 5000)
 - Follow-ups:
   - Inbox: `speck/ideas/2026-11-27-give-real-panel-tests-longer-to-start-on-a-busy-machine.md` (the shared 10 s panel start limit failed 92 tests in this build's related run under load). Related, not the same tests: 0774's worktree note `2026-11-27-steady-the-quick-checks-real-panel-tests-under-load.md`.
   - The 0067 AC2 browser test still waits 5 s for the restart (out of scope: other panel tests); it failed once in the related run.
