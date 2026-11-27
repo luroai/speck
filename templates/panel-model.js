@@ -204,7 +204,8 @@ function chains(tickets) {
 }
 // 0467: what an open ticket's dependency box shows, or null for none. `byId`: every ticket on the board by id, done ones
 // too. `unlocks`: chains()'s. A ticket whose after: names two or more shows a Waits on box: each of them, in id order,
-// with its state ('shipped', 'building' or 'queued') and how many are in each. One whose after: names one, or that an
+// with its state ('shipped', 'approved', 'building' or 'queued') and how many are shipped, building and queued. One
+// whose after: names one, or that an
 // unfinished ticket waits on, shows a Chain box: five slots, up to two tickets before it, itself, then up to two after
 // it. Before it: the one it waits on, then the one that one waits on when it waits on only one. After it: the lowest
 // id waiting on it, then the lowest waiting on that. When more lie beyond an end, its last slot is { more: n } in their
@@ -215,14 +216,15 @@ function depsOf(t, byId, unlocks, gone = new Map()) {
   const id = String(t.id), waiting = new Set((Array.isArray(t.waiting_on) ? t.waiting_on : []).map(String));
   const cancelled = new Set((Array.isArray(t.after_cancelled) ? t.after_cancelled : []).map(String));
   const afterOf = x => [...new Set((x && Array.isArray(x.after) ? x.after : []).map(String))].filter(a => a !== String(x.id));
-  // Shipped is done, building is in flight, queued the rest. One not on the board is shipped when it's in the ticket's
-  // after: and its waiting_on leaves it out, as speck counts it done.
+  // Shipped is done, approved is approved (0778), building is any other in flight, queued the rest. One not on the
+  // board is shipped when it's in the ticket's after:
+  // and its waiting_on leaves it out, as speck counts it done.
   const after = afterOf(t);
-  const stateOf = d => { if (cancelled.has(d)) return 'cancelled'; const o = byId.get(d); return o ? o.status === 'done' ? 'shipped' : IN_FLIGHT.includes(o.status) ? 'building' : 'queued' : after.includes(d) && !waiting.has(d) ? 'shipped' : 'queued'; };
+  const stateOf = d => { if (cancelled.has(d)) return 'cancelled'; const o = byId.get(d); return o ? o.status === 'done' ? 'shipped' : o.status === 'approved' ? 'approved' : IN_FLIGHT.includes(o.status) ? 'building' : 'queued' : after.includes(d) && !waiting.has(d) ? 'shipped' : 'queued'; };
   if (after.length >= 2) {
     // Shipped or not as its facts table counts them, from waiting_on.
     // 0613: and its title, or '' for one not on the board.
-    const items = after.sort(byNumber).map(d => ({ id: d, title: String((byId.get(d) ?? gone.get(d))?.title ?? ''), state: cancelled.has(d) ? 'cancelled' : !waiting.has(d) ? 'shipped' : stateOf(d) === 'building' ? 'building' : 'queued' }));
+    const items = after.sort(byNumber).map(d => ({ id: d, title: String((byId.get(d) ?? gone.get(d))?.title ?? ''), state: cancelled.has(d) ? 'cancelled' : !waiting.has(d) ? 'shipped' : ['approved', 'building'].includes(stateOf(d)) ? stateOf(d) : 'queued' }));
     const count = s => items.filter(i => i.state === s).length;
     return { kind: 'waits', items, shipped: count('shipped'), building: count('building'), queued: count('queued') };
   }

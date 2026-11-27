@@ -52,7 +52,7 @@ test('0698 AC3: a ticket with neither field reads as today', async () => {
   assert.doesNotMatch(whereOf(p, '0803').textContent, /ships after/);
   const view = await fullViewOf(p, '0802');
   assert.doesNotMatch(view.textContent, /Can start on/);
-  assert.match(factsOf(p, view).find(([label]) => label === 'Waits for')[1], /0801 building/);
+  assert.match(factsOf(p, view).find(([label]) => label === 'Waits for')[1], /0801 approved/); // 0778: it was "building"
   const done = await fullViewOf(p, '0803');
   assert.doesNotMatch(done.textContent, /Ships after/);
 });

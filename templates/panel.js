@@ -876,7 +876,7 @@ function lintCell(t) {
 // ticket waiting on two or more shows them as facts (waitsFacts). A Chain box: a header counting the tickets before and
 // after it, then five even slots, each a circle over an id. A link or a circle for a ticket on the page goes to it, as
 // an id in a note does (goTo). In the side pane, which covers the page, it shows that ticket in the pane instead.
-const DEP_WORDS = { shipped: 'shipped', building: 'building', queued: 'queued', cancelled: 'cancelled', self: 'this ticket' }; // 0704: cancelled
+const DEP_WORDS = { shipped: 'shipped', approved: 'approved', building: 'building', queued: 'queued', cancelled: 'cancelled', self: 'this ticket' }; // 0704: cancelled
 const depsIds = t => (!t.deps ? [] : t.deps.kind === 'waits' ? t.deps.items.map(i => i.id) : t.deps.slots.filter(s => s && s.id && s.state !== 'self').map(s => s.id));
 const depsLinks = t => depsIds(t).filter(id => onPage.has(String(id))); // the ones that go to their ticket
 // A link or a slot: a button that goes to the ticket when it's on the page, otherwise the same, not a button.
